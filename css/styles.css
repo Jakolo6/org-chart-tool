@@ -69,7 +69,7 @@ svg#chartSvg { width: 100%; height: 100%; display: block; }
 /* header-nunataks no longer used for background artwork */
 .header-nunataks { display: none; }
 
-/* Ensure the RedCare logo keeps its original red color and is crisp */
+/* Ensure the logo is crisp and properly sized */
 .logo-container img {
     height: 40px;
     width: auto;
@@ -474,7 +474,7 @@ svg#chartSvg { width: 100%; height: 100%; display: block; }
 .action-button.secondary { background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
 .action-button.secondary:hover { background-color: #e2e8f0; transform: translateY(-1px); }
 
-/* Override upload button for RedCare styling */
+/* Custom styling for upload button */
 .upload-button { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: #AACFCB; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: all 0.2s ease; margin-top: 10px; }
 .upload-button:hover { background: #8AAFAB; transform: translateY(-1px); }
 

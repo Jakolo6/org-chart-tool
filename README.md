@@ -240,7 +240,7 @@ This application was refactored from a single large HTML file (~5,232 lines, 204
 
 ## 📄 License
 
-This project is proprietary software developed for RedCare Pharmacy.
+This project is proprietary software.
 
 ## 🤝 Support
 
