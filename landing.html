@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Organigram Analyzer - Visualize Your Organization</title>
+  
+  <!-- External Dependencies -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- App Styles -->
+  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/landing.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+</head>
+<body>
+  <div class="landing-page">
+    <!-- Header Navigation -->
+    <header class="landing-header">
+      <div class="container">
+        <div class="logo">
+          <img src="./assets/images/RDC.DE_BIG.svg" alt="RedCare Logo" />
+          <h1>Organigram Analyzer</h1>
+        </div>
+        <nav class="main-nav">
+          <ul>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#testimonials">Testimonials</a></li>
+            <li><a href="./auth/login.html" class="nav-login">Login</a></li>
+            <li><a href="./auth/register.html" class="nav-register">Register</a></li>
+          </ul>
+        </nav>
+        <button class="mobile-menu-btn">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero-content">
+          <h1>Visualize Your Organization Like Never Before</h1>
+          <p>Transform your Excel data into interactive org charts. Compare organizational changes, analyze team structures, and gain valuable insights.</p>
+          <div class="hero-buttons">
+            <a href="./auth/register.html" class="btn btn-primary">Get Started</a>
+            <a href="#demo" class="btn btn-secondary">See Demo</a>
+          </div>
+        </div>
+        <div class="hero-image">
+          <img src="./assets/images/org-chart-preview.png" alt="Org Chart Preview" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+      <div class="container">
+        <h2 class="section-title">Powerful Features</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-project-diagram"></i>
+            </div>
+            <h3>Interactive Visualization</h3>
+            <p>Navigate through your org structure with intuitive controls. Zoom, pan, and explore your organization with ease.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-exchange-alt"></i>
+            </div>
+            <h3>Compare Changes</h3>
+            <p>Upload baseline and target org structures to visualize changes. See who moved, who's new, and track organizational evolution.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-chart-pie"></i>
+            </div>
+            <h3>Team Statistics</h3>
+            <p>Get instant insights with FTE statistics, team size analysis, and management span metrics for any node in your org chart.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-search"></i>
+            </div>
+            <h3>Quick Search</h3>
+            <p>Find any employee instantly with our powerful search functionality. Jump directly to their position in the org chart.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-save"></i>
+            </div>
+            <h3>Save & Share</h3>
+            <p>Save your org charts to access them later or share with colleagues. Track organizational changes over time.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-file-excel"></i>
+            </div>
+            <h3>Excel Integration</h3>
+            <p>Import directly from Excel files with automatic column mapping. No special formatting required.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="how-it-works">
+      <div class="container">
+        <h2 class="section-title">How It Works</h2>
+        <div class="steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h3>Upload Your Excel File</h3>
+              <p>Start with a simple Excel file containing employee names, managers, and job titles. Additional columns like FTE, location, and job family enhance your insights.</p>
+              <div class="excel-example">
+                <table class="excel-table">
+                  <thead>
+                    <tr>
+                      <th>Employee Name</th>
+                      <th>Manager</th>
+                      <th>Business Title</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>John Smith</td>
+                      <td></td>
+                      <td>CEO</td>
+                    </tr>
+                    <tr>
+                      <td>Sarah Johnson</td>
+                      <td>John Smith</td>
+                      <td>VP Engineering</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h3>Map Your Columns</h3>
+              <p>Our intelligent system automatically detects column mappings, but you can adjust them if needed. We'll validate your data to ensure it creates a proper hierarchy.</p>
+              <img src="./assets/images/column-mapping.png" alt="Column Mapping" class="step-image" />
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h3>Explore Your Org Chart</h3>
+              <p>Interact with your dynamic org chart. Click on nodes to see details, search for employees, and analyze team structures at any level.</p>
+              <img src="./assets/images/org-chart-explore.png" alt="Org Chart Exploration" class="step-image" />
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <h3>Compare & Analyze Changes</h3>
+              <p>Upload a second file to compare organizational changes. See who moved, who's new, and understand the impact of reorganizations.</p>
+              <img src="./assets/images/org-chart-compare.png" alt="Org Chart Comparison" class="step-image" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Demo Section -->
+    <section id="demo" class="demo">
+      <div class="container">
+        <h2 class="section-title">See It In Action</h2>
+        <div class="demo-video">
+          <div class="video-container">
+            <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          </div>
+        </div>
+        <div class="demo-cta">
+          <p>Ready to visualize your organization?</p>
+          <a href="./auth/register.html" class="btn btn-primary">Get Started Now</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section id="testimonials" class="testimonials">
+      <div class="container">
+        <h2 class="section-title">What Our Users Say</h2>
+        <div class="testimonials-slider">
+          <div class="testimonial">
+            <div class="testimonial-content">
+              <p>"This tool saved me hours of work during our recent reorganization. Being able to visualize the changes and explain them to stakeholders made the transition much smoother."</p>
+            </div>
+            <div class="testimonial-author">
+              <img src="./assets/images/testimonial-1.jpg" alt="Sarah L." />
+              <div class="author-info">
+                <h4>Sarah L.</h4>
+                <p>HR Director, Tech Company</p>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial">
+            <div class="testimonial-content">
+              <p>"The ability to compare before and after organizational structures helped us identify potential issues before implementing changes. The statistics feature is incredibly valuable."</p>
+            </div>
+            <div class="testimonial-author">
+              <img src="./assets/images/testimonial-2.jpg" alt="Michael R." />
+              <div class="author-info">
+                <h4>Michael R.</h4>
+                <p>COO, Healthcare Organization</p>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial">
+            <div class="testimonial-content">
+              <p>"We use this tool regularly to track our organizational evolution. It's become an essential part of our quarterly planning and helps us communicate changes effectively."</p>
+            </div>
+            <div class="testimonial-author">
+              <img src="./assets/images/testimonial-3.jpg" alt="Jennifer T." />
+              <div class="author-info">
+                <h4>Jennifer T.</h4>
+                <p>People Operations Manager</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+      <div class="container">
+        <h2>Transform Your Organizational Planning Today</h2>
+        <p>Join thousands of companies using Organigram Analyzer to visualize, plan, and communicate organizational structures.</p>
+        <div class="cta-buttons">
+          <a href="./auth/register.html" class="btn btn-primary">Create Free Account</a>
+          <a href="./auth/login.html" class="btn btn-secondary">Sign In</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="landing-footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-logo">
+            <img src="./assets/images/RDC.DE_BIG.svg" alt="RedCare Logo" />
+            <p>Organigram Analyzer</p>
+          </div>
+          <div class="footer-links">
+            <div class="footer-column">
+              <h4>Product</h4>
+              <ul>
+                <li><a href="#features">Features</a></li>
+                <li><a href="#how-it-works">How It Works</a></li>
+                <li><a href="#demo">Demo</a></li>
+                <li><a href="#testimonials">Testimonials</a></li>
+              </ul>
+            </div>
+            <div class="footer-column">
+              <h4>Resources</h4>
+              <ul>
+                <li><a href="#">Documentation</a></li>
+                <li><a href="#">FAQ</a></li>
+                <li><a href="#">Support</a></li>
+                <li><a href="#">Blog</a></li>
+              </ul>
+            </div>
+            <div class="footer-column">
+              <h4>Company</h4>
+              <ul>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+                <li><a href="#">Privacy Policy</a></li>
+                <li><a href="#">Terms of Service</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 Organigram Analyzer. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Mobile menu toggle
+    document.querySelector('.mobile-menu-btn').addEventListener('click', function() {
+      document.querySelector('.main-nav').classList.toggle('active');
+      this.classList.toggle('active');
+    });
+
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        const targetId = this.getAttribute('href');
+        if (targetId === '#') return;
+        
+        const targetElement = document.querySelector(targetId);
+        if (targetElement) {
+          window.scrollTo({
+            top: targetElement.offsetTop - 80,
+            behavior: 'smooth'
+          });
+          
+          // Close mobile menu if open
+          document.querySelector('.main-nav').classList.remove('active');
+          document.querySelector('.mobile-menu-btn').classList.remove('active');
+        }
+      });
+    });
+
+    // Simple testimonial slider
+    let currentSlide = 0;
+    const testimonials = document.querySelectorAll('.testimonial');
+    
+    function showSlide(index) {
+      testimonials.forEach((slide, i) => {
+        slide.style.display = i === index ? 'block' : 'none';
+      });
+    }
+    
+    function nextSlide() {
+      currentSlide = (currentSlide + 1) % testimonials.length;
+      showSlide(currentSlide);
+    }
+    
+    // Initialize slider
+    showSlide(0);
+    setInterval(nextSlide, 5000);
+  </script>
+</body>
+</html>

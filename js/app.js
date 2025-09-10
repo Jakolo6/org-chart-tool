@@ -31,14 +31,58 @@ function updateUserInfo(user, profile, organization) {
   const userInfoEl = document.getElementById('userInfo');
   if (!userInfoEl) return;
   
+  // Get first name for greeting
+  const fullName = profile.display_name || user.email;
+  const firstName = fullName.split(' ')[0];
+  
   userInfoEl.innerHTML = `
-    <div class="user-name">${profile.display_name || user.email}</div>
-    <div class="user-org">${organization.name}</div>
-    <div class="user-actions">
-      <a href="./auth/profile.html">Profile</a>
-      <a href="#" id="signOutLink">Sign Out</a>
+    <div class="user-dropdown">
+      <div class="user-info-trigger">
+        <div class="user-avatar">${getInitials(fullName)}</div>
+        <div class="user-details">
+          <div class="user-name">${fullName}</div>
+          <div class="user-org">${organization.name}</div>
+        </div>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="user-dropdown-menu">
+        <a href="./auth/profile.html" class="dropdown-item">
+          <i class="fas fa-user"></i> My Profile
+        </a>
+        <a href="#" class="dropdown-item" id="savedChartsLink">
+          <i class="fas fa-chart-bar"></i> Saved Charts
+        </a>
+        <div class="dropdown-divider"></div>
+        <a href="#" class="dropdown-item" id="signOutLink">
+          <i class="fas fa-sign-out-alt"></i> Sign Out
+        </a>
+      </div>
     </div>
   `;
+  
+  // Show welcome message if first login
+  const isFirstLogin = sessionStorage.getItem('firstLogin') !== 'false';
+  if (isFirstLogin) {
+    showWelcomeMessage(firstName);
+    sessionStorage.setItem('firstLogin', 'false');
+  }
+  
+  // Add dropdown toggle
+  const userDropdown = document.querySelector('.user-dropdown');
+  const userTrigger = document.querySelector('.user-info-trigger');
+  
+  if (userTrigger) {
+    userTrigger.addEventListener('click', () => {
+      userDropdown.classList.toggle('active');
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!userDropdown.contains(e.target)) {
+        userDropdown.classList.remove('active');
+      }
+    });
+  }
   
   // Add sign out event listener
   const signOutLink = document.getElementById('signOutLink');
@@ -48,12 +92,80 @@ function updateUserInfo(user, profile, organization) {
       try {
         const { signOut } = await import('./auth.js');
         await signOut();
-        window.location.href = './auth/login.html';
+        window.location.href = './landing.html';
       } catch (error) {
         console.error('Sign out error:', error);
       }
     });
   }
+  
+  // Add saved charts event listener
+  const savedChartsLink = document.getElementById('savedChartsLink');
+  if (savedChartsLink) {
+    savedChartsLink.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        const charts = await loadSavedOrgCharts();
+        showChartsModal(charts);
+      } catch (error) {
+        alert(`Error loading charts: ${error.message}`);
+      }
+    });
+  }
+}
+
+// Get initials from name
+function getInitials(name) {
+  return name
+    .split(' ')
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 2);
+}
+
+// Show welcome message
+function showWelcomeMessage(firstName) {
+  const welcomeToast = document.createElement('div');
+  welcomeToast.className = 'welcome-toast';
+  welcomeToast.innerHTML = `
+    <div class="welcome-toast-content">
+      <div class="welcome-toast-icon">
+        <i class="fas fa-hand-wave"></i>
+      </div>
+      <div class="welcome-toast-message">
+        <h3>Welcome, ${firstName}!</h3>
+        <p>Upload an Excel file to get started with your org chart.</p>
+      </div>
+      <button class="welcome-toast-close">&times;</button>
+    </div>
+  `;
+  
+  document.body.appendChild(welcomeToast);
+  
+  // Show toast with animation
+  setTimeout(() => {
+    welcomeToast.classList.add('show');
+  }, 100);
+  
+  // Add close button functionality
+  const closeBtn = welcomeToast.querySelector('.welcome-toast-close');
+  closeBtn.addEventListener('click', () => {
+    welcomeToast.classList.remove('show');
+    setTimeout(() => {
+      document.body.removeChild(welcomeToast);
+    }, 300);
+  });
+  
+  // Auto-hide after 5 seconds
+  setTimeout(() => {
+    welcomeToast.classList.remove('show');
+    setTimeout(() => {
+      if (document.body.contains(welcomeToast)) {
+        document.body.removeChild(welcomeToast);
+      }
+    }, 300);
+  }, 5000);
 }
 
 // Save current org chart

@@ -6,36 +6,106 @@
     <title>Login - Org Chart Tool</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/auth.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .auth-nav {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+        
+        .back-to-home {
+            display: flex;
+            align-items: center;
+            color: #64748b;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .back-to-home i {
+            margin-right: 8px;
+        }
+        
+        .back-to-home:hover {
+            color: #3b82f6;
+            transform: translateX(-3px);
+        }
+        
+        .auth-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .auth-logo img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        
+        .loading-indicator {
+            display: none;
+            margin-left: 10px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .btn-with-loader {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
 </head>
 <body>
+    <nav class="auth-nav">
+        <a href="../landing.html" class="back-to-home">
+            <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
+    </nav>
+    
     <div class="auth-container">
         <div class="auth-card">
+            <div class="auth-logo">
+                <img src="../assets/images/RDC.DE_BIG.svg" alt="RedCare Logo">
+                <h2>Organigram Analyzer</h2>
+            </div>
+            
             <div class="auth-header">
-                <h1>Login to Org Chart Tool</h1>
-                <p>Enter your credentials to access your organization charts</p>
+                <h1>Welcome Back</h1>
+                <p>Sign in to continue to your organization charts</p>
             </div>
             
             <form id="loginForm" class="auth-form">
                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required>
+                    <label for="email"><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required>
+                    <label for="password"><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
                 </div>
                 
                 <div class="form-error" id="loginError"></div>
                 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Login</button>
+                    <button type="submit" class="btn btn-primary btn-with-loader">
+                        <span>Sign In</span>
+                        <i class="fas fa-spinner loading-indicator" id="loginSpinner"></i>
+                    </button>
                 </div>
                 
                 <div class="auth-links">
-                    <p>Don't have an account? <a href="register.html">Register</a></p>
-                    <p><a href="forgot-password.html">Forgot password?</a></p>
+                    <p>New to Organigram Analyzer? <a href="register.html">Create an account</a></p>
+                    <p><a href="forgot-password.html"><i class="fas fa-key"></i> Forgot password?</a></p>
                 </div>
             </form>
         </div>
@@ -46,21 +116,60 @@
         
         const loginForm = document.getElementById('loginForm');
         const loginError = document.getElementById('loginError');
+        const loginSpinner = document.getElementById('loginSpinner');
+        const submitButton = loginForm.querySelector('button[type="submit"]');
         
+        // Check if user is already logged in
+        const checkExistingSession = async () => {
+            try {
+                const { getCurrentUser } = await import('../js/auth.js');
+                const { user } = await getCurrentUser();
+                
+                if (user) {
+                    window.location.href = '../index.html';
+                }
+            } catch (error) {
+                console.error('Session check error:', error);
+            }
+        };
+        
+        // Run session check
+        checkExistingSession();
+        
+        // Handle form submission
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             
+            // Show loading state
             loginError.textContent = '';
+            loginSpinner.style.display = 'inline-block';
+            submitButton.disabled = true;
             
             try {
-                const { user, profile, organization, error } = await signIn(email, password);
+                const { user, profile, organization, error, message, partialSuccess } = await signIn(email, password);
                 
                 if (error || !user) {
-                    loginError.textContent = error?.message || 'Failed to login. Please check your credentials.';
+                    // Handle error with user-friendly message
+                    if (error?.message) {
+                        if (error.message.includes('Invalid login')) {
+                            loginError.textContent = 'Invalid email or password. Please try again.';
+                        } else if (error.message.includes('Email not confirmed')) {
+                            loginError.textContent = 'Please confirm your email address before logging in.';
+                        } else {
+                            loginError.textContent = error.message;
+                        }
+                    } else {
+                        loginError.textContent = 'Failed to login. Please check your credentials.';
+                    }
                     return;
+                }
+                
+                if (partialSuccess && message) {
+                    // Handle partial success (e.g., logged in but profile not loaded)
+                    console.warn('Partial login success:', message);
                 }
                 
                 // Store user data in session storage
@@ -72,11 +181,21 @@
                     organizationName: organization?.name
                 }));
                 
+                // Show success message briefly before redirect
+                loginError.textContent = 'Login successful! Redirecting...';
+                loginError.style.color = '#10b981';
+                
                 // Redirect to the dashboard on successful login
-                window.location.href = '../index.html';
+                setTimeout(() => {
+                    window.location.href = '../index.html';
+                }, 500);
             } catch (error) {
                 loginError.textContent = 'An unexpected error occurred. Please try again.';
                 console.error('Login error:', error);
+            } finally {
+                // Hide loading state
+                loginSpinner.style.display = 'none';
+                submitButton.disabled = false;
             }
         });
     </script>

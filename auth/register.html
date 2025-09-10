@@ -6,46 +6,195 @@
     <title>Register - Org Chart Tool</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="../css/auth.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .auth-nav {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+        }
+        
+        .back-to-home {
+            display: flex;
+            align-items: center;
+            color: #64748b;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .back-to-home i {
+            margin-right: 8px;
+        }
+        
+        .back-to-home:hover {
+            color: #3b82f6;
+            transform: translateX(-3px);
+        }
+        
+        .auth-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .auth-logo img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        
+        .loading-indicator {
+            display: none;
+            margin-left: 10px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .btn-with-loader {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .registration-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+        
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            right: -50%;
+            width: 100%;
+            height: 2px;
+            background-color: #e2e8f0;
+            z-index: 0;
+        }
+        
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #e2e8f0;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            position: relative;
+            z-index: 1;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .step.active .step-number {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .step-label {
+            font-size: 14px;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+        
+        .step.active .step-label {
+            color: #3b82f6;
+            font-weight: 500;
+        }
+        
+        .form-success {
+            color: #10b981;
+            font-size: 14px;
+            margin-bottom: 16px;
+            min-height: 20px;
+        }
+    </style>
 </head>
 <body>
+    <nav class="auth-nav">
+        <a href="../landing.html" class="back-to-home">
+            <i class="fas fa-arrow-left"></i> Back to Home
+        </a>
+    </nav>
+    
     <div class="auth-container">
         <div class="auth-card">
+            <div class="auth-logo">
+                <img src="../assets/images/RDC.DE_BIG.svg" alt="RedCare Logo">
+                <h2>Organigram Analyzer</h2>
+            </div>
+            
+            <div class="registration-steps">
+                <div class="step active">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Account</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Verification</div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Complete</div>
+                </div>
+            </div>
+            
             <div class="auth-header">
-                <h1>Create an Account</h1>
-                <p>Sign up to start managing your organization charts</p>
+                <h1>Create Your Account</h1>
+                <p>Get started with Organigram Analyzer</p>
             </div>
             
             <form id="registerForm" class="auth-form">
                 <div class="form-group">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" name="email" required>
+                    <label for="email"><i class="fas fa-envelope"></i> Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email address" required>
+                    <small>We'll send a verification link to this address</small>
                 </div>
                 
                 <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required minlength="8">
-                    <small>Password must be at least 8 characters</small>
+                    <label for="password"><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="password" name="password" placeholder="Create a secure password" required minlength="8">
+                    <small>Must be at least 8 characters with letters and numbers</small>
                 </div>
                 
                 <div class="form-group">
-                    <label for="displayName">Your Name</label>
-                    <input type="text" id="displayName" name="displayName" required>
+                    <label for="displayName"><i class="fas fa-user"></i> Your Name</label>
+                    <input type="text" id="displayName" name="displayName" placeholder="Enter your full name" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="organizationName">Organization Name</label>
-                    <input type="text" id="organizationName" name="organizationName" required>
+                    <label for="organizationName"><i class="fas fa-building"></i> Organization Name</label>
+                    <input type="text" id="organizationName" name="organizationName" placeholder="Enter your organization name" required>
                 </div>
                 
+                <div class="form-success" id="registerSuccess"></div>
                 <div class="form-error" id="registerError"></div>
                 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Register</button>
+                    <button type="submit" class="btn btn-primary btn-with-loader">
+                        <span>Create Account</span>
+                        <i class="fas fa-spinner loading-indicator" id="registerSpinner"></i>
+                    </button>
                 </div>
                 
                 <div class="auth-links">
-                    <p>Already have an account? <a href="login.html">Login</a></p>
+                    <p>Already have an account? <a href="login.html">Sign in</a></p>
                 </div>
             </form>
         </div>
@@ -56,7 +205,44 @@
         
         const registerForm = document.getElementById('registerForm');
         const registerError = document.getElementById('registerError');
+        const registerSuccess = document.getElementById('registerSuccess');
+        const registerSpinner = document.getElementById('registerSpinner');
+        const submitButton = registerForm.querySelector('button[type="submit"]');
+        const steps = document.querySelectorAll('.step');
         
+        // Check if user is already logged in
+        const checkExistingSession = async () => {
+            try {
+                const { getCurrentUser } = await import('../js/auth.js');
+                const { user } = await getCurrentUser();
+                
+                if (user) {
+                    window.location.href = '../index.html';
+                }
+            } catch (error) {
+                console.error('Session check error:', error);
+            }
+        };
+        
+        // Run session check
+        checkExistingSession();
+        
+        // Password validation
+        const passwordInput = document.getElementById('password');
+        passwordInput.addEventListener('input', () => {
+            const password = passwordInput.value;
+            const hasMinLength = password.length >= 8;
+            const hasLetter = /[a-zA-Z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            
+            if (password && (!hasMinLength || !hasLetter || !hasNumber)) {
+                passwordInput.setCustomValidity('Password must be at least 8 characters with letters and numbers');
+            } else {
+                passwordInput.setCustomValidity('');
+            }
+        });
+        
+        // Handle form submission
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -65,30 +251,68 @@
             const displayName = document.getElementById('displayName').value;
             const organizationName = document.getElementById('organizationName').value;
             
+            // Show loading state
             registerError.textContent = '';
+            registerSuccess.textContent = '';
+            registerSpinner.style.display = 'inline-block';
+            submitButton.disabled = true;
             
             try {
-                const { user, profile, organization, error } = await signUp(email, password, displayName, organizationName);
+                const { user, profile, organization, error, message, partialSuccess } = await signUp(email, password, displayName, organizationName);
                 
                 if (error || !user) {
-                    registerError.textContent = error?.message || 'Failed to register. Please try again.';
+                    // Handle error with user-friendly message
+                    if (error?.message) {
+                        if (error.message.includes('already registered')) {
+                            registerError.textContent = 'This email is already registered. Please log in or use a different email.';
+                        } else if (error.message.includes('password')) {
+                            registerError.textContent = 'Password does not meet requirements. Please use at least 8 characters with letters and numbers.';
+                        } else if (error.message.includes('Too many registration attempts')) {
+                            registerError.textContent = error.message;
+                        } else {
+                            registerError.textContent = error.message;
+                        }
+                    } else {
+                        registerError.textContent = 'Failed to register. Please try again.';
+                    }
                     return;
                 }
                 
-                // Store user data in session storage
-                sessionStorage.setItem('currentUser', JSON.stringify({
-                    id: user.id,
-                    email: user.email,
-                    displayName: profile?.display_name || displayName,
-                    organizationId: profile?.organization_id || organization?.id,
-                    organizationName: organization?.name || organizationName
-                }));
+                // Update steps to show verification step
+                steps[0].classList.remove('active');
+                steps[1].classList.add('active');
                 
-                // Redirect to the dashboard on successful registration
-                window.location.href = '../index.html';
+                // Show success message
+                registerSuccess.textContent = 'Account created successfully! Please check your email to verify your account.';
+                registerForm.reset();
+                
+                // If we have partial success (e.g., user created but profile/org failed)
+                if (partialSuccess && message) {
+                    console.warn('Partial registration success:', message);
+                    registerError.textContent = message;
+                    registerError.style.color = '#f59e0b'; // Warning color
+                }
+                
+                // Disable form fields
+                Array.from(registerForm.elements).forEach(element => {
+                    if (element.tagName !== 'BUTTON') {
+                        element.disabled = true;
+                    }
+                });
+                
+                // Change button text
+                submitButton.querySelector('span').textContent = 'Check Email';
+                submitButton.addEventListener('click', () => {
+                    window.location.href = 'login.html';
+                }, { once: true });
+                
             } catch (error) {
                 registerError.textContent = 'An unexpected error occurred. Please try again.';
                 console.error('Registration error:', error);
+            } finally {
+                // Hide loading state
+                registerSpinner.style.display = 'none';
+                submitButton.disabled = false;
             }
         });
     </script>
