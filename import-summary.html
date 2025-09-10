@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Import Summary - Organigram Analyzer</title>
+  
+  <!-- External Dependencies -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- App Styles -->
+  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/app-ui.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  
+  <!-- Component Styles -->
+  <link rel="stylesheet" href="./css/components/summary.css" />
+  <link rel="stylesheet" href="./css/components/validation-results.css" />
+  <link rel="stylesheet" href="./css/components/org-chart-preview.css" />
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-container">
+        <div class="app-logo">
+          <img src="./assets/images/org-chart-icon.svg" alt="Org Chart Logo" height="30" 
+               onerror="this.onerror=null; this.src='./assets/images/org-chart-icon.png'" />
+          <h1>Organigram Analyzer</h1>
+        </div>
+        <nav class="main-nav">
+          <ul>
+            <li><a href="dashboard.html"><i class="fas fa-th-large"></i> Projects</a></li>
+            <li><a href="upload.html"><i class="fas fa-upload"></i> Upload</a></li>
+          </ul>
+        </nav>
+        <div class="user-info" id="userInfo">
+          <!-- User info will be populated by JS -->
+        </div>
+      </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="app-content">
+      <div class="import-summary" id="importSummary">
+        <!-- Content will be populated by JavaScript -->
+      </div>
+    </main>
+  </div>
+  
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Loading import summary...</div>
+  </div>
+  
+  <!-- Scripts -->
+  <script type="module" src="./js/import-summary/init.js"></script>
+</body>
+</html>

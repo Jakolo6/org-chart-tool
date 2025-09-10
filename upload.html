@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Upload Excel - Organigram Analyzer</title>
+  
+  <!-- External Dependencies -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- App Styles -->
+  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/app-ui.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  
+  <style>
+    .upload-container {
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 30px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .upload-header {
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    .upload-header h1 {
+      font-size: 24px;
+      color: #1e293b;
+      margin-bottom: 10px;
+    }
+    
+    .upload-header p {
+      color: #64748b;
+      font-size: 16px;
+    }
+    
+    .upload-area {
+      border: 2px dashed #cbd5e1;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 30px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .upload-area:hover, .upload-area.dragover {
+      border-color: #3b82f6;
+      background-color: rgba(59, 130, 246, 0.05);
+    }
+    
+    .upload-icon {
+      font-size: 48px;
+      color: #94a3b8;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+    
+    .upload-area:hover .upload-icon, .upload-area.dragover .upload-icon {
+      color: #3b82f6;
+    }
+    
+    .upload-text {
+      margin-bottom: 15px;
+      color: #64748b;
+    }
+    
+    .upload-text strong {
+      color: #1e293b;
+    }
+    
+    .upload-formats {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+    
+    .upload-input {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+    
+    .project-form {
+      margin-top: 30px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #1e293b;
+    }
+    
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 16px;
+      color: #1e293b;
+      transition: all 0.3s ease;
+    }
+    
+    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+      border-color: #3b82f6;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .form-group textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+    
+    .form-group .radio-group {
+      display: flex;
+      gap: 20px;
+    }
+    
+    .form-group .radio-option {
+      display: flex;
+      align-items: center;
+    }
+    
+    .form-group .radio-option input {
+      width: auto;
+      margin-right: 8px;
+    }
+    
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+      font-size: 16px;
+    }
+    
+    .btn-primary {
+      background-color: #3b82f6;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: #2563eb;
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+      background-color: #f1f5f9;
+      color: #64748b;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #e2e8f0;
+      color: #1e293b;
+    }
+    
+    .file-preview {
+      margin-top: 20px;
+      display: none;
+    }
+    
+    .file-preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .file-preview-title {
+      font-weight: 500;
+      color: #1e293b;
+    }
+    
+    .file-preview-info {
+      font-size: 14px;
+      color: #64748b;
+    }
+    
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    
+    .preview-table th {
+      background-color: #f8fafc;
+      padding: 10px;
+      text-align: left;
+      font-weight: 500;
+      color: #1e293b;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .preview-table td {
+      padding: 10px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #64748b;
+    }
+    
+    .preview-table tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      display: none;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      font-size: 18px;
+      color: #1e293b;
+    }
+    
+    .progress-bar {
+      width: 300px;
+      height: 10px;
+      background-color: #e2e8f0;
+      border-radius: 5px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background-color: #3b82f6;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    
+    .error-message {
+      background-color: #fee2e2;
+      border-left: 4px solid #ef4444;
+      padding: 12px 15px;
+      margin-bottom: 20px;
+      color: #b91c1c;
+      border-radius: 4px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-container">
+        <div class="app-logo">
+          <img src="./assets/images/org-chart-icon.svg" alt="Org Chart Logo" height="30" onerror="this.onerror=null; this.src='./assets/images/org-chart-icon.png'" />
+          <h1>Organigram Analyzer</h1>
+        </div>
+        <nav class="main-nav">
+          <ul>
+            <li><a href="dashboard.html"><i class="fas fa-th-large"></i> Projects</a></li>
+            <li><a href="upload.html" class="active"><i class="fas fa-upload"></i> Upload</a></li>
+          </ul>
+        </nav>
+        <div class="user-info" id="userInfo">
+          <!-- User info will be populated by JS -->
+        </div>
+      </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="app-content">
+      <div class="upload-container">
+        <div class="upload-header">
+          <h1>Upload Your Organization Data</h1>
+          <p>Upload an Excel file with your organization structure to create or update your org chart</p>
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <div class="upload-area" id="uploadArea">
+          <i class="fas fa-file-excel upload-icon"></i>
+          <p class="upload-text"><strong>Drop your Excel file here</strong> or click to browse</p>
+          <p class="upload-formats">Supported formats: .xlsx, .xls, .csv (max 10MB)</p>
+          <input type="file" id="fileInput" class="upload-input" accept=".xlsx,.xls,.csv" />
+        </div>
+        
+        <div class="file-preview" id="filePreview">
+          <div class="file-preview-header">
+            <div class="file-preview-title">File Preview</div>
+            <div class="file-preview-info" id="fileInfo">example.xlsx (5 KB)</div>
+          </div>
+          <div class="preview-table-container">
+            <table class="preview-table" id="previewTable">
+              <thead>
+                <tr id="previewHeader"></tr>
+              </thead>
+              <tbody id="previewBody"></tbody>
+            </table>
+          </div>
+        </div>
+        
+        <form id="projectForm" class="project-form">
+          <div class="form-group">
+            <label for="projectName">Project Name *</label>
+            <input type="text" id="projectName" name="projectName" required placeholder="Enter a name for this org chart" />
+          </div>
+          
+          <div class="form-group">
+            <label for="projectDescription">Description (optional)</label>
+            <textarea id="projectDescription" name="projectDescription" placeholder="Add a description for this org chart"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label>Chart Type</label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input type="radio" id="typeBaseline" name="chartType" value="baseline" checked />
+                <label for="typeBaseline">Baseline (Current State)</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" id="typeTarget" name="chartType" value="target" />
+                <label for="typeTarget">Target (Future State)</label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" id="cancelBtn" class="btn btn-secondary">Cancel</button>
+            <button type="submit" id="continueBtn" class="btn btn-primary" disabled>Continue</button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+  
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Processing your file...</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+  
+  <script type="module">
+    import { getCurrentUser } from './js/auth.js';
+    import { createDraftProject } from './js/projectService.js';
+    
+    // DOM Elements
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+    const fileInfo = document.getElementById('fileInfo');
+    const previewHeader = document.getElementById('previewHeader');
+    const previewBody = document.getElementById('previewBody');
+    const projectForm = document.getElementById('projectForm');
+    const projectName = document.getElementById('projectName');
+    const projectDescription = document.getElementById('projectDescription');
+    const continueBtn = document.getElementById('continueBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const errorMessage = document.getElementById('errorMessage');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingText = document.getElementById('loadingText');
+    const progressFill = document.getElementById('progressFill');
+    const userInfo = document.getElementById('userInfo');
+    
+    // Global variables
+    let parsedData = null;
+    let fileName = '';
+    let fileSize = 0;
+    let existingProjectId = null; // For re-upload scenario
+    
+    // Check authentication
+    async function checkAuth() {
+      try {
+        const { user, profile, organization, error } = await getCurrentUser();
+        
+        if (error || !user) {
+          // Redirect to login if not authenticated
+          window.location.href = './auth/login.html';
+          return false;
+        }
+        
+        // Update UI with user info
+        updateUserInfo(user, profile, organization);
+        return true;
+      } catch (error) {
+        console.error('Auth check error:', error);
+        return false;
+      }
+    }
+    
+    // Update UI with user info
+    function updateUserInfo(user, profile, organization) {
+      if (!userInfo) return;
+      
+      // Get first name for greeting
+      const fullName = profile?.display_name || user.email.split('@')[0];
+      const initials = getInitials(fullName);
+      
+      userInfo.innerHTML = `
+        <div class="user-dropdown">
+          <div class="user-info-trigger">
+            <div class="user-avatar">${initials}</div>
+            <div class="user-details">
+              <div class="user-name">${fullName}</div>
+              <div class="user-org">${organization?.name || 'My Organization'}</div>
+            </div>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+          <div class="user-dropdown-menu">
+            <a href="./auth/profile.html" class="dropdown-item">
+              <i class="fas fa-user"></i> My Profile
+            </a>
+            <a href="dashboard.html" class="dropdown-item">
+              <i class="fas fa-chart-bar"></i> My Charts
+            </a>
+            <div class="dropdown-divider"></div>
+            <a href="#" class="dropdown-item" id="signOutLink">
+              <i class="fas fa-sign-out-alt"></i> Sign Out
+            </a>
+          </div>
+        </div>
+      `;
+      
+      // Add dropdown toggle
+      const userDropdown = document.querySelector('.user-dropdown');
+      const userTrigger = document.querySelector('.user-info-trigger');
+      
+      if (userTrigger) {
+        userTrigger.addEventListener('click', () => {
+          userDropdown.classList.toggle('active');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!userDropdown.contains(e.target)) {
+            userDropdown.classList.remove('active');
+          }
+        });
+      }
+      
+      // Add sign out event listener
+      const signOutLink = document.getElementById('signOutLink');
+      if (signOutLink) {
+        signOutLink.addEventListener('click', async (e) => {
+          e.preventDefault();
+          try {
+            const { signOut } = await import('./js/auth.js');
+            await signOut();
+            window.location.href = './landing.html';
+          } catch (error) {
+            console.error('Sign out error:', error);
+          }
+        });
+      }
+    }
+    
+    // Get initials from name
+    function getInitials(name) {
+      return name
+        .split(' ')
+        .map(part => part[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2);
+    }
+    
+    // Check URL parameters for existing project ID
+    function checkUrlParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      existingProjectId = urlParams.get('project');
+      
+      if (existingProjectId) {
+        // TODO: Load existing project data
+        // This would be implemented in a future step
+      }
+    }
+    
+    // Handle file drag and drop
+    function setupDragAndDrop() {
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+      });
+      
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, highlight, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, unhighlight, false);
+      });
+      
+      function highlight() {
+        uploadArea.classList.add('dragover');
+      }
+      
+      function unhighlight() {
+        uploadArea.classList.remove('dragover');
+      }
+      
+      uploadArea.addEventListener('drop', handleDrop, false);
+      
+      function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+          handleFile(files[0]);
+        }
+      }
+    }
+    
+    // Handle file selection
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        handleFile(fileInput.files[0]);
+      }
+    });
+    
+    // Process the selected file
+    async function handleFile(file) {
+      // Reset previous data
+      resetFilePreview();
+      
+      // Check file type
+      const validTypes = [
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/csv'
+      ];
+      
+      if (!validTypes.includes(file.type) && 
+          !file.name.endsWith('.xlsx') && 
+          !file.name.endsWith('.xls') && 
+          !file.name.endsWith('.csv')) {
+        showError('Invalid file type. Please upload an Excel or CSV file.');
+        return;
+      }
+      
+      // Check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        showError('File is too large. Maximum file size is 10MB.');
+        return;
+      }
+      
+      // Save file info
+      fileName = file.name;
+      fileSize = file.size;
+      
+      // Show loading overlay
+      showLoading('Reading file...');
+      
+      try {
+        // Read the file
+        const reader = new FileReader();
+        
+        reader.onload = async (e) => {
+          try {
+            // Parse the file
+            updateProgress(30, 'Parsing data...');
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            // Get the first sheet
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // Convert to JSON
+            updateProgress(60, 'Processing data...');
+            parsedData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            // Check if data is valid
+            if (!parsedData || parsedData.length < 2) {
+              showError('Invalid or empty file. Please check your Excel file and try again.');
+              hideLoading();
+              return;
+            }
+            
+            // Check row limit (max 5000)
+            if (parsedData.length > 5000) {
+              showError(`File contains ${parsedData.length} rows, exceeding the 5,000 row limit.`);
+              hideLoading();
+              return;
+            }
+            
+            // Update file info
+            fileInfo.textContent = `${fileName} (${formatFileSize(fileSize)})`;
+            
+            // Show preview (first 5 rows)
+            updateProgress(90, 'Generating preview...');
+            showPreview(parsedData);
+            
+            // Enable continue button
+            continueBtn.disabled = false;
+            
+            // Hide loading overlay
+            hideLoading();
+            
+            // Show file preview
+            filePreview.style.display = 'block';
+            
+            // Auto-fill project name from filename
+            if (!projectName.value) {
+              projectName.value = fileName.replace(/\.[^/.]+$/, '');
+            }
+          } catch (error) {
+            console.error('Error parsing file:', error);
+            showError('Error parsing file. Please check your file format and try again.');
+            hideLoading();
+          }
+        };
+        
+        reader.onerror = () => {
+          showError('Error reading file. Please try again.');
+          hideLoading();
+        };
+        
+        reader.readAsArrayBuffer(file);
+      } catch (error) {
+        console.error('Error handling file:', error);
+        showError('Error processing file. Please try again.');
+        hideLoading();
+      }
+    }
+    
+    // Show file preview
+    function showPreview(data) {
+      // Clear previous preview
+      previewHeader.innerHTML = '';
+      previewBody.innerHTML = '';
+      
+      // Get header row
+      const headerRow = data[0];
+      
+      // Add header cells
+      headerRow.forEach(cell => {
+        const th = document.createElement('th');
+        th.textContent = cell || '';
+        previewHeader.appendChild(th);
+      });
+      
+      // Add data rows (max 5)
+      const maxRows = Math.min(5, data.length - 1);
+      for (let i = 1; i <= maxRows; i++) {
+        const row = data[i];
+        const tr = document.createElement('tr');
+        
+        row.forEach(cell => {
+          const td = document.createElement('td');
+          td.textContent = cell || '';
+          tr.appendChild(td);
+        });
+        
+        previewBody.appendChild(tr);
+      }
+    }
+    
+    // Reset file preview
+    function resetFilePreview() {
+      filePreview.style.display = 'none';
+      previewHeader.innerHTML = '';
+      previewBody.innerHTML = '';
+      parsedData = null;
+      continueBtn.disabled = true;
+      hideError();
+    }
+    
+    // Format file size
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      else return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+    
+    // Show error message
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = 'block';
+    }
+    
+    // Hide error message
+    function hideError() {
+      errorMessage.style.display = 'none';
+      errorMessage.textContent = '';
+    }
+    
+    // Show loading overlay
+    function showLoading(message) {
+      loadingText.textContent = message || 'Processing...';
+      loadingOverlay.style.display = 'flex';
+      progressFill.style.width = '0%';
+    }
+    
+    // Hide loading overlay
+    function hideLoading() {
+      loadingOverlay.style.display = 'none';
+    }
+    
+    // Update progress bar
+    function updateProgress(percent, message) {
+      progressFill.style.width = percent + '%';
+      if (message) {
+        loadingText.textContent = message;
+      }
+    }
+    
+    // Handle form submission
+    projectForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!parsedData) {
+        showError('Please upload a file first.');
+        return;
+      }
+      
+      const name = projectName.value.trim();
+      const description = projectDescription.value.trim();
+      const isBaseline = document.getElementById('typeBaseline').checked;
+      
+      if (!name) {
+        showError('Please enter a project name.');
+        return;
+      }
+      
+      // Show loading overlay
+      showLoading('Creating project...');
+      
+      try {
+        // Save project to database
+        updateProgress(50, 'Saving data to database...');
+        
+        // Create draft project
+        const result = await createDraftProject(
+          parsedData,
+          {
+            name,
+            description,
+            isBaseline,
+            isTarget: !isBaseline,
+            fileName,
+            fileSize
+          },
+          existingProjectId
+        );
+        
+        if (result.error) {
+          throw result.error;
+        }
+        
+        // Store project ID in session storage for the mapping page
+        sessionStorage.setItem('currentProjectId', result.project.id);
+        
+        // Redirect to mapping page
+        updateProgress(100, 'Redirecting to column mapping...');
+        window.location.href = `mapping.html?project=${result.project.id}`;
+      } catch (error) {
+        console.error('Error creating project:', error);
+        hideLoading();
+        showError('Error creating project: ' + (error.message || 'Unknown error'));
+      }
+    });
+    
+    // Handle cancel button
+    cancelBtn.addEventListener('click', () => {
+      // Confirm if data has been entered
+      if (parsedData || projectName.value || projectDescription.value) {
+        if (confirm('Are you sure you want to cancel? Your changes will not be saved.')) {
+          window.location.href = 'dashboard.html';
+        }
+      } else {
+        window.location.href = 'dashboard.html';
+      }
+    });
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Check authentication
+      const isAuthenticated = await checkAuth();
+      
+      if (!isAuthenticated) {
+        return;
+      }
+      
+      // Check URL parameters
+      checkUrlParams();
+      
+      // Setup drag and drop
+      setupDragAndDrop();
+    });
+  </script>
+</body>
+</html>

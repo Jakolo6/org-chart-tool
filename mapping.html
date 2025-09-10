@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Column Mapping - Organigram Analyzer</title>
+  
+  <!-- External Dependencies -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- App Styles -->
+  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/app-ui.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  
+  <style>
+    .mapping-container {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 30px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .mapping-header {
+      margin-bottom: 30px;
+    }
+    
+    .mapping-header h1 {
+      font-size: 24px;
+      color: #1e293b;
+      margin-bottom: 10px;
+    }
+    
+    .mapping-header p {
+      color: #64748b;
+      font-size: 16px;
+    }
+    
+    .mapping-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 30px;
+    }
+    
+    .mapping-table th {
+      background-color: #f8fafc;
+      padding: 12px 15px;
+      text-align: left;
+      font-weight: 500;
+      color: #1e293b;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .mapping-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: middle;
+    }
+    
+    .mapping-table tr:last-child td {
+      border-bottom: none;
+    }
+    
+    .mapping-table .required-field {
+      color: #ef4444;
+      margin-left: 3px;
+    }
+    
+    .mapping-table .field-description {
+      font-size: 14px;
+      color: #64748b;
+      margin-top: 3px;
+    }
+    
+    .mapping-table select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 16px;
+      color: #1e293b;
+      background-color: white;
+      transition: all 0.3s ease;
+    }
+    
+    .mapping-table select:focus {
+      border-color: #3b82f6;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .mapping-table select.error {
+      border-color: #ef4444;
+      background-color: #fef2f2;
+    }
+    
+    .mapping-table .sample-value {
+      font-size: 14px;
+      color: #64748b;
+      font-style: italic;
+    }
+    
+    .mapping-presets {
+      margin-bottom: 30px;
+      padding: 15px;
+      background-color: #f8fafc;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .mapping-presets-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    
+    .mapping-presets-title {
+      font-weight: 500;
+      color: #1e293b;
+    }
+    
+    .mapping-presets-actions {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+      font-size: 16px;
+    }
+    
+    .btn-primary {
+      background-color: #3b82f6;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: #2563eb;
+      transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+      background-color: #f1f5f9;
+      color: #64748b;
+    }
+    
+    .btn-secondary:hover {
+      background-color: #e2e8f0;
+      color: #1e293b;
+    }
+    
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+    }
+    
+    .error-message {
+      background-color: #fee2e2;
+      border-left: 4px solid #ef4444;
+      padding: 12px 15px;
+      margin-bottom: 20px;
+      color: #b91c1c;
+      border-radius: 4px;
+      display: none;
+    }
+    
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      display: none;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      font-size: 18px;
+      color: #1e293b;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-container">
+        <div class="app-logo">
+          <img src="./assets/images/org-chart-icon.svg" alt="Org Chart Logo" height="30" onerror="this.onerror=null; this.src='./assets/images/org-chart-icon.png'" />
+          <h1>Organigram Analyzer</h1>
+        </div>
+        <nav class="main-nav">
+          <ul>
+            <li><a href="dashboard.html"><i class="fas fa-th-large"></i> Projects</a></li>
+            <li><a href="upload.html" class="active"><i class="fas fa-upload"></i> Upload</a></li>
+          </ul>
+        </nav>
+        <div class="user-info" id="userInfo">
+          <!-- User info will be populated by JS -->
+        </div>
+      </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="app-content">
+      <div class="mapping-container">
+        <div class="mapping-header">
+          <h1>Map Your Excel Columns</h1>
+          <p>Match your Excel columns to the appropriate fields in the org chart</p>
+        </div>
+        
+        <div class="error-message" id="errorMessage"></div>
+        
+        <div class="mapping-presets">
+          <div class="mapping-presets-header">
+            <div class="mapping-presets-title">Column Mapping Presets</div>
+            <div class="mapping-presets-actions">
+              <button id="autoDetectBtn" class="btn btn-sm btn-secondary">
+                <i class="fas fa-magic"></i> Auto-Detect
+              </button>
+              <button id="savePresetBtn" class="btn btn-sm btn-secondary">
+                <i class="fas fa-save"></i> Save Preset
+              </button>
+              <select id="loadPresetSelect" class="btn btn-sm btn-secondary">
+                <option value="">Load Preset</option>
+                <!-- Presets will be populated by JS -->
+              </select>
+            </div>
+          </div>
+          <p>Use presets to quickly map columns or let us try to auto-detect the mapping.</p>
+        </div>
+        
+        <table class="mapping-table">
+          <thead>
+            <tr>
+              <th>Org Chart Field</th>
+              <th>Excel Column</th>
+              <th>Sample Value</th>
+            </tr>
+          </thead>
+          <tbody id="mappingTableBody">
+            <!-- Mapping rows will be populated by JS -->
+          </tbody>
+        </table>
+        
+        <div class="form-actions">
+          <button id="backBtn" class="btn btn-secondary">Back</button>
+          <button id="continueBtn" class="btn btn-primary">Continue</button>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Processing your mapping...</div>
+  </div>
+  
+  <!-- Save Preset Modal (will be implemented in future) -->
+  
+  <script type="module">
+    import { getCurrentUser } from './js/auth.js';
+    import { getProject, saveColumnMapping } from './js/projectService.js';
+    
+    // DOM Elements
+    const mappingTableBody = document.getElementById('mappingTableBody');
+    const autoDetectBtn = document.getElementById('autoDetectBtn');
+    const savePresetBtn = document.getElementById('savePresetBtn');
+    const loadPresetSelect = document.getElementById('loadPresetSelect');
+    const backBtn = document.getElementById('backBtn');
+    const continueBtn = document.getElementById('continueBtn');
+    const errorMessage = document.getElementById('errorMessage');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingText = document.getElementById('loadingText');
+    const userInfo = document.getElementById('userInfo');
+    
+    // Global variables
+    let projectId = null;
+    let projectData = null;
+    let rawHeaders = [];
+    let rawData = [];
+    let mappingConfig = {};
+    let sampleValues = {};
+    
+    // Required and optional fields
+    const requiredFields = [
+      { id: 'id', name: 'Employee ID', description: 'Unique identifier for each employee' },
+      { id: 'name', name: 'Name', description: 'Employee full name' },
+      { id: 'managerId', name: 'Manager ID', description: 'ID of the employee\'s manager' }
+    ];
+    
+    const optionalFields = [
+      { id: 'title', name: 'Job Title', description: 'Employee\'s job title or position' },
+      { id: 'department', name: 'Department', description: 'Department or business unit' },
+      { id: 'location', name: 'Location', description: 'Office location or work site' },
+      { id: 'fte', name: 'FTE', description: 'Full-time equivalent (0-2)' },
+      { id: 'costCenter', name: 'Cost Center', description: 'Financial cost center' },
+      { id: 'jobFamily', name: 'Job Family', description: 'Group of related job roles' },
+      { id: 'managementLevel', name: 'Management Level', description: 'Hierarchical level in organization' }
+    ];
+    
+    // Check authentication
+    async function checkAuth() {
+      try {
+        const { user, profile, organization, error } = await getCurrentUser();
+        
+        if (error || !user) {
+          // Redirect to login if not authenticated
+          window.location.href = './auth/login.html';
+          return false;
+        }
+        
+        // Update UI with user info
+        updateUserInfo(user, profile, organization);
+        return true;
+      } catch (error) {
+        console.error('Auth check error:', error);
+        return false;
+      }
+    }
+    
+    // Update UI with user info
+    function updateUserInfo(user, profile, organization) {
+      if (!userInfo) return;
+      
+      // Get first name for greeting
+      const fullName = profile?.display_name || user.email.split('@')[0];
+      const initials = getInitials(fullName);
+      
+      userInfo.innerHTML = `
+        <div class="user-dropdown">
+          <div class="user-info-trigger">
+            <div class="user-avatar">${initials}</div>
+            <div class="user-details">
+              <div class="user-name">${fullName}</div>
+              <div class="user-org">${organization?.name || 'My Organization'}</div>
+            </div>
+            <i class="fas fa-chevron-down"></i>
+          </div>
+          <div class="user-dropdown-menu">
+            <a href="./auth/profile.html" class="dropdown-item">
+              <i class="fas fa-user"></i> My Profile
+            </a>
+            <a href="dashboard.html" class="dropdown-item">
+              <i class="fas fa-chart-bar"></i> My Charts
+            </a>
+            <div class="dropdown-divider"></div>
+            <a href="#" class="dropdown-item" id="signOutLink">
+              <i class="fas fa-sign-out-alt"></i> Sign Out
+            </a>
+          </div>
+        </div>
+      `;
+      
+      // Add dropdown toggle
+      const userDropdown = document.querySelector('.user-dropdown');
+      const userTrigger = document.querySelector('.user-info-trigger');
+      
+      if (userTrigger) {
+        userTrigger.addEventListener('click', () => {
+          userDropdown.classList.toggle('active');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!userDropdown.contains(e.target)) {
+            userDropdown.classList.remove('active');
+          }
+        });
+      }
+      
+      // Add sign out event listener
+      const signOutLink = document.getElementById('signOutLink');
+      if (signOutLink) {
+        signOutLink.addEventListener('click', async (e) => {
+          e.preventDefault();
+          try {
+            const { signOut } = await import('./js/auth.js');
+            await signOut();
+            window.location.href = './landing.html';
+          } catch (error) {
+            console.error('Sign out error:', error);
+          }
+        });
+      }
+    }
+    
+    // Get initials from name
+    function getInitials(name) {
+      return name
+        .split(' ')
+        .map(part => part[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2);
+    }
+    
+    // Check URL parameters for project ID
+    function checkUrlParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      projectId = urlParams.get('project');
+      
+      if (!projectId) {
+        // No project ID provided, redirect to upload
+        window.location.href = 'upload.html';
+      }
+      
+      return projectId;
+    }
+    
+    // Load project data
+    async function loadProjectData() {
+      try {
+        showLoading('Loading project data...');
+        
+        const { project, error } = await getProject(projectId);
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (!project) {
+          throw new Error('Project not found');
+        }
+        
+        projectData = project;
+        
+        // Get the latest version
+        const latestVersion = project.chart_versions.sort((a, b) => 
+          b.version_number - a.version_number
+        )[0];
+        
+        if (!latestVersion) {
+          throw new Error('No versions found for this project');
+        }
+        
+        // Get raw headers and data
+        rawHeaders = latestVersion.raw_headers || [];
+        rawData = project.chart_versions[0].raw_data || [];
+        
+        // Get existing mapping if available
+        if (latestVersion.column_mapping) {
+          mappingConfig = latestVersion.column_mapping;
+        }
+        
+        // Extract sample values for each column
+        if (rawData.length > 0) {
+          const firstRow = rawData[0];
+          rawHeaders.forEach((header, index) => {
+            sampleValues[header] = firstRow[index] || '';
+          });
+        }
+        
+        // Populate mapping table
+        populateMappingTable();
+        
+        hideLoading();
+      } catch (error) {
+        console.error('Error loading project data:', error);
+        showError('Error loading project data: ' + (error.message || 'Unknown error'));
+        hideLoading();
+      }
+    }
+    
+    // Populate mapping table
+    function populateMappingTable() {
+      mappingTableBody.innerHTML = '';
+      
+      // Add required fields
+      requiredFields.forEach(field => {
+        const row = createMappingRow(field, true);
+        mappingTableBody.appendChild(row);
+      });
+      
+      // Add optional fields
+      optionalFields.forEach(field => {
+        const row = createMappingRow(field, false);
+        mappingTableBody.appendChild(row);
+      });
+      
+      // Auto-detect if no mapping exists
+      if (Object.keys(mappingConfig).length === 0) {
+        autoDetectMapping();
+      }
+    }
+    
+    // Create mapping row
+    function createMappingRow(field, isRequired) {
+      const row = document.createElement('tr');
+      
+      // Field name cell
+      const fieldNameCell = document.createElement('td');
+      fieldNameCell.innerHTML = `
+        ${field.name}
+        ${isRequired ? '<span class="required-field">*</span>' : ''}
+        <div class="field-description">${field.description}</div>
+      `;
+      row.appendChild(fieldNameCell);
+      
+      // Column select cell
+      const columnSelectCell = document.createElement('td');
+      const select = document.createElement('select');
+      select.id = `mapping-${field.id}`;
+      select.dataset.field = field.id;
+      
+      // Add empty option
+      const emptyOption = document.createElement('option');
+      emptyOption.value = '';
+      emptyOption.textContent = '-- Select Column --';
+      select.appendChild(emptyOption);
+      
+      // Add options for each column
+      rawHeaders.forEach(header => {
+        const option = document.createElement('option');
+        option.value = header;
+        option.textContent = header;
+        
+        // Select if mapped
+        if (mappingConfig[field.id] === header) {
+          option.selected = true;
+        }
+        
+        select.appendChild(option);
+      });
+      
+      // Add change event
+      select.addEventListener('change', () => {
+        updateMapping(field.id, select.value);
+      });
+      
+      columnSelectCell.appendChild(select);
+      row.appendChild(columnSelectCell);
+      
+      // Sample value cell
+      const sampleValueCell = document.createElement('td');
+      sampleValueCell.className = 'sample-value';
+      sampleValueCell.id = `sample-${field.id}`;
+      
+      // Show sample value if mapped
+      if (mappingConfig[field.id] && sampleValues[mappingConfig[field.id]]) {
+        sampleValueCell.textContent = sampleValues[mappingConfig[field.id]];
+      } else {
+        sampleValueCell.textContent = '—';
+      }
+      
+      row.appendChild(sampleValueCell);
+      
+      return row;
+    }
+    
+    // Update mapping
+    function updateMapping(fieldId, columnName) {
+      // Update mapping config
+      if (columnName) {
+        mappingConfig[fieldId] = columnName;
+      } else {
+        delete mappingConfig[fieldId];
+      }
+      
+      // Update sample value
+      const sampleValueCell = document.getElementById(`sample-${fieldId}`);
+      if (sampleValueCell) {
+        if (columnName && sampleValues[columnName]) {
+          sampleValueCell.textContent = sampleValues[columnName];
+        } else {
+          sampleValueCell.textContent = '—';
+        }
+      }
+      
+      // Check if all required fields are mapped
+      validateMapping();
+    }
+    
+    // Auto-detect mapping
+    function autoDetectMapping() {
+      // Common column names for each field
+      const fieldMappings = {
+        id: ['id', 'employee_id', 'employeeid', 'employee id', 'emp id', 'emp_id', 'empid', 'staff id', 'staffid', 'person id', 'personid'],
+        name: ['name', 'full name', 'fullname', 'employee name', 'employee_name', 'employeename', 'staff name', 'staffname', 'person name', 'personname'],
+        managerId: ['manager id', 'managerid', 'manager_id', 'supervisor id', 'supervisorid', 'supervisor_id', 'reports to', 'reportsto', 'reports_to'],
+        title: ['title', 'job title', 'jobtitle', 'job_title', 'position', 'role'],
+        department: ['department', 'dept', 'business unit', 'businessunit', 'business_unit', 'division', 'team'],
+        location: ['location', 'office', 'site', 'workplace', 'work location', 'worklocation', 'work_location'],
+        fte: ['fte', 'full time equivalent', 'fulltime', 'full_time', 'hours', 'capacity'],
+        costCenter: ['cost center', 'costcenter', 'cost_center', 'cc', 'cost'],
+        jobFamily: ['job family', 'jobfamily', 'job_family', 'job group', 'jobgroup', 'job_group', 'job category', 'jobcategory', 'job_category'],
+        managementLevel: ['management level', 'managementlevel', 'management_level', 'level', 'grade', 'job level', 'joblevel', 'job_level']
+      };
+      
+      // Try to match columns to fields
+      rawHeaders.forEach(header => {
+        const headerLower = header.toLowerCase();
+        
+        // Check each field
+        Object.entries(fieldMappings).forEach(([fieldId, possibleNames]) => {
+          // Skip if already mapped
+          if (mappingConfig[fieldId]) return;
+          
+          // Check if header matches any possible name
+          if (possibleNames.some(name => headerLower === name || headerLower.includes(name))) {
+            // Update mapping
+            mappingConfig[fieldId] = header;
+            
+            // Update select
+            const select = document.getElementById(`mapping-${fieldId}`);
+            if (select) {
+              select.value = header;
+            }
+            
+            // Update sample value
+            const sampleValueCell = document.getElementById(`sample-${fieldId}`);
+            if (sampleValueCell && sampleValues[header]) {
+              sampleValueCell.textContent = sampleValues[header];
+            }
+          }
+        });
+      });
+      
+      // Validate mapping
+      validateMapping();
+    }
+    
+    // Validate mapping
+    function validateMapping() {
+      // Check if all required fields are mapped
+      const allRequiredMapped = requiredFields.every(field => 
+        mappingConfig[field.id] && mappingConfig[field.id].trim() !== ''
+      );
+      
+      // Enable/disable continue button
+      continueBtn.disabled = !allRequiredMapped;
+      
+      // Highlight missing required fields
+      requiredFields.forEach(field => {
+        const select = document.getElementById(`mapping-${field.id}`);
+        if (select) {
+          if (!mappingConfig[field.id] || mappingConfig[field.id].trim() === '') {
+            select.classList.add('error');
+          } else {
+            select.classList.remove('error');
+          }
+        }
+      });
+      
+      return allRequiredMapped;
+    }
+    
+    // Show error message
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = 'block';
+    }
+    
+    // Hide error message
+    function hideError() {
+      errorMessage.style.display = 'none';
+      errorMessage.textContent = '';
+    }
+    
+    // Show loading overlay
+    function showLoading(message) {
+      loadingText.textContent = message || 'Processing...';
+      loadingOverlay.style.display = 'flex';
+    }
+    
+    // Hide loading overlay
+    function hideLoading() {
+      loadingOverlay.style.display = 'none';
+    }
+    
+    // Handle auto-detect button
+    autoDetectBtn.addEventListener('click', () => {
+      autoDetectMapping();
+    });
+    
+    // Handle save preset button
+    savePresetBtn.addEventListener('click', () => {
+      // This will be implemented in future
+      alert('Save preset functionality will be implemented in a future update.');
+    });
+    
+    // Handle back button
+    backBtn.addEventListener('click', () => {
+      window.location.href = `upload.html?project=${projectId}`;
+    });
+    
+    // Handle continue button
+    continueBtn.addEventListener('click', async () => {
+      // Validate mapping
+      if (!validateMapping()) {
+        showError('Please map all required fields before continuing.');
+        return;
+      }
+      
+      try {
+        showLoading('Saving mapping...');
+        
+        // Save mapping to database
+        const { success, error } = await saveColumnMapping(projectId, mappingConfig);
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Redirect to import summary
+        window.location.href = `import-summary.html?project=${projectId}`;
+      } catch (error) {
+        console.error('Error saving mapping:', error);
+        showError('Error saving mapping: ' + (error.message || 'Unknown error'));
+        hideLoading();
+      }
+    });
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Check authentication
+      const isAuthenticated = await checkAuth();
+      
+      if (!isAuthenticated) {
+        return;
+      }
+      
+      // Check URL parameters
+      const validProjectId = checkUrlParams();
+      
+      if (validProjectId) {
+        // Load project data
+        await loadProjectData();
+      }
+    });
+  </script>
+</body>
+</html>

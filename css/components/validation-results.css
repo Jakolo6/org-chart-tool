@@ -1,0 +1,125 @@
+/* css/components/validation-results.css */
+.validation-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.summary-stat {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: bold;
+  color: #1e293b;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.validation-errors,
+.validation-warnings {
+  margin-bottom: 20px;
+  padding: 15px;
+  border-radius: 6px;
+}
+
+.validation-errors {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.validation-warnings {
+  background-color: #fefce8;
+  border: 1px solid #fde047;
+}
+
+.validation-errors h3,
+.validation-warnings h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.validation-errors h3 {
+  color: #dc2626;
+}
+
+.validation-warnings h3 {
+  color: #d97706;
+}
+
+.validation-errors ul,
+.validation-warnings ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.validation-errors li,
+.validation-warnings li {
+  margin-bottom: 5px;
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.validation-success {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  color: #166534;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.validation-success i {
+  font-size: 24px;
+  color: #16a34a;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .validation-summary {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .validation-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-stat {
+    padding: 10px 0;
+  }
+}
