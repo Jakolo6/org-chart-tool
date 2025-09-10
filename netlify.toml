@@ -9,9 +9,15 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Handle SPA routing - uncomment when ready for SPA routing
+# Redirect root to landing page
 [[redirects]]
-  from = "/*"
+  from = "/"
+  to = "/landing.html"
+  status = 200
+
+# Handle SPA routing for app
+[[redirects]]
+  from = "/app/*"
   to = "/index.html"
   status = 200
 

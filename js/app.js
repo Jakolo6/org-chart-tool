@@ -9,6 +9,12 @@ import { state } from './main.js';
 // Check authentication status
 export async function checkAuth() {
   try {
+    // Skip auth check for landing page
+    const currentPath = window.location.pathname;
+    if (currentPath.endsWith('landing.html') || currentPath === '/' || currentPath === '') {
+      return false; // Don't redirect from landing page
+    }
+    
     const { user, profile, organization, error } = await getCurrentUser();
     
     if (error || !user) {
@@ -235,6 +241,12 @@ export async function loadOrgChart(chartId) {
 export async function initApp() {
   // Check if user is authenticated
   const isAuthenticated = await checkAuth();
+  
+  // Skip app initialization on landing page
+  const currentPath = window.location.pathname;
+  if (currentPath.endsWith('landing.html') || currentPath === '/' || currentPath === '') {
+    return; // Don't initialize app on landing page
+  }
   
   if (!isAuthenticated) {
     return;
