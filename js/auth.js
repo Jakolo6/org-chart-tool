@@ -20,6 +20,7 @@ export async function signUp(email, password, displayName, organizationName) {
       email,
       password,
       options: {
+        emailRedirectTo: window.location.origin + '/auth/email-confirmation.html',
         data: {
           display_name: displayName,
           organization_name: organizationName
@@ -33,6 +34,16 @@ export async function signUp(email, password, displayName, organizationName) {
         throw new Error('Too many registration attempts. Please wait a minute before trying again.');
       }
       throw authError;
+    }
+    
+    // If we don't have a user object, it means email confirmation is required
+    if (!authData.user) {
+      return {
+        user: null,
+        emailConfirmationRequired: true,
+        message: 'Please check your email to confirm your account.',
+        error: null
+      };
     }
     
     // 2. Create an organization for the user

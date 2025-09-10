@@ -258,9 +258,9 @@
             submitButton.disabled = true;
             
             try {
-                const { user, profile, organization, error, message, partialSuccess } = await signUp(email, password, displayName, organizationName);
+                const { user, error, message, emailConfirmationRequired, partialSuccess } = await signUp(email, password, displayName, organizationName);
                 
-                if (error || !user) {
+                if (error) {
                     // Handle error with user-friendly message
                     if (error?.message) {
                         if (error.message.includes('already registered')) {
@@ -276,6 +276,12 @@
                         registerError.textContent = 'Failed to register. Please try again.';
                     }
                     return;
+                }
+                
+                // Handle email confirmation required case
+                if (emailConfirmationRequired || !user) {
+                    // Show success message for email confirmation
+                    registerSuccess.textContent = message || 'Please check your email to confirm your account.';
                 }
                 
                 // Update steps to show verification step
