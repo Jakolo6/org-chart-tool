@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Org Chart Tool</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/auth.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Create an Account</h1>
+                <p>Sign up to start managing your organization charts</p>
+            </div>
+            
+            <form id="registerForm" class="auth-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required minlength="8">
+                    <small>Password must be at least 8 characters</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="displayName">Your Name</label>
+                    <input type="text" id="displayName" name="displayName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="organizationName">Organization Name</label>
+                    <input type="text" id="organizationName" name="organizationName" required>
+                </div>
+                
+                <div class="form-error" id="registerError"></div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </div>
+                
+                <div class="auth-links">
+                    <p>Already have an account? <a href="login.html">Login</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { signUp } from '../js/auth.js';
+        
+        const registerForm = document.getElementById('registerForm');
+        const registerError = document.getElementById('registerError');
+        
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const displayName = document.getElementById('displayName').value;
+            const organizationName = document.getElementById('organizationName').value;
+            
+            registerError.textContent = '';
+            
+            try {
+                const { user, profile, organization, error } = await signUp(email, password, displayName, organizationName);
+                
+                if (error || !user) {
+                    registerError.textContent = error?.message || 'Failed to register. Please try again.';
+                    return;
+                }
+                
+                // Store user data in session storage
+                sessionStorage.setItem('currentUser', JSON.stringify({
+                    id: user.id,
+                    email: user.email,
+                    displayName: profile?.display_name || displayName,
+                    organizationId: profile?.organization_id || organization?.id,
+                    organizationName: organization?.name || organizationName
+                }));
+                
+                // Redirect to the dashboard on successful registration
+                window.location.href = '../index.html';
+            } catch (error) {
+                registerError.textContent = 'An unexpected error occurred. Please try again.';
+                console.error('Registration error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

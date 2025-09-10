@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Organigram Analyzer</title>
+  
+  <!-- External Dependencies -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- App Styles -->
+  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="./css/auth.css" />
+</head>
+<body>
+  <!-- Main Application Root -->
+  <div id="mainApp">
+
+    <!-- Header with file inputs -->
+    <div class="header">
+        <div class="header-content">
+            <h1>Organigram Analyzer</h1>
+            <div class="mode-indicator baseline">Baseline View</div>
+        </div>
+        
+        <!-- User info and actions -->
+        <div id="userInfo" class="user-info">
+            <!-- Will be populated by app.js -->
+        </div>
+        
+    <!-- Fallback: ensure Welcome modal buttons work even if modules fail -->
+    <script>
+      (function(){
+        document.addEventListener('click', function(e){
+          var startBtn = e.target.closest('.welcome-start-btn');
+          var closeBtn = e.target.closest('.welcome-close');
+          if (startBtn || closeBtn) {
+            e.preventDefault();
+            if (window.closeWelcomeModal) {
+              try { window.closeWelcomeModal(); return; } catch(_){}
+            }
+            var m = document.getElementById('welcomeModal');
+            if (m) { m.style.display = 'none'; }
+            var up = document.getElementById('uploadScreen');
+            if (up) { up.classList.add('visible'); }
+          }
+        }, true);
+      })();
+    </script>
+        <div class="file-inputs">
+            <div class="file-input-group">
+                <label for="baselineFile" class="file-label">📊 Status Quo (Baseline)</label>
+                <input type="file" id="baselineFile" class="file-input" accept=".xlsx,.xls" />
+                <span id="baselineStatus" class="file-status"></span>
+            </div>
+            
+            <!-- Save/Load buttons -->
+            <div class="chart-actions">
+                <button id="saveChartBtn" class="btn btn-primary">💾 Save Chart</button>
+                <button id="loadChartsBtn" class="btn btn-secondary">📂 Load Charts</button>
+            </div>
+            <div class="file-input-group">
+                <label for="updateFile" class="file-label update">🔄 Target State (Update)</label>
+                <input type="file" id="updateFile" class="file-input" accept=".xlsx,.xls" />
+                <span id="updateStatus" class="file-status"></span>
+            </div>
+        </div>
+        
+        <div class="header-controls">
+            <button class="header-btn compare-btn" id="compareBtn" type="button" disabled>⇄ Switch to Comparison Mode</button>
+            <button class="header-btn" onclick="resetView()">🔄 Reset View</button>
+            <button class="header-btn" id="summaryStatsBtn" onclick="toggleSummaryStatistics()" style="display: none;">📊 Summary Changes in Org</button>
+        </div>
+        
+        <!-- Logo on top-right -->
+        <div class="logo-container">
+            <img src="./assets/images/RDC.DE_BIG.svg" alt="RedCare Logo" />
+        </div>
+    </div>
+
+    
+
+    <!-- Legend -->
+    <div class="legend-container" id="legendContainer" style="display: none;">
+        <div class="legend-title">Legend</div>
+        <div class="legend-items">
+            <div class="legend-item">
+                <div class="legend-sample legend-sample-new"></div>
+                <span class="legend-text">New</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-sample legend-sample-moved"></div>
+                <span class="legend-text">Moved</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Statistics Display -->
+    <div class="overall-stats-display" id="overallStatsDisplay">
+        <div class="overall-stats-title">📊 Overall Changes</div>
+        <div class="overall-stats-items" id="overallStatsItems">
+            <!-- Stats will be populated by JavaScript -->
+        </div>
+    </div>
+
+    
+
+    
+
+    <!-- Status Quo Upload Screen -->
+    <div class="upload-screen" id="uploadScreen">
+        <div class="upload-container">
+            <div class="upload-title">📊 Organigram Analyzer</div>
+            <div class="upload-sections-wrapper">
+                <div class="upload-section">
+                    <div class="upload-section-title">
+                        📈 Status Quo (Baseline)
+                        <span class="required-badge">Required</span>
+                    </div>
+                    <div class="upload-description">
+                        Upload your current organizational structure as an Excel file
+                    </div>
+                    <div class="upload-area" onclick="document.getElementById('baselineFile').click()">
+                        <div class="upload-icon">📊</div>
+                        <div class="upload-text">Click to select or drag & drop your Excel file</div>
+                        <button class="upload-button">Choose File</button>
+                        <div class="upload-progress" id="baselineProgress">
+                            <div class="progress-bar" id="baselineProgressBar"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="upload-section">
+                    <div class="upload-section-title">
+                        🔄 Target State (Optional)
+                        <span class="optional-badge">Optional</span>
+                    </div>
+                    <div class="upload-description">
+                        Upload your planned organizational structure to compare changes
+                    </div>
+                    <div class="upload-area" onclick="document.getElementById('updateFile').click()">
+                        <div class="upload-icon">🔄</div>
+                        <div class="upload-text">Click to select or drag & drop your Excel file</div>
+                        <button class="upload-button">Choose File</button>
+                        <div class="upload-progress" id="updateProgress">
+                            <div class="progress-bar" id="updateProgressBar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="upload-actions">
+                <button class="action-button secondary" id="backBtn" type="button">← Back</button>
+                <button class="action-button primary disabled" id="continueBtn" type="button" onclick="proceedFromUpload()">Continue →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Welcome Tutorial Modal -->
+    <div class="welcome-modal" id="welcomeModal">
+        <div class="welcome-dialog">
+            <div class="welcome-header">
+                <h1 class="welcome-title">🎉 Welcome to Organigram Analyzer!</h1>
+                <p class="welcome-subtitle">Your powerful tool for visualizing and comparing organizational structures</p>
+                <button class="welcome-close" onclick="closeWelcomeModal()">×</button>
+            </div>
+            
+            <div class="welcome-content">
+                <!-- What you need section -->
+                <div class="welcome-section">
+                    <h3 class="welcome-section-title">📋 What you need</h3>
+                    <p class="welcome-section-description">An Excel file with your organization data. Required columns:</p>
+                    
+                    <div class="excel-example">
+                        <table class="excel-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee Name</th>
+                                    <th>Manager</th>
+                                    <th>Business Title</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>John Smith</td>
+                                    <td></td>
+                                    <td>CEO</td>
+                                </tr>
+                                <tr>
+                                    <td>Sarah Johnson</td>
+                                    <td>John Smith</td>
+                                    <td>VP Engineering</td>
+                                </tr>
+                                <tr>
+                                    <td>Mike Chen</td>
+                                    <td>Sarah Johnson</td>
+                                    <td>Senior Developer</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <p class="welcome-section-description" style="margin-top: 15px; font-size: 0.9rem;">💡 <strong>Optional columns</strong> for enhanced insights: FTE, Location, Job Family, Management Level</p>
+                </div>
+                
+                <!-- What the tool does section -->
+                <div class="welcome-section">
+                    <h3 class="welcome-section-title">⚡ What the tool does</h3>
+                    <ul class="welcome-features-list">
+                        <li class="welcome-feature-item">📊 Creates interactive organization charts from your Excel data</li>
+                        <li class="welcome-feature-item">🔍 Enables quick search and navigation through your org structure</li>
+                        <li class="welcome-feature-item">⚖️ Compares two versions to highlight organizational changes</li>
+                        <li class="welcome-feature-item">📈 Shows FTE statistics and team insights in the Node Stats panel</li>
+                        <li class="welcome-feature-item">👆 Hover over red/green numbers to see exactly who left or joined each team</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="welcome-footer">
+                <label class="welcome-checkbox">
+                    <input type="checkbox" id="dontShowAgain" />
+                    Don't show this again
+                </label>
+                <button class="welcome-start-btn">
+                    Get Started! 🚀
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column Mapping Modal -->
+    <div class="modal-overlay" id="columnMappingModal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 class="modal-title">📋 Column Mapping</h3>
+            </div>
+            <div class="modal-body">
+                <div class="mapping-field">
+                    <label class="mapping-label required">Employee Name</label>
+                    <select class="mapping-select" id="employeeNameMapping"></select>
+                    <div class="detected-info"></div>
+                </div>
+                <div class="mapping-field">
+                    <label class="mapping-label required">Manager</label>
+                    <select class="mapping-select" id="managerMapping"></select>
+                    <div class="detected-info"></div>
+                </div>
+                <div class="mapping-field">
+                    <label class="mapping-label">Job Title</label>
+                    <select class="mapping-select" id="jobTitleMapping"></select>
+                    <div class="detected-info"></div>
+                </div>
+                <div class="mapping-field">
+                    <label class="mapping-label">FTE</label>
+                    <select class="mapping-select" id="fteMapping"></select>
+                    <div class="detected-info"></div>
+                </div>
+                <div class="mapping-field">
+                    <label class="mapping-label">Location</label>
+                    <select class="mapping-select" id="locationMapping"></select>
+                    <div class="detected-info"></div>
+                </div>
+                <div class="mapping-field">
+                    <label class="mapping-label">Job Family</label>
+                    <select class="mapping-select" id="jobFamilyMapping"></select>
+                    <div class="detected-info"></div>
+                </div>
+                <div class="mapping-field">
+                    <label class="mapping-label">Management Level</label>
+                    <select class="mapping-select" id="managementLevelMapping"></select>
+                    <div class="detected-info"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" id="cancelMappingBtn">Cancel</button>
+                <button class="modal-btn primary" id="confirmMappingBtn">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Validation Error Modal -->
+    <div class="validation-modal" id="validationModal" style="display: none;">
+        <div class="validation-dialog">
+            <div class="validation-header">
+                <h3 class="validation-title">⚠️ Data Validation Errors</h3>
+            </div>
+            <div class="validation-body">
+                <div class="validation-summary">
+                    <p class="validation-count"><span id="errorCount">0</span> errors found in your data:</p>
+                </div>
+                <ul class="error-list" id="errorList"></ul>
+            </div>
+            <div class="validation-footer">
+                <button class="validation-btn download" id="downloadErrorsBtn">Download Errors</button>
+                <button class="validation-btn close" id="closeValidationBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Field -->
+    <div class="search-container no-data" id="searchContainer">
+        <input type="text" class="search-input" id="searchInput" placeholder="🔍 Search for employee..." autocomplete="off">
+        <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <!-- Main container -->
+    <div class="main-container">
+        <!-- Chart area -->
+        <div class="chart-area" id="chartArea">
+            <div class="background-nunataks">
+                <!-- Background removed as requested -->
+            </div>
+            <svg id="chartSvg" class="chart-svg"></svg>
+        </div>
+
+        <!-- Toast Notification for Success Messages -->
+        <div id="toastNotification" class="toast"></div>
+
+        <!-- Selected Node Statistics Floating Panel -->
+        <div class="selected-stats-display" id="selectedStatsDisplay" style="display: none;">
+            <div class="selected-stats-header">
+                <span class="selected-stats-title">👤 Selected Node</span>
+                <button class="selected-stats-close" onclick="hideSelectedNodeStats()" title="Close">×</button>
+            </div>
+            <div id="selectedStatsContainer">
+                <div class="loading-state">
+                    Click on an employee to view their statistics
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Changelog Panel -->
+    <div class="changelog-panel" id="changelogPanel">
+        <div class="changelog-header">
+            <h3 class="changelog-title">📋 Change Log</h3>
+            <button class="changelog-close-btn" onclick="closeChangelogPanel()">×</button>
+        </div>
+        <div class="changelog-content" id="changelogContent">
+            <!-- Change sections will be populated by JavaScript -->
+        </div>
+
+        <!-- Cascade Effects Summary -->
+        <div class="change-section" id="cascadeSection" style="display: none;">
+            <div class="cascade-summary">
+                <h4 class="cascade-title">📊 Total Impact Analysis</h4>
+                <div class="impact-overview">
+                    <div class="impact-card direct">
+                        <div class="impact-number" id="totalDirectChanges">0</div>
+                        <div class="impact-label">Direct Changes</div>
+                    </div>
+                    <div class="impact-plus">+</div>
+                    <div class="impact-card cascade">
+                        <div class="impact-number" id="totalCascadeAffected">0</div>
+                        <div class="impact-label">Cascade Effects</div>
+                    </div>
+                    <div class="impact-equals">=</div>
+                    <div class="impact-card total">
+                        <div class="impact-number" id="totalWithCascade">0</div>
+                        <div class="impact-label">Total Affected</div>
+                    </div>
+                </div>
+                <div class="cascade-details-section">
+                    <div class="cascade-header" onclick="toggleCascadeDetails()">
+                        <span class="cascade-header-text">🔗 View Cascade Details</span>
+                        <span class="cascade-chevron" id="cascadeChevron">▼</span>
+                    </div>
+                    <div class="cascade-details-list" id="cascadeDetailsList" style="display: none;">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div> <!-- End of mainApp -->
+    
+    <!-- Main Application Script -->
+  <script type="module">
+    import { initApp } from './js/app.js';
+    
+    // Initialize the application with authentication
+    document.addEventListener('DOMContentLoaded', function() {
+      initApp();
+    });
+  </script>
+</body>
+</html>

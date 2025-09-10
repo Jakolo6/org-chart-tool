@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Org Chart Tool</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/auth.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Your Profile</h1>
+                <p>Manage your account information</p>
+            </div>
+            
+            <form id="profileForm" class="auth-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label for="displayName">Display Name</label>
+                    <input type="text" id="displayName" name="displayName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="organization">Organization</label>
+                    <input type="text" id="organization" name="organization" readonly>
+                </div>
+                
+                <div class="form-error" id="profileError"></div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                </div>
+                
+                <div class="auth-links">
+                    <p><a href="../index.html">Back to Dashboard</a></p>
+                    <p><a href="#" id="signOutBtn">Sign Out</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { getCurrentUser, updateProfile, signOut } from '../js/auth.js';
+        
+        const profileForm = document.getElementById('profileForm');
+        const profileError = document.getElementById('profileError');
+        const signOutBtn = document.getElementById('signOutBtn');
+        
+        // Load user profile data
+        async function loadProfile() {
+            try {
+                const { user, profile, organization, error } = await getCurrentUser();
+                
+                if (error || !user) {
+                    // Redirect to login if not authenticated
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                // Populate form fields
+                document.getElementById('email').value = user.email;
+                document.getElementById('displayName').value = profile.display_name || '';
+                document.getElementById('organization').value = organization.name;
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                profileError.textContent = 'Failed to load profile data';
+            }
+        }
+        
+        // Load profile on page load
+        loadProfile();
+        
+        // Handle profile update
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const displayName = document.getElementById('displayName').value;
+            
+            profileError.textContent = '';
+            
+            try {
+                const { user } = await getCurrentUser();
+                
+                if (!user) {
+                    profileError.textContent = 'You must be logged in to update your profile';
+                    return;
+                }
+                
+                const { profile, error } = await updateProfile(user.id, {
+                    display_name: displayName,
+                    updated_at: new Date().toISOString()
+                });
+                
+                if (error) {
+                    profileError.textContent = error.message || 'Failed to update profile';
+                    return;
+                }
+                
+                // Show success message
+                profileError.textContent = 'Profile updated successfully';
+                profileError.style.color = '#10b981';
+            } catch (error) {
+                profileError.textContent = 'An unexpected error occurred';
+                console.error('Profile update error:', error);
+            }
+        });
+        
+        // Handle sign out
+        signOutBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            
+            try {
+                const { error } = await signOut();
+                
+                if (error) {
+                    profileError.textContent = error.message || 'Failed to sign out';
+                    return;
+                }
+                
+                // Redirect to login page
+                window.location.href = 'login.html';
+            } catch (error) {
+                profileError.textContent = 'An unexpected error occurred';
+                console.error('Sign out error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

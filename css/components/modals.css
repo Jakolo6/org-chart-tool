@@ -1,0 +1,257 @@
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #999;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+/* Chart List Styles */
+.charts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.chart-item {
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f9f9f9;
+}
+
+.chart-info {
+    flex: 1;
+}
+
+.chart-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.2rem;
+}
+
+.chart-info p {
+    margin: 0 0 10px 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.chart-meta {
+    display: flex;
+    gap: 10px;
+    font-size: 0.8rem;
+}
+
+.chart-type {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: bold;
+}
+
+.chart-type.baseline {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.chart-type.target {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.chart-date {
+    color: #666;
+}
+
+.chart-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Chart Form Styles */
+.chart-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-group label {
+    font-weight: bold;
+    color: #333;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.radio-group {
+    display: flex;
+    gap: 20px;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.form-error {
+    color: #d32f2f;
+    font-size: 0.9rem;
+    min-height: 20px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* Loading and Empty States */
+.loading,
+.empty,
+.error {
+    padding: 20px;
+    text-align: center;
+    color: #666;
+}
+
+.error {
+    color: #d32f2f;
+}
+
+/* Team Member Styles */
+.team-member {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.team-member:last-child {
+    border-bottom: none;
+}
+
+.team-member-info {
+    flex: 1;
+}
+
+.team-member-name {
+    font-weight: bold;
+}
+
+.team-member-email {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.team-member-role {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.team-member-role.admin {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.team-member-role.user {
+    background-color: #f5f5f5;
+    color: #616161;
+}
+
+.team-member-actions {
+    display: flex;
+    gap: 5px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .chart-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .chart-actions {
+        margin-top: 10px;
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .radio-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+}

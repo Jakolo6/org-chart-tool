@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organization Management - Org Chart Tool</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/auth.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card org-management">
+            <div class="auth-header">
+                <h1>Organization Management</h1>
+                <p>Manage your organization and team members</p>
+            </div>
+            
+            <div class="org-details">
+                <h2>Organization Details</h2>
+                <form id="orgForm" class="auth-form">
+                    <div class="form-group">
+                        <label for="orgName">Organization Name</label>
+                        <input type="text" id="orgName" name="orgName" required>
+                    </div>
+                    
+                    <div class="form-error" id="orgError"></div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Update Organization</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="team-management">
+                <h2>Team Members</h2>
+                <div class="team-list" id="teamList">
+                    <!-- Team members will be populated here -->
+                    <div class="loading">Loading team members...</div>
+                </div>
+                
+                <div class="invite-user">
+                    <h3>Invite New User</h3>
+                    <form id="inviteForm" class="auth-form">
+                        <div class="form-group">
+                            <label for="inviteEmail">Email Address</label>
+                            <input type="email" id="inviteEmail" name="inviteEmail" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="inviteRole">Role</label>
+                            <select id="inviteRole" name="inviteRole">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-error" id="inviteError"></div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Send Invitation</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="auth-links">
+                <p><a href="../index.html">Back to Dashboard</a></p>
+                <p><a href="profile.html">Your Profile</a></p>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { getCurrentUser, inviteUser } from '../js/auth.js';
+        import { getOrgUsers, updateOrganization } from '../js/orgManagement.js';
+        
+        const orgForm = document.getElementById('orgForm');
+        const orgError = document.getElementById('orgError');
+        const inviteForm = document.getElementById('inviteForm');
+        const inviteError = document.getElementById('inviteError');
+        const teamList = document.getElementById('teamList');
+        
+        let currentUser = null;
+        let currentOrg = null;
+        
+        // Load organization data
+        async function loadOrganization() {
+            try {
+                const { user, profile, organization, error } = await getCurrentUser();
+                
+                if (error || !user) {
+                    // Redirect to login if not authenticated
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                currentUser = user;
+                currentOrg = organization;
+                
+                // Populate organization form
+                document.getElementById('orgName').value = organization.name;
+                
+                // Check if user is admin
+                if (profile.role !== 'admin') {
+                    // Disable editing for non-admins
+                    document.getElementById('orgName').disabled = true;
+                    orgForm.querySelector('button').disabled = true;
+                    inviteForm.querySelector('button').disabled = true;
+                    document.getElementById('inviteEmail').disabled = true;
+                    document.getElementById('inviteRole').disabled = true;
+                }
+                
+                // Load team members
+                loadTeamMembers();
+            } catch (error) {
+                console.error('Error loading organization:', error);
+                orgError.textContent = 'Failed to load organization data';
+            }
+        }
+        
+        // Load team members
+        async function loadTeamMembers() {
+            try {
+                const { users, error } = await getOrgUsers(currentOrg.id);
+                
+                if (error) {
+                    teamList.innerHTML = '<div class="error">Failed to load team members</div>';
+                    return;
+                }
+                
+                if (users.length === 0) {
+                    teamList.innerHTML = '<div class="empty">No team members found</div>';
+                    return;
+                }
+                
+                // Render team members
+                teamList.innerHTML = users.map(user => `
+                    <div class="team-member">
+                        <div class="team-member-info">
+                            <div class="team-member-name">${user.display_name || user.email}</div>
+                            <div class="team-member-email">${user.email}</div>
+                            <div class="team-member-role ${user.role}">${user.role}</div>
+                        </div>
+                        ${currentUser.id !== user.id && currentUser.role === 'admin' ? `
+                            <div class="team-member-actions">
+                                <button class="btn btn-small" data-action="change-role" data-user-id="${user.id}" data-current-role="${user.role}">
+                                    ${user.role === 'admin' ? 'Make User' : 'Make Admin'}
+                                </button>
+                                <button class="btn btn-small btn-danger" data-action="remove-user" data-user-id="${user.id}">
+                                    Remove
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+                
+                // Add event listeners for team member actions
+                teamList.querySelectorAll('[data-action]').forEach(button => {
+                    button.addEventListener('click', handleTeamMemberAction);
+                });
+            } catch (error) {
+                console.error('Error loading team members:', error);
+                teamList.innerHTML = '<div class="error">Failed to load team members</div>';
+            }
+        }
+        
+        // Handle team member actions (change role, remove)
+        async function handleTeamMemberAction(e) {
+            const action = e.target.dataset.action;
+            const userId = e.target.dataset.userId;
+            
+            if (action === 'change-role') {
+                const currentRole = e.target.dataset.currentRole;
+                const newRole = currentRole === 'admin' ? 'user' : 'admin';
+                
+                try {
+                    const { success, error } = await updateUserRole(userId, newRole);
+                    
+                    if (error) {
+                        alert(`Failed to update role: ${error.message}`);
+                        return;
+                    }
+                    
+                    // Reload team members
+                    loadTeamMembers();
+                } catch (error) {
+                    console.error('Error updating role:', error);
+                    alert('Failed to update role');
+                }
+            } else if (action === 'remove-user') {
+                if (!confirm('Are you sure you want to remove this user from your organization?')) {
+                    return;
+                }
+                
+                try {
+                    const { success, error } = await removeUser(userId);
+                    
+                    if (error) {
+                        alert(`Failed to remove user: ${error.message}`);
+                        return;
+                    }
+                    
+                    // Reload team members
+                    loadTeamMembers();
+                } catch (error) {
+                    console.error('Error removing user:', error);
+                    alert('Failed to remove user');
+                }
+            }
+        }
+        
+        // Handle organization update
+        orgForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const orgName = document.getElementById('orgName').value;
+            
+            orgError.textContent = '';
+            
+            try {
+                const { organization, error } = await updateOrganization(currentOrg.id, {
+                    name: orgName
+                });
+                
+                if (error) {
+                    orgError.textContent = error.message || 'Failed to update organization';
+                    return;
+                }
+                
+                // Update current org
+                currentOrg = organization;
+                
+                // Show success message
+                orgError.textContent = 'Organization updated successfully';
+                orgError.style.color = 'green';
+            } catch (error) {
+                console.error('Error updating organization:', error);
+                orgError.textContent = 'An unexpected error occurred';
+            }
+        });
+        
+        // Handle user invitation
+        inviteForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('inviteEmail').value;
+            const role = document.getElementById('inviteRole').value;
+            
+            inviteError.textContent = '';
+            
+            try {
+                const { success, error } = await inviteUser(email, currentOrg.id, role);
+                
+                if (error) {
+                    inviteError.textContent = error.message || 'Failed to send invitation';
+                    return;
+                }
+                
+                // Show success message
+                inviteError.textContent = 'Invitation sent successfully';
+                inviteError.style.color = 'green';
+                
+                // Clear form
+                document.getElementById('inviteEmail').value = '';
+            } catch (error) {
+                console.error('Error inviting user:', error);
+                inviteError.textContent = 'An unexpected error occurred';
+            }
+        });
+        
+        // Load organization on page load
+        loadOrganization();
+    </script>
+</body>
+</html>

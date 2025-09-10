@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Org Chart Tool</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/auth.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>Login to Org Chart Tool</h1>
+                <p>Enter your credentials to access your organization charts</p>
+            </div>
+            
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <div class="form-error" id="loginError"></div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </div>
+                
+                <div class="auth-links">
+                    <p>Don't have an account? <a href="register.html">Register</a></p>
+                    <p><a href="forgot-password.html">Forgot password?</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { signIn } from '../js/auth.js';
+        
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('loginError');
+        
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            loginError.textContent = '';
+            
+            try {
+                const { user, profile, organization, error } = await signIn(email, password);
+                
+                if (error || !user) {
+                    loginError.textContent = error?.message || 'Failed to login. Please check your credentials.';
+                    return;
+                }
+                
+                // Store user data in session storage
+                sessionStorage.setItem('currentUser', JSON.stringify({
+                    id: user.id,
+                    email: user.email,
+                    displayName: profile?.display_name,
+                    organizationId: profile?.organization_id,
+                    organizationName: organization?.name
+                }));
+                
+                // Redirect to the dashboard on successful login
+                window.location.href = '../index.html';
+            } catch (error) {
+                loginError.textContent = 'An unexpected error occurred. Please try again.';
+                console.error('Login error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
