@@ -15,10 +15,17 @@ import { supabase } from './supabase.js';
  */
 export async function signUp(email, password, displayName, organizationName) {
   try {
-    // 1. Sign up the user with Supabase Auth
+    // 1. Sign up the user with Supabase Auth with improved email confirmation
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          display_name: displayName,
+          organization_name: organizationName
+        },
+        emailRedirectTo: window.location.origin + '/auth/email-confirmation.html'
+      }
     });
     
     if (authError) {
