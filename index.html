@@ -464,11 +464,29 @@
     <!-- Main Application Script -->
   <script type="module">
     import { initApp } from './js/app.js';
+    import { getCurrentUser } from './js/auth.js';
     
-    // Initialize the application with authentication
-    document.addEventListener('DOMContentLoaded', function() {
-      initApp();
-    });
+    // Immediate authentication check
+    async function checkAuthOnLoad() {
+      try {
+        const { user, error } = await getCurrentUser();
+        
+        if (error || !user) {
+          // Not authenticated, redirect to login
+          window.location.href = './auth/login.html';
+          return;
+        }
+        
+        // User is authenticated, initialize app
+        initApp();
+      } catch (error) {
+        console.error('Authentication error:', error);
+        window.location.href = './auth/login.html';
+      }
+    }
+    
+    // Run auth check immediately
+    checkAuthOnLoad();
   </script>
 </body>
 </html>

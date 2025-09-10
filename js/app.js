@@ -28,6 +28,8 @@ export async function checkAuth() {
     return true;
   } catch (error) {
     console.error('Auth check error:', error);
+    // Redirect to login on any auth error
+    window.location.href = './auth/login.html';
     return false;
   }
 }
@@ -239,16 +241,18 @@ export async function loadOrgChart(chartId) {
 
 // Initialize app
 export async function initApp() {
-  // Check if user is authenticated
-  const isAuthenticated = await checkAuth();
-  
   // Skip app initialization on landing page
   const currentPath = window.location.pathname;
   if (currentPath.endsWith('landing.html') || currentPath === '/' || currentPath === '') {
     return; // Don't initialize app on landing page
   }
   
+  // Check if user is authenticated - this will redirect to login if not authenticated
+  const isAuthenticated = await checkAuth();
+  
   if (!isAuthenticated) {
+    // Redirect to login page if not authenticated
+    window.location.href = './auth/login.html';
     return;
   }
   
