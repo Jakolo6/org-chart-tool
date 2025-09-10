@@ -671,8 +671,33 @@
         const totalChartsEl = document.getElementById('totalCharts');
         const teamSizeEl = document.getElementById('teamSize');
         
+        // Loading indicator
+        function showLoading() {
+            const loadingEl = document.createElement('div');
+            loadingEl.id = 'loadingIndicator';
+            loadingEl.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.8);display:flex;justify-content:center;align-items:center;z-index:9999;';
+            
+            const spinner = document.createElement('div');
+            spinner.style.cssText = 'width:50px;height:50px;border:5px solid #f3f3f3;border-top:5px solid #3b82f6;border-radius:50%;animation:spin 1s linear infinite;';
+            loadingEl.appendChild(spinner);
+            
+            const style = document.createElement('style');
+            style.textContent = '@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}';
+            document.head.appendChild(style);
+            
+            document.body.appendChild(loadingEl);
+        }
+        
+        function hideLoading() {
+            const loadingEl = document.getElementById('loadingIndicator');
+            if (loadingEl) {
+                loadingEl.remove();
+            }
+        }
+        
         // Load user data
         async function loadUserData() {
+            showLoading();
             try {
                 const { user, profile, organization, error } = await getCurrentUser();
                 
@@ -682,21 +707,31 @@
                     return;
                 }
                 
+                console.log('User data loaded:', { user, profile, organization });
+                
                 // Set user info
-                const displayName = profile.display_name || user.email.split('@')[0];
+                const displayName = profile?.display_name || user.email.split('@')[0];
+                const orgName = organization?.name || 'My Organization';
                 const initials = getInitials(displayName);
                 
+                // Update all user-related elements
                 userInitials.textContent = initials;
                 mobileUserInitials.textContent = initials;
                 userName.textContent = displayName;
-                userOrg.textContent = organization.name;
+                userOrg.textContent = orgName;
                 welcomeName.textContent = displayName.split(' ')[0];
                 
+                // Customize page title with user name
+                document.title = `${displayName}'s Dashboard - Org Chart Tool`;
+                
                 // Load user's charts
-                loadUserCharts();
+                await loadUserCharts();
                 
             } catch (error) {
                 console.error('Error loading user data:', error);
+                alert('There was an error loading your profile data. Please try refreshing the page.');
+            } finally {
+                hideLoading();
             }
         }
         
@@ -713,17 +748,29 @@
         // Load user's charts
         async function loadUserCharts() {
             try {
+                // Clear any existing content
+                while (projectsContainer.firstChild) {
+                    projectsContainer.removeChild(projectsContainer.firstChild);
+                }
+                projectsContainer.appendChild(emptyState);
+                
                 const { charts, error } = await getOrgCharts();
                 
                 if (error) {
                     console.error('Error loading charts:', error);
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'alert alert-error';
+                    errorMsg.textContent = 'Could not load your charts. Please try again later.';
+                    projectsContainer.appendChild(errorMsg);
                     return;
                 }
                 
-                // Update stats
-                totalChartsEl.textContent = charts.length;
+                console.log('Charts loaded:', charts);
                 
-                if (charts.length > 0) {
+                // Update stats
+                totalChartsEl.textContent = charts && charts.length ? charts.length : '0';
+                
+                if (charts && charts.length > 0) {
                     // Hide empty state
                     emptyState.style.display = 'none';
                     
@@ -740,13 +787,36 @@
                     projectsContainer.appendChild(projectsGrid);
                     
                     // Update team size stat with the most recent chart
-                    if (charts[0] && charts[0].employee_count) {
-                        teamSizeEl.textContent = charts[0].employee_count;
+                    if (charts[0]) {
+                        if (charts[0].employee_count) {
+                            teamSizeEl.textContent = charts[0].employee_count;
+                        } else {
+                            // Try to estimate from chart data
+                            try {
+                                const chartData = charts[0].data || [];
+                                if (Array.isArray(chartData)) {
+                                    teamSizeEl.textContent = chartData.length;
+                                }
+                            } catch (e) {
+                                console.log('Could not determine team size from chart data');
+                                teamSizeEl.textContent = '?';
+                            }
+                        }
                     }
+                } else {
+                    // Show empty state
+                    emptyState.style.display = 'block';
+                    teamSizeEl.textContent = '0';
                 }
+                
+                return charts;
                 
             } catch (error) {
                 console.error('Error loading charts:', error);
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'alert alert-error';
+                errorMsg.textContent = 'An error occurred while loading your charts.';
+                projectsContainer.appendChild(errorMsg);
             }
         }
         
@@ -852,7 +922,27 @@
         });
         
         // Load user data on page load
-        document.addEventListener('DOMContentLoaded', loadUserData);
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is logged in first
+            const checkSession = async () => {
+                try {
+                    const { user } = await getCurrentUser();
+                    if (!user) {
+                        console.log('No active session found, redirecting to login');
+                        window.location.href = './auth/login.html';
+                        return;
+                    }
+                    
+                    // User is logged in, load their data
+                    await loadUserData();
+                } catch (error) {
+                    console.error('Session check error:', error);
+                    window.location.href = './auth/login.html';
+                }
+            };
+            
+            checkSession();
+        });
     </script>
 </body>
 </html>
