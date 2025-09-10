@@ -24,7 +24,7 @@ export async function signUp(email, password, displayName, organizationName) {
           display_name: displayName,
           organization_name: organizationName
         },
-        emailRedirectTo: window.location.origin + '/auth/email-confirmation.html'
+        emailRedirectTo: 'https://org-chart-tool.netlify.app/auth/email-confirmation.html'
       }
     });
     
