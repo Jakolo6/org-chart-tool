@@ -21,35 +21,98 @@ export async function signUp(email, password, displayName, organizationName) {
       password,
     });
     
-    if (authError) throw authError;
+    if (authError) {
+      // Handle rate limiting errors
+      if (authError.message && authError.message.includes('security purposes') && authError.message.includes('seconds')) {
+        throw new Error('Too many registration attempts. Please wait a minute before trying again.');
+      }
+      throw authError;
+    }
     
     // 2. Create an organization for the user
-    const { data: orgData, error: orgError } = await supabase
-      .from('organizations')
-      .insert([{ name: organizationName }])
-      .select()
-      .single();
-    
-    if (orgError) throw orgError;
-    
-    // 3. Update the user's profile with organization ID and display name
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .insert([{
-        id: authData.user.id,
-        display_name: displayName,
-        organization_id: orgData.id,
-        role: 'admin' // First user is the admin
-      }])
-      .select()
-      .single();
-    
-    if (profileError) throw profileError;
-    
-    return { user: authData.user, profile: profileData, organization: orgData, error: null };
+    try {
+      const { data: orgData, error: orgError } = await supabase
+        .from('organizations')
+        .insert([{ name: organizationName }])
+        .select()
+        .single();
+      
+      if (orgError) {
+        console.error('Organization creation error:', orgError);
+        // Continue with signup even if org creation fails
+        // We'll return partial success
+        return { 
+          user: authData.user, 
+          partialSuccess: true,
+          message: 'Account created but organization setup failed. Please contact support.',
+          error: null 
+        };
+      }
+      
+      // 3. Update the user's profile with organization ID and display name
+      try {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .insert([{
+            id: authData.user.id,
+            display_name: displayName,
+            organization_id: orgData.id,
+            role: 'admin' // First user is the admin
+          }])
+          .select()
+          .single();
+        
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          // Continue with signup even if profile creation fails
+          return { 
+            user: authData.user, 
+            organization: orgData,
+            partialSuccess: true,
+            message: 'Account and organization created but profile setup failed. Please contact support.',
+            error: null 
+          };
+        }
+        
+        return { user: authData.user, profile: profileData, organization: orgData, error: null };
+      } catch (profileError) {
+        console.error('Profile creation exception:', profileError);
+        return { 
+          user: authData.user, 
+          organization: orgData,
+          partialSuccess: true,
+          message: 'Account and organization created but profile setup failed. Please contact support.',
+          error: null 
+        };
+      }
+    } catch (orgError) {
+      console.error('Organization creation exception:', orgError);
+      return { 
+        user: authData.user, 
+        partialSuccess: true,
+        message: 'Account created but organization setup failed. Please contact support.',
+        error: null 
+      };
+    }
   } catch (error) {
     console.error('Error signing up:', error);
-    return { user: null, error };
+    
+    // Provide user-friendly error messages
+    let userMessage = 'Registration failed. Please try again.';
+    
+    if (error.message) {
+      if (error.message.includes('Too many registration attempts')) {
+        userMessage = error.message;
+      } else if (error.message.includes('already registered')) {
+        userMessage = 'This email is already registered. Please log in or use a different email.';
+      } else if (error.message.includes('password')) {
+        userMessage = 'Password does not meet requirements. Please use at least 8 characters.';
+      } else if (error.message.includes('recursion')) {
+        userMessage = 'System error with permissions. Please try again in a few minutes.';
+      }
+    }
+    
+    return { user: null, error: { message: userMessage, originalError: error } };
   }
 }
 
@@ -69,23 +132,55 @@ export async function signIn(email, password) {
     if (error) throw error;
     
     // Get the user's profile and organization
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*, organizations(*)')
-      .eq('id', data.user.id)
-      .single();
-    
-    if (profileError) throw profileError;
-    
-    return { 
-      user: data.user, 
-      profile, 
-      organization: profile.organizations,
-      error: null 
-    };
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*, organizations(*)')
+        .eq('id', data.user.id)
+        .single();
+      
+      if (profileError) {
+        console.error('Profile fetch error:', profileError);
+        return { 
+          user: data.user, 
+          partialSuccess: true,
+          message: 'Logged in but could not load profile data. Some features may be limited.',
+          error: null 
+        };
+      }
+      
+      return { 
+        user: data.user, 
+        profile, 
+        organization: profile.organizations,
+        error: null 
+      };
+    } catch (profileError) {
+      console.error('Profile fetch exception:', profileError);
+      return { 
+        user: data.user, 
+        partialSuccess: true,
+        message: 'Logged in but could not load profile data. Some features may be limited.',
+        error: null 
+      };
+    }
   } catch (error) {
     console.error('Error signing in:', error);
-    return { user: null, error };
+    
+    // Provide user-friendly error messages
+    let userMessage = 'Login failed. Please check your credentials and try again.';
+    
+    if (error.message) {
+      if (error.message.includes('Invalid login')) {
+        userMessage = 'Invalid email or password. Please try again.';
+      } else if (error.message.includes('Email not confirmed')) {
+        userMessage = 'Please confirm your email address before logging in.';
+      } else if (error.message.includes('recursion')) {
+        userMessage = 'System error with permissions. Please try again in a few minutes.';
+      }
+    }
+    
+    return { user: null, error: { message: userMessage, originalError: error } };
   }
 }
 
