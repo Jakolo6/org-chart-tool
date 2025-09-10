@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f8fafc" rx="10" ry="10"/>
+  
+  <!-- CEO Node -->
+  <g transform="translate(400, 80)">
+    <rect width="180" height="80" fill="#3b82f6" rx="8" ry="8" filter="drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))"/>
+    <text x="90" y="35" font-family="Arial" font-size="16" fill="white" text-anchor="middle">John Smith</text>
+    <text x="90" y="55" font-family="Arial" font-size="14" fill="white" text-anchor="middle">CEO</text>
+    <line x1="90" y1="80" x2="90" y2="110" stroke="#94a3b8" stroke-width="2"/>
+  </g>
+  
+  <!-- Level 1 Nodes -->
+  <g transform="translate(200, 190)">
+    <rect width="160" height="70" fill="#2563eb" rx="8" ry="8" filter="drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))"/>
+    <text x="80" y="30" font-family="Arial" font-size="14" fill="white" text-anchor="middle">Sarah Johnson</text>
+    <text x="80" y="50" font-family="Arial" font-size="12" fill="white" text-anchor="middle">VP Engineering</text>
+    <line x1="80" y1="70" x2="80" y2="100" stroke="#94a3b8" stroke-width="2"/>
+    <line x1="200" y1="150" x2="80" y2="70" stroke="#94a3b8" stroke-width="2"/>
+  </g>
+  
+  <g transform="translate(400, 190)">
+    <rect width="160" height="70" fill="#2563eb" rx="8" ry="8" filter="drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))"/>
+    <text x="80" y="30" font-family="Arial" font-size="14" fill="white" text-anchor="middle">Michael Brown</text>
+    <text x="80" y="50" font-family="Arial" font-size="12" fill="white" text-anchor="middle">CFO</text>
+    <line x1="400" y1="150" x2="80" y2="70" stroke="#94a3b8" stroke-width="2"/>
+  </g>
+  
+  <g transform="translate(600, 190)">
+    <rect width="160" height="70" fill="#2563eb" rx="8" ry="8" filter="drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))"/>
+    <text x="80" y="30" font-family="Arial" font-size="14" fill="white" text-anchor="middle">Emily Davis</text>
+    <text x="80" y="50" font-family="Arial" font-size="12" fill="white" text-anchor="middle">VP Marketing</text>
+    <line x1="80" y1="70" x2="80" y2="100" stroke="#94a3b8" stroke-width="2"/>
+    <line x1="600" y1="150" x2="80" y2="70" stroke="#94a3b8" stroke-width="2"/>
+  </g>
+  
+  <!-- Level 2 Nodes -->
+  <g transform="translate(120, 290)">
+    <rect width="140" height="60" fill="#60a5fa" rx="8" ry="8" filter="drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))"/>
+    <text x="70" y="25" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Alex Wilson</text>
+    <text x="70" y="45" font-family="Arial" font-size="11" fill="white" text-anchor="middle">Lead Developer</text>
+  </g>
+  
+  <g transform="translate(280, 290)">
+    <rect width="140" height="60" fill="#60a5fa" rx="8" ry="8" filter="drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))"/>
+    <text x="70" y="25" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Jessica Lee</text>
+    <text x="70" y="45" font-family="Arial" font-size="11" fill="white" text-anchor="middle">QA Manager</text>
+  </g>
+  
+  <g transform="translate(520, 290)">
+    <rect width="140" height="60" fill="#60a5fa" rx="8" ry="8" filter="drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))"/>
+    <text x="70" y="25" font-family="Arial" font-size="12" fill="white" text-anchor="middle">David Miller</text>
+    <text x="70" y="45" font-family="Arial" font-size="11" fill="white" text-anchor="middle">Digital Marketing</text>
+  </g>
+  
+  <g transform="translate(680, 290)">
+    <rect width="140" height="60" fill="#60a5fa" rx="8" ry="8" filter="drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))"/>
+    <text x="70" y="25" font-family="Arial" font-size="12" fill="white" text-anchor="middle">Lisa Chen</text>
+    <text x="70" y="45" font-family="Arial" font-size="11" fill="white" text-anchor="middle">Brand Manager</text>
+  </g>
+  
+  <!-- Connecting Lines -->
+  <line x1="400" y1="160" x2="280" y2="190" stroke="#94a3b8" stroke-width="2"/>
+  <line x1="400" y1="160" x2="480" y2="190" stroke="#94a3b8" stroke-width="2"/>
+  <line x1="400" y1="160" x2="680" y2="190" stroke="#94a3b8" stroke-width="2"/>
+  
+  <line x1="280" y1="260" x2="190" y2="290" stroke="#94a3b8" stroke-width="2"/>
+  <line x1="280" y1="260" x2="350" y2="290" stroke="#94a3b8" stroke-width="2"/>
+  
+  <line x1="680" y1="260" x2="590" y2="290" stroke="#94a3b8" stroke-width="2"/>
+  <line x1="680" y1="260" x2="750" y2="290" stroke="#94a3b8" stroke-width="2"/>
+  
+  <!-- Stats Panel -->
+  <g transform="translate(50, 380)">
+    <rect width="700" height="180" fill="white" rx="10" ry="10" filter="drop-shadow(0 4px 10px rgba(0, 0, 0, 0.1))"/>
+    
+    <text x="20" y="30" font-family="Arial" font-size="16" font-weight="bold" fill="#1e293b">Team Statistics</text>
+    
+    <line x1="20" y1="45" x2="680" y2="45" stroke="#e2e8f0" stroke-width="1"/>
+    
+    <text x="20" y="70" font-family="Arial" font-size="14" fill="#64748b">Total Employees:</text>
+    <text x="150" y="70" font-family="Arial" font-size="14" font-weight="bold" fill="#1e293b">8</text>
+    
+    <text x="20" y="100" font-family="Arial" font-size="14" fill="#64748b">Total FTE:</text>
+    <text x="150" y="100" font-family="Arial" font-size="14" font-weight="bold" fill="#1e293b">7.5</text>
+    
+    <text x="20" y="130" font-family="Arial" font-size="14" fill="#64748b">Avg. Team Size:</text>
+    <text x="150" y="130" font-family="Arial" font-size="14" font-weight="bold" fill="#1e293b">2.3</text>
+    
+    <text x="20" y="160" font-family="Arial" font-size="14" fill="#64748b">Management Span:</text>
+    <text x="150" y="160" font-family="Arial" font-size="14" font-weight="bold" fill="#1e293b">3</text>
+    
+    <!-- Chart -->
+    <rect x="300" y="60" width="380" height="100" fill="#f8fafc" rx="5" ry="5"/>
+    
+    <rect x="320" y="80" width="60" height="60" fill="#3b82f6"/>
+    <rect x="390" y="60" width="60" height="80" fill="#2563eb"/>
+    <rect x="460" y="90" width="60" height="50" fill="#60a5fa"/>
+    <rect x="530" y="70" width="60" height="70" fill="#93c5fd"/>
+    <rect x="600" y="100" width="60" height="40" fill="#bfdbfe"/>
+    
+    <line x1="300" y1="140" x2="680" y2="140" stroke="#64748b" stroke-width="1"/>
+    
+    <text x="320" y="155" font-family="Arial" font-size="10" fill="#64748b" text-anchor="middle">Exec</text>
+    <text x="390" y="155" font-family="Arial" font-size="10" fill="#64748b" text-anchor="middle">Eng</text>
+    <text x="460" y="155" font-family="Arial" font-size="10" fill="#64748b" text-anchor="middle">QA</text>
+    <text x="530" y="155" font-family="Arial" font-size="10" fill="#64748b" text-anchor="middle">Mktg</text>
+    <text x="600" y="155" font-family="Arial" font-size="10" fill="#64748b" text-anchor="middle">Other</text>
+  </g>
+</svg>
