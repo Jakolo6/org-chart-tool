@@ -1,3 +1,4 @@
+// Use the supabase instance from supabase.js
 import { supabase } from './supabase.js';
 
 /**
