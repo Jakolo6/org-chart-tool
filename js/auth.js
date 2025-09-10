@@ -222,29 +222,45 @@ export async function signOut() {
  */
 export async function getCurrentUser() {
   try {
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // First check the session
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     
-    if (authError || !user) {
-      return { user: null, profile: null, organization: null, error: authError };
+    if (sessionError) {
+      console.error('Session error:', sessionError);
+      return { user: null, profile: null, organization: null, error: sessionError };
     }
+    
+    // If no session, return early
+    if (!sessionData?.session?.user) {
+      return { user: null, profile: null, organization: null, error: null };
+    }
+    
+    // Get user from session
+    const user = sessionData.session.user;
     
     // Get the user's profile and organization
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('*, organizations(*)')
-      .eq('id', user.id)
-      .single();
-    
-    if (profileError) {
-      return { user, profile: null, organization: null, error: profileError };
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*, organizations(*)')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError) {
+        console.warn('Profile fetch error:', profileError);
+        return { user, profile: null, organization: null, error: null };
+      }
+      
+      return { 
+        user, 
+        profile, 
+        organization: profile.organizations,
+        error: null 
+      };
+    } catch (profileError) {
+      console.error('Profile fetch exception:', profileError);
+      return { user, profile: null, organization: null, error: null };
     }
-    
-    return { 
-      user, 
-      profile, 
-      organization: profile.organizations,
-      error: null 
-    };
   } catch (error) {
     console.error('Error getting current user:', error);
     return { user: null, profile: null, organization: null, error };
