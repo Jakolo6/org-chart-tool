@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Org Chart Tool</title>
+    <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="./css/auth.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Dashboard specific styles */
+        body {
+            background-color: #f8fafc;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar styles */
+        .sidebar {
+            width: 250px;
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #334155;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .sidebar-header img {
+            height: 35px;
+            margin-right: 10px;
+        }
+        
+        .sidebar-header h2 {
+            font-size: 1.2rem;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: #334155;
+            color: #f8fafc;
+            border-left-color: #3b82f6;
+        }
+        
+        .sidebar-menu i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid #334155;
+            margin-top: 20px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #3b82f6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+        
+        .user-details {
+            overflow: hidden;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .user-role {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+        
+        .sidebar-footer .btn {
+            width: 100%;
+            text-align: center;
+            padding: 8px;
+            background-color: transparent;
+            border: 1px solid #475569;
+            color: #94a3b8;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-footer .btn:hover {
+            background-color: #475569;
+            color: #f8fafc;
+        }
+        
+        /* Main content area */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .page-title h1 {
+            font-size: 1.8rem;
+            color: #1e293b;
+            margin: 0;
+        }
+        
+        .page-title p {
+            color: #64748b;
+            margin: 5px 0 0;
+        }
+        
+        .header-actions .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+        
+        .btn i {
+            margin-right: 6px;
+        }
+        
+        /* Dashboard cards */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+        
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        
+        .card-content {
+            margin-bottom: 15px;
+        }
+        
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        
+        .trend {
+            display: flex;
+            align-items: center;
+        }
+        
+        .trend.up {
+            color: #10b981;
+        }
+        
+        .trend.down {
+            color: #ef4444;
+        }
+        
+        .trend i {
+            margin-right: 4px;
+        }
+        
+        /* Projects section */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+        
+        .section-action {
+            color: #3b82f6;
+            font-weight: 500;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-action i {
+            margin-left: 4px;
+        }
+        
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .project-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .project-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .project-image {
+            height: 160px;
+            background-color: #e2e8f0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .project-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .project-type {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .project-type.baseline {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+        
+        .project-type.target {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+        
+        .project-details {
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .project-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0 0 10px;
+        }
+        
+        .project-description {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            flex: 1;
+        }
+        
+        .project-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        
+        .project-date {
+            display: flex;
+            align-items: center;
+        }
+        
+        .project-date i {
+            margin-right: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .project-actions {
+            padding: 10px 15px;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .project-btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+        
+        .project-btn.primary {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+        }
+        
+        .project-btn.primary:hover {
+            background-color: #2563eb;
+        }
+        
+        .project-btn.secondary {
+            background-color: #f1f5f9;
+            color: #64748b;
+            border: none;
+        }
+        
+        .project-btn.secondary:hover {
+            background-color: #e2e8f0;
+            color: #1e293b;
+        }
+        
+        /* Empty state */
+        .empty-state {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 20px;
+        }
+        
+        .empty-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0 0 10px;
+        }
+        
+        .empty-description {
+            color: #64748b;
+            margin-bottom: 20px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                z-index: 1000;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .mobile-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px 20px;
+                background-color: white;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                margin-bottom: 20px;
+            }
+            
+            .menu-toggle {
+                background: none;
+                border: none;
+                color: #1e293b;
+                font-size: 1.5rem;
+                cursor: pointer;
+            }
+        }
+        
+        @media (min-width: 769px) {
+            .mobile-header {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="./assets/images/org-chart-icon.svg" alt="Org Chart Logo" onerror="this.onerror=null; this.src='./assets/images/org-chart-icon.png'">
+                <h2>Org Chart Tool</h2>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="dashboard.html" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+                <li><a href="index.html"><i class="fas fa-project-diagram"></i> Create Chart</a></li>
+                <li><a href="#saved-charts"><i class="fas fa-save"></i> Saved Charts</a></li>
+                <li><a href="#templates"><i class="fas fa-layer-group"></i> Templates</a></li>
+                <li><a href="#settings"><i class="fas fa-cog"></i> Settings</a></li>
+            </ul>
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userInitials">JD</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName">John Doe</div>
+                        <div class="user-role" id="userOrg">Organization Name</div>
+                    </div>
+                </div>
+                <a href="auth/profile.html" class="btn">Manage Profile</a>
+                <button id="signOutBtn" class="btn" style="margin-top: 10px;">Sign Out</button>
+            </div>
+        </aside>
+        
+        <!-- Mobile Header (visible on small screens) -->
+        <div class="mobile-header">
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo">
+                <img src="./assets/images/org-chart-icon.svg" alt="Org Chart Logo" height="30" onerror="this.onerror=null; this.src='./assets/images/org-chart-icon.png'">
+            </div>
+            <div class="mobile-avatar" id="mobileUserInitials">JD</div>
+        </div>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div class="page-title">
+                    <h1>Dashboard</h1>
+                    <p>Welcome back, <span id="welcomeName">John</span>!</p>
+                </div>
+                <div class="header-actions">
+                    <a href="index.html" class="btn btn-primary"><i class="fas fa-plus"></i> New Org Chart</a>
+                </div>
+            </div>
+            
+            <!-- Dashboard Cards -->
+            <div class="dashboard-cards">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Total Charts</h3>
+                        <div class="card-icon">
+                            <i class="fas fa-chart-network"></i>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="stat-value" id="totalCharts">0</div>
+                        <div class="stat-label">Created charts</div>
+                    </div>
+                    <div class="card-footer">
+                        <span>This month</span>
+                        <div class="trend up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>2 new</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Team Size</h3>
+                        <div class="card-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="stat-value" id="teamSize">0</div>
+                        <div class="stat-label">Team members</div>
+                    </div>
+                    <div class="card-footer">
+                        <span>Last chart</span>
+                        <div class="trend up">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>5 members</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Storage</h3>
+                        <div class="card-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="stat-value">20%</div>
+                        <div class="stat-label">Of 100MB used</div>
+                    </div>
+                    <div class="card-footer">
+                        <span>Upgrade for more</span>
+                        <a href="#upgrade" style="color: #3b82f6; text-decoration: none;">Details</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Projects -->
+            <div class="section-header">
+                <h2 class="section-title">Recent Charts</h2>
+                <a href="#view-all" class="section-action">View all <i class="fas fa-chevron-right"></i></a>
+            </div>
+            
+            <div id="projectsContainer">
+                <!-- Projects will be loaded here -->
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon">
+                        <i class="fas fa-project-diagram"></i>
+                    </div>
+                    <h3 class="empty-title">No charts yet</h3>
+                    <p class="empty-description">Get started by creating your first organizational chart. Upload an Excel file with your team structure.</p>
+                    <a href="index.html" class="btn btn-primary"><i class="fas fa-plus"></i> Create New Chart</a>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script type="module">
+        import { getCurrentUser, signOut } from './js/auth.js';
+        import { getOrgCharts } from './js/orgChartService.js';
+        
+        // DOM elements
+        const userInitials = document.getElementById('userInitials');
+        const mobileUserInitials = document.getElementById('mobileUserInitials');
+        const userName = document.getElementById('userName');
+        const userOrg = document.getElementById('userOrg');
+        const welcomeName = document.getElementById('welcomeName');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        const projectsContainer = document.getElementById('projectsContainer');
+        const emptyState = document.getElementById('emptyState');
+        const totalChartsEl = document.getElementById('totalCharts');
+        const teamSizeEl = document.getElementById('teamSize');
+        
+        // Load user data
+        async function loadUserData() {
+            try {
+                const { user, profile, organization, error } = await getCurrentUser();
+                
+                if (error || !user) {
+                    // Redirect to login if not authenticated
+                    window.location.href = './auth/login.html';
+                    return;
+                }
+                
+                // Set user info
+                const displayName = profile.display_name || user.email.split('@')[0];
+                const initials = getInitials(displayName);
+                
+                userInitials.textContent = initials;
+                mobileUserInitials.textContent = initials;
+                userName.textContent = displayName;
+                userOrg.textContent = organization.name;
+                welcomeName.textContent = displayName.split(' ')[0];
+                
+                // Load user's charts
+                loadUserCharts();
+                
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+        
+        // Get initials from name
+        function getInitials(name) {
+            return name
+                .split(' ')
+                .map(part => part[0])
+                .join('')
+                .toUpperCase()
+                .substring(0, 2);
+        }
+        
+        // Load user's charts
+        async function loadUserCharts() {
+            try {
+                const { charts, error } = await getOrgCharts();
+                
+                if (error) {
+                    console.error('Error loading charts:', error);
+                    return;
+                }
+                
+                // Update stats
+                totalChartsEl.textContent = charts.length;
+                
+                if (charts.length > 0) {
+                    // Hide empty state
+                    emptyState.style.display = 'none';
+                    
+                    // Create projects grid
+                    const projectsGrid = document.createElement('div');
+                    projectsGrid.className = 'projects-grid';
+                    
+                    // Add chart cards
+                    charts.forEach(chart => {
+                        const chartCard = createChartCard(chart);
+                        projectsGrid.appendChild(chartCard);
+                    });
+                    
+                    projectsContainer.appendChild(projectsGrid);
+                    
+                    // Update team size stat with the most recent chart
+                    if (charts[0] && charts[0].employee_count) {
+                        teamSizeEl.textContent = charts[0].employee_count;
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error loading charts:', error);
+            }
+        }
+        
+        // Create chart card element
+        function createChartCard(chart) {
+            const card = document.createElement('div');
+            card.className = 'project-card';
+            
+            const formattedDate = new Date(chart.created_at).toLocaleDateString();
+            const chartType = chart.is_baseline ? 'baseline' : 'target';
+            
+            card.innerHTML = `
+                <div class="project-image">
+                    <img src="./assets/images/org-chart-preview.svg" alt="Chart Preview">
+                    <div class="project-type ${chartType}">${chartType === 'baseline' ? 'Baseline' : 'Target'}</div>
+                </div>
+                <div class="project-details">
+                    <h3 class="project-title">${chart.name}</h3>
+                    <p class="project-description">${chart.description || 'No description provided.'}</p>
+                    <div class="project-meta">
+                        <div class="project-date">
+                            <i class="far fa-calendar-alt"></i>
+                            <span>${formattedDate}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="project-actions">
+                    <button class="project-btn primary view-chart-btn" data-id="${chart.id}">View Chart</button>
+                    <button class="project-btn secondary delete-chart-btn" data-id="${chart.id}">Delete</button>
+                </div>
+            `;
+            
+            // Add event listeners
+            const viewBtn = card.querySelector('.view-chart-btn');
+            const deleteBtn = card.querySelector('.delete-chart-btn');
+            
+            viewBtn.addEventListener('click', () => {
+                window.location.href = `index.html?chart=${chart.id}`;
+            });
+            
+            deleteBtn.addEventListener('click', async () => {
+                if (confirm('Are you sure you want to delete this chart?')) {
+                    try {
+                        const { deleteOrgChart } = await import('./js/orgChartService.js');
+                        const { success, error } = await deleteOrgChart(chart.id);
+                        
+                        if (error) {
+                            alert('Error deleting chart: ' + error.message);
+                            return;
+                        }
+                        
+                        // Remove card from UI
+                        card.remove();
+                        
+                        // Update stats
+                        totalChartsEl.textContent = parseInt(totalChartsEl.textContent) - 1;
+                        
+                        // Show empty state if no charts left
+                        if (parseInt(totalChartsEl.textContent) === 0) {
+                            emptyState.style.display = 'block';
+                        }
+                        
+                    } catch (error) {
+                        alert('Error deleting chart: ' + error.message);
+                    }
+                }
+            });
+            
+            return card;
+        }
+        
+        // Handle sign out
+        signOutBtn.addEventListener('click', async () => {
+            try {
+                const { error } = await signOut();
+                
+                if (error) {
+                    console.error('Error signing out:', error);
+                    return;
+                }
+                
+                window.location.href = './auth/login.html';
+            } catch (error) {
+                console.error('Error signing out:', error);
+            }
+        });
+        
+        // Mobile menu toggle
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+            });
+        }
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768 && 
+                !e.target.closest('.sidebar') && 
+                !e.target.closest('.menu-toggle') && 
+                sidebar.classList.contains('active')) {
+                sidebar.classList.remove('active');
+            }
+        });
+        
+        // Load user data on page load
+        document.addEventListener('DOMContentLoaded', loadUserData);
+    </script>
+</body>
+</html>
