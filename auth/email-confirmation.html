@@ -77,6 +77,20 @@
             const accessToken = params.get('access_token');
             const refreshToken = params.get('refresh_token');
             const type = params.get('type');
+            const error = params.get('error');
+            const errorCode = params.get('error_code');
+            const errorDescription = params.get('error_description');
+            
+            // Handle error cases first
+            if (error || errorCode) {
+                if (errorCode === 'otp_expired' || error === 'access_denied') {
+                    showExpired();
+                    return;
+                }
+                
+                showError(errorDescription || 'Invalid confirmation link. Please check your email and try again.');
+                return;
+            }
             
             if (!accessToken || type !== 'signup') {
                 showError('Invalid confirmation link. Please check your email and try again.');
