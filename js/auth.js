@@ -23,8 +23,7 @@ export async function signUp(email, password, displayName, organizationName) {
         data: {
           display_name: displayName,
           organization_name: organizationName
-        },
-        emailRedirectTo: 'https://org-chart-tool.netlify.app/auth/email-confirmation.html'
+        }
       }
     });
     
