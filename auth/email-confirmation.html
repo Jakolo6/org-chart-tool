@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Confirmation - Org Chart Tool</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/auth.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .confirmation-container {
+            text-align: center;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .confirmation-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #10b981;
+        }
+        
+        .confirmation-icon.error {
+            color: #ef4444;
+        }
+        
+        .confirmation-title {
+            font-size: 24px;
+            margin-bottom: 16px;
+            color: #1e293b;
+        }
+        
+        .confirmation-message {
+            color: #64748b;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <img src="../assets/images/org-chart-icon.svg" alt="Org Chart Logo" onerror="this.onerror=null; this.src='../assets/images/org-chart-icon.png'">
+                <h2>Organigram Analyzer</h2>
+            </div>
+            
+            <div id="confirmationContent" class="confirmation-container">
+                <div class="loading-container">
+                    <div class="spinner"></div>
+                    <p>Verifying your email...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { supabase } from '../js/supabase.js';
+        
+        const confirmationContent = document.getElementById('confirmationContent');
+        
+        // Function to parse hash parameters
+        function parseHashParams() {
+            const hash = window.location.hash.substring(1);
+            return hash.split('&').reduce((params, param) => {
+                const [key, value] = param.split('=');
+                params[key] = decodeURIComponent(value);
+                return params;
+            }, {});
+        }
+        
+        // Function to show success message
+        function showSuccess() {
+            confirmationContent.innerHTML = `
+                <div class="confirmation-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h1 class="confirmation-title">Email Confirmed!</h1>
+                <p class="confirmation-message">
+                    Your email has been successfully verified. You can now sign in to your account.
+                </p>
+                <a href="login.html" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </a>
+            `;
+        }
+        
+        // Function to show error message
+        function showError(message) {
+            confirmationContent.innerHTML = `
+                <div class="confirmation-icon error">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <h1 class="confirmation-title">Verification Failed</h1>
+                <p class="confirmation-message">
+                    ${message || 'There was a problem verifying your email. The link may have expired or is invalid.'}
+                </p>
+                <a href="login.html" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt"></i> Try Signing In
+                </a>
+            `;
+        }
+        
+        // Process the confirmation
+        async function processConfirmation() {
+            try {
+                // Check if we have an access token in the URL
+                const params = parseHashParams();
+                
+                if (params.access_token && params.type === 'signup') {
+                    // The user has clicked the confirmation link
+                    // Supabase automatically handles the confirmation
+                    // We just need to show a success message
+                    showSuccess();
+                    
+                    // Redirect to login after 3 seconds
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 3000);
+                } else {
+                    showError('Invalid confirmation link. Please check your email and try again.');
+                }
+            } catch (error) {
+                console.error('Error processing confirmation:', error);
+                showError('An error occurred while processing your confirmation.');
+            }
+        }
+        
+        // Run when the page loads
+        processConfirmation();
+    </script>
+</body>
+</html>

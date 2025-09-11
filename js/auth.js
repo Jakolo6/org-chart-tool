@@ -22,8 +22,7 @@ export async function signUp(email, password, displayName, organizationName) {
       options: {
         emailRedirectTo: window.location.origin + '/auth/email-confirmation.html',
         data: {
-          display_name: displayName,
-          organization_name: organizationName
+          display_name: displayName
         }
       }
     });

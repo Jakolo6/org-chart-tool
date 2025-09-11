@@ -653,9 +653,13 @@
         </main>
     </div>
     
+    <!-- Load Supabase client first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <script type="module">
         import { getCurrentUser, signOut } from './js/auth.js';
         import { getOrgCharts } from './js/orgChartService.js';
+        import { getDashboardStats, getRecentActivity } from './js/services/dashboardService.js';
         
         // DOM elements
         const userInitials = document.getElementById('userInitials');
@@ -663,13 +667,16 @@
         const userName = document.getElementById('userName');
         const userOrg = document.getElementById('userOrg');
         const welcomeName = document.getElementById('welcomeName');
+        const totalChartsEl = document.getElementById('totalCharts');
+        const teamSizeEl = document.getElementById('teamSize');
+        const totalEmployeesEl = document.getElementById('totalEmployees');
+        const recentActivityList = document.getElementById('recentActivityList');
+        const teamMembersList = document.getElementById('teamMembersList');
         const signOutBtn = document.getElementById('signOutBtn');
         const menuToggle = document.getElementById('menuToggle');
         const sidebar = document.querySelector('.sidebar');
         const projectsContainer = document.getElementById('projectsContainer');
         const emptyState = document.getElementById('emptyState');
-        const totalChartsEl = document.getElementById('totalCharts');
-        const teamSizeEl = document.getElementById('teamSize');
         
         // Loading indicator
         function showLoading() {
@@ -695,14 +702,14 @@
             }
         }
         
-        // Load user data
+        // Load user data and dashboard stats
         async function loadUserData() {
             showLoading();
             try {
+                // Load user profile first
                 const { user, profile, organization, error } = await getCurrentUser();
                 
                 if (error || !user) {
-                    // Redirect to login if not authenticated
                     window.location.href = './auth/login.html';
                     return;
                 }
@@ -721,24 +728,174 @@
                 userOrg.textContent = orgName;
                 welcomeName.textContent = displayName.split(' ')[0];
                 
-                // Customize page title with user name
+                // Update page title
                 document.title = `${displayName}'s Dashboard - Org Chart Tool`;
                 
-                // Load user's charts
-                await loadUserCharts();
+                // Load dashboard stats in parallel
+                await Promise.all([
+                    loadDashboardStats(),
+                    loadUserCharts(),
+                    loadRecentActivity(),
+                    loadTeamMembers()
+                ]);
                 
             } catch (error) {
-                console.error('Error loading user data:', error);
-                alert('There was an error loading your profile data. Please try refreshing the page.');
+                console.error('Error loading dashboard data:', error);
+                showError('There was an error loading your dashboard. Please try refreshing the page.');
             } finally {
                 hideLoading();
             }
         }
         
+        // Load and display dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const { stats, error } = await getDashboardStats();
+                if (error) throw error;
+                
+                // Update stats cards
+                if (totalChartsEl) totalChartsEl.textContent = stats.totalCharts || '0';
+                if (teamSizeEl) teamSizeEl.textContent = stats.teamSize || '1';
+                if (totalEmployeesEl) totalEmployeesEl.textContent = stats.totalEmployees || '0';
+                
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+                showError('Could not load dashboard statistics');
+            }
+        }
+        
+        // Load and display recent activity
+        async function loadRecentActivity() {
+            if (!recentActivityList) return;
+            
+            try {
+                const { activity, error } = await getRecentActivity();
+                if (error) throw error;
+                
+                // Clear existing items
+                recentActivityList.innerHTML = '';
+                
+                if (!activity || activity.length === 0) {
+                    recentActivityList.innerHTML = '<li class="no-activity">No recent activity</li>';
+                    return;
+                }
+                
+                // Add activity items
+                activity.forEach(item => {
+                    const li = document.createElement('li');
+                    const timeAgo = formatTimeAgo(new Date(item.timestamp));
+                    
+                    let actionText = '';
+                    if (item.type === 'chart') {
+                        actionText = `Chart "${item.title}" was ${item.action}`;
+                    } else {
+                        actionText = `Item was ${item.action}`;
+                    }
+                    
+                    li.innerHTML = `
+                        <div class="activity-icon">
+                            <i class="fas fa-${getActivityIcon(item.type)}"></i>
+                        </div>
+                        <div class="activity-details">
+                            <p class="activity-text">${actionText}</p>
+                            <span class="activity-time">${timeAgo}</span>
+                        </div>
+                    `;
+                    recentActivityList.appendChild(li);
+                });
+                
+            } catch (error) {
+                console.error('Error loading recent activity:', error);
+                recentActivityList.innerHTML = '<li class="error">Could not load recent activity</li>';
+            }
+        }
+        
+        // Load and display team members
+        async function loadTeamMembers() {
+            if (!teamMembersList) return;
+            
+            try {
+                const { stats, error } = await getDashboardStats();
+                if (error) throw error;
+                
+                // Clear existing items
+                teamMembersList.innerHTML = '';
+                
+                if (!stats.teamMembers || stats.teamMembers.length === 0) {
+                    teamMembersList.innerHTML = '<li class="no-members">No team members found</li>';
+                    return;
+                }
+                
+                // Add team members
+                stats.teamMembers.forEach(member => {
+                    const li = document.createElement('li');
+                    const initials = getInitials(member.display_name || member.email);
+                    const joinDate = new Date(member.created_at).toLocaleDateString();
+                    
+                    li.innerHTML = `
+                        <div class="member-avatar">${initials}</div>
+                        <div class="member-info">
+                            <span class="member-name">${member.display_name || member.email}</span>
+                            <span class="member-email">${member.email}</span>
+                        </div>
+                        <div class="member-since">Since ${joinDate}</div>
+                    `;
+                    teamMembersList.appendChild(li);
+                });
+                
+            } catch (error) {
+                console.error('Error loading team members:', error);
+                teamMembersList.innerHTML = '<li class="error">Could not load team members</li>';
+            }
+        }
+        
+        // Helper function to get icon for activity type
+        function getActivityIcon(type) {
+            const icons = {
+                'chart': 'project-diagram',
+                'user': 'user',
+                'team': 'users',
+                'file': 'file-alt',
+                'settings': 'cog'
+            };
+            return icons[type] || 'bell';
+        }
+        
+        // Format time as "X time ago"
+        function formatTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            let interval = Math.floor(seconds / 31536000);
+            if (interval >= 1) return interval + ' year' + (interval === 1 ? '' : 's') + ' ago';
+            
+            interval = Math.floor(seconds / 2592000);
+            if (interval >= 1) return interval + ' month' + (interval === 1 ? '' : 's') + ' ago';
+            
+            interval = Math.floor(seconds / 86400);
+            if (interval >= 1) return interval + ' day' + (interval === 1 ? '' : 's') + ' ago';
+            
+            interval = Math.floor(seconds / 3600);
+            if (interval >= 1) return interval + ' hour' + (interval === 1 ? '' : 's') + ' ago';
+            
+            interval = Math.floor(seconds / 60);
+            if (interval >= 1) return interval + ' minute' + (interval === 1 ? '' : 's') + ' ago';
+            
+            return 'just now';
+        }
+        
+        // Show error message
+        function showError(message) {
+            // You might want to implement a more sophisticated error display
+            console.error(message);
+            // Optionally show a toast notification or alert
+        }
+        
         // Get initials from name
         function getInitials(name) {
+            if (!name) return '??';
             return name
                 .split(' ')
+                .filter(part => part.length > 0)
                 .map(part => part[0])
                 .join('')
                 .toUpperCase()
