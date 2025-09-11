@@ -178,10 +178,7 @@
                     <input type="text" id="displayName" name="displayName" placeholder="Enter your full name" required>
                 </div>
                 
-                <div class="form-group">
-                    <label for="organizationName"><i class="fas fa-building"></i> Organization Name</label>
-                    <input type="text" id="organizationName" name="organizationName" placeholder="Enter your organization name" required>
-                </div>
+                <!-- Organization field removed -->
                 
                 <div class="form-success" id="registerSuccess"></div>
                 <div class="form-error" id="registerError"></div>
@@ -249,7 +246,6 @@
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const displayName = document.getElementById('displayName').value;
-            const organizationName = document.getElementById('organizationName').value;
             
             // Show loading state
             registerError.textContent = '';
@@ -258,7 +254,7 @@
             submitButton.disabled = true;
             
             try {
-                const { user, error, message, emailConfirmationRequired, partialSuccess } = await signUp(email, password, displayName, organizationName);
+                const { user, error, message, emailConfirmationRequired, partialSuccess } = await signUp(email, password, displayName);
                 
                 if (error) {
                     // Handle error with user-friendly message

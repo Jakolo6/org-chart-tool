@@ -531,7 +531,7 @@
             
             <ul class="sidebar-menu">
                 <li><a href="dashboard.html" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
-                <li><a href="index.html"><i class="fas fa-project-diagram"></i> Create Chart</a></li>
+                <li><a href="upload.html"><i class="fas fa-project-diagram"></i> Create Chart</a></li>
                 <li><a href="#saved-charts"><i class="fas fa-save"></i> Saved Charts</a></li>
                 <li><a href="#templates"><i class="fas fa-layer-group"></i> Templates</a></li>
                 <li><a href="#settings"><i class="fas fa-cog"></i> Settings</a></li>
@@ -542,7 +542,6 @@
                     <div class="user-avatar" id="userInitials">JD</div>
                     <div class="user-details">
                         <div class="user-name" id="userName">John Doe</div>
-                        <div class="user-role" id="userOrg">Organization Name</div>
                     </div>
                 </div>
                 <a href="auth/profile.html" class="btn">Manage Profile</a>
@@ -569,7 +568,7 @@
                     <p>Welcome back, <span id="welcomeName">John</span>!</p>
                 </div>
                 <div class="header-actions">
-                    <a href="index.html" class="btn btn-primary"><i class="fas fa-plus"></i> New Org Chart</a>
+                    <a href="upload.html" class="btn btn-primary"><i class="fas fa-plus"></i> New Org Chart</a>
                 </div>
             </div>
             
@@ -706,30 +705,33 @@
         async function loadUserData() {
             showLoading();
             try {
-                // Load user profile first
-                const { user, profile, organization, error } = await getCurrentUser();
+                const userId = await getUserId();
+                if (!userId) {
+                    throw new Error('User not found');
+                }
+                const { user, profile, error } = await getCurrentUser();
                 
-                if (error || !user) {
-                    window.location.href = './auth/login.html';
+                if (error) {
+                    console.error('Error loading user data:', error);
+                    // Even if there's an error, we might still have partial user data
+                    if (user?.email) {
+                        const nameFromEmail = user.email.split('@')[0];
+                        document.getElementById('userName').textContent = nameFromEmail;
+                        document.getElementById('welcomeName').textContent = nameFromEmail;
+                        // User organization removed
+                    }
                     return;
                 }
                 
-                console.log('User data loaded:', { user, profile, organization });
-                
-                // Set user info
-                const displayName = profile?.display_name || user.email.split('@')[0];
-                const orgName = organization?.name || 'My Organization';
-                const initials = getInitials(displayName);
-                
-                // Update all user-related elements
-                userInitials.textContent = initials;
-                mobileUserInitials.textContent = initials;
-                userName.textContent = displayName;
-                userOrg.textContent = orgName;
-                welcomeName.textContent = displayName.split(' ')[0];
-                
-                // Update page title
-                document.title = `${displayName}'s Dashboard - Org Chart Tool`;
+                // Update UI with user data
+                if (profile?.display_name) {
+                    document.getElementById('userName').textContent = profile.display_name;
+                    document.getElementById('welcomeName').textContent = profile.display_name.split(' ')[0];
+                } else if (user?.email) {
+                    const nameFromEmail = user.email.split('@')[0];
+                    document.getElementById('userName').textContent = nameFromEmail;
+                    document.getElementById('welcomeName').textContent = nameFromEmail;
+                }
                 
                 // Load dashboard stats in parallel
                 await Promise.all([
@@ -815,34 +817,17 @@
             if (!teamMembersList) return;
             
             try {
+                const userId = await getUserId();
+                if (!userId) {
+                    throw new Error('User not found');
+                }
                 const { stats, error } = await getDashboardStats();
                 if (error) throw error;
                 
                 // Clear existing items
                 teamMembersList.innerHTML = '';
                 
-                if (!stats.teamMembers || stats.teamMembers.length === 0) {
-                    teamMembersList.innerHTML = '<li class="no-members">No team members found</li>';
-                    return;
-                }
-                
-                // Add team members
-                stats.teamMembers.forEach(member => {
-                    const li = document.createElement('li');
-                    const initials = getInitials(member.display_name || member.email);
-                    const joinDate = new Date(member.created_at).toLocaleDateString();
-                    
-                    li.innerHTML = `
-                        <div class="member-avatar">${initials}</div>
-                        <div class="member-info">
-                            <span class="member-name">${member.display_name || member.email}</span>
-                            <span class="member-email">${member.email}</span>
-                        </div>
-                        <div class="member-since">Since ${joinDate}</div>
-                    `;
-                    teamMembersList.appendChild(li);
-                });
-                
+                // Team members section removed - no longer using organizations
             } catch (error) {
                 console.error('Error loading team members:', error);
                 teamMembersList.innerHTML = '<li class="error">Could not load team members</li>';
@@ -909,24 +894,11 @@
                 while (projectsContainer.firstChild) {
                     projectsContainer.removeChild(projectsContainer.firstChild);
                 }
-                projectsContainer.appendChild(emptyState);
-                
+
                 const { charts, error } = await getOrgCharts();
-                
-                if (error) {
-                    console.error('Error loading charts:', error);
-                    const errorMsg = document.createElement('div');
-                    errorMsg.className = 'alert alert-error';
-                    errorMsg.textContent = 'Could not load your charts. Please try again later.';
-                    projectsContainer.appendChild(errorMsg);
-                    return;
-                }
-                
-                console.log('Charts loaded:', charts);
-                
-                // Update stats
-                totalChartsEl.textContent = charts && charts.length ? charts.length : '0';
-                
+                if (error) throw error;
+
+                // Update UI based on whether we have charts
                 if (charts && charts.length > 0) {
                     // Hide empty state
                     emptyState.style.display = 'none';
@@ -956,14 +928,27 @@
                                 }
                             } catch (e) {
                                 console.log('Could not determine team size from chart data');
-                                teamSizeEl.textContent = '?';
+                                teamSizeEl.textContent = '0';
                             }
                         }
                     }
                 } else {
-                    // Show empty state
+                    // Show empty state with appropriate message
                     emptyState.style.display = 'block';
+                    emptyState.innerHTML = `
+                        <div class="empty-state-content">
+                            <i class="fas fa-folder-open"></i>
+                            <h3>No charts yet</h3>
+                            <p>Get started by creating your first chart.</p>
+                            <button id="createFirstChart" class="btn btn-primary">Create First Chart</button>
+                        </div>
+                    `;
                     teamSizeEl.textContent = '0';
+                    
+                    // Add event listener for create first chart button
+                    document.getElementById('createFirstChart')?.addEventListener('click', () => {
+                        window.location.href = 'upload.html';
+                    });
                 }
                 
                 return charts;
@@ -1043,6 +1028,17 @@
             });
             
             return card;
+        }
+        
+        // Get the user's ID
+        async function getUserId() {
+            try {
+                const { user } = await getCurrentUser();
+                return user?.id || null;
+            } catch (error) {
+                console.error('Error getting user ID:', error);
+                return null;
+            }
         }
         
         // Handle sign out
