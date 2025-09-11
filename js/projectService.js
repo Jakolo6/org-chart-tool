@@ -14,8 +14,8 @@ import { getCurrentUser } from './auth.js';
  */
 export async function createDraftProject(parsedData, projectInfo, existingProjectId = null) {
   try {
-    // Get current user and organization
-    const { user, profile, organization, error: userError } = await getCurrentUser();
+    // Get current user
+    const { user, profile, error: userError } = await getCurrentUser();
     
     if (userError || !user) {
       throw new Error('User not authenticated');
@@ -36,7 +36,7 @@ export async function createDraftProject(parsedData, projectInfo, existingProjec
     const { data: project, error: projectError } = await supabase
       .from('org_charts')
       .insert({
-        organization_id: profile.organization_id,
+        owner_id: user.id,
         name: projectInfo.name,
         description: projectInfo.description || '',
         is_baseline: projectInfo.isBaseline,
@@ -190,8 +190,8 @@ async function updateLastAccessedProject(userId, projectId) {
  */
 export async function getProjects(includeDeleted = false) {
   try {
-    // Get current user and organization
-    const { user, profile, error: userError } = await getCurrentUser();
+    // Get current user
+    const { user, error: userError } = await getCurrentUser();
     
     if (userError || !user) {
       throw new Error('User not authenticated');
@@ -211,7 +211,7 @@ export async function getProjects(includeDeleted = false) {
         ),
         employees (count)
       `)
-      .eq('organization_id', profile.organization_id)
+      .eq('owner_id', user.id)
       .eq('status', 'ready') // Only get ready projects, not drafts
       .order('updated_at', { ascending: false });
     
