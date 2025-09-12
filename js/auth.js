@@ -1,10 +1,29 @@
-// Use the supabase instance from supabase.js
-// Access supabase from the global scope
-const supabase = window.supabase || {};
+// Auth.js - Authentication functions
 
-// Make sure supabase is available
-if (!window.supabase) {
-  console.error('Supabase client not found. Make sure supabase.js is loaded first.');
+// Wait for supabaseClient to be available
+let authInitialized = false;
+let authInitAttempts = 0;
+const MAX_INIT_ATTEMPTS = 10;
+
+// Initialize auth module
+function initAuth() {
+  if (authInitialized) return true;
+  
+  if (authInitAttempts >= MAX_INIT_ATTEMPTS) {
+    console.error('Failed to initialize auth after multiple attempts');
+    return false;
+  }
+  
+  if (!window.supabaseClient) {
+    console.warn(`Supabase client not available yet, attempt ${authInitAttempts + 1}/${MAX_INIT_ATTEMPTS}`);
+    authInitAttempts++;
+    setTimeout(initAuth, 100);
+    return false;
+  }
+  
+  console.log('Auth module initialized successfully');
+  authInitialized = true;
+  return true;
 }
 
 /**
@@ -19,9 +38,11 @@ if (!window.supabase) {
  * @returns {Promise<{user, error}>} - The created user or error
  */
 async function signUp(email, password, displayName) {
+  if (!initAuth()) return { user: null, error: { message: 'Auth not initialized' } };
+  
   try {
     // 1. Sign up the user with Supabase Auth with improved email confirmation
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    const { data: authData, error: authError } = await window.supabaseClient.auth.signUp({
       email,
       password,
       options: {
@@ -53,7 +74,7 @@ async function signUp(email, password, displayName) {
     // 2. Create a profile for the user
     try {
       // Check if profile already exists
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile } = await window.supabaseClient
         .from('profiles')
         .select('*')
         .eq('id', authData.user.id)
@@ -61,7 +82,7 @@ async function signUp(email, password, displayName) {
         
       if (existingProfile) {
         // Profile exists, update it
-        const { data: updatedProfile, error: updateError } = await supabase
+        const { data: updatedProfile, error: updateError } = await window.supabaseClient
           .from('profiles')
           .update({
             display_name: displayName || existingProfile.display_name
@@ -84,19 +105,23 @@ async function signUp(email, password, displayName) {
       }
       
       // Create new profile
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profile, error: profileError } = await window.supabaseClient
         .from('profiles')
-        .insert([{
-          id: authData.user.id,
-          display_name: displayName || authData.user.email.split('@')[0]
-        }])
+        .insert([
+          {
+            id: authData.user.id,
+            display_name: displayName,
+            email: email,
+            created_at: new Date().toISOString()
+          }
+        ])
         .select()
         .single();
       
       if (profileError) {
         console.error('Profile creation error:', profileError);
         // Try a simpler approach
-        const { error: simpleProfileError } = await supabase
+        const { error: simpleProfileError } = await window.supabaseClient
           .from('profiles')
           .insert({
             id: authData.user.id,
@@ -116,7 +141,7 @@ async function signUp(email, password, displayName) {
         return { user: authData.user, profile: { id: authData.user.id }, error: null };
       }
       
-      return { user: authData.user, profile: profileData, error: null };
+      return { user: authData.user, profile, error: null };
     } catch (profileError) {
       console.error('Profile creation exception:', profileError);
       return { 
@@ -155,8 +180,10 @@ async function signUp(email, password, displayName) {
  * @returns {Promise<{user, error}>} - The authenticated user or error
  */
 async function signIn(email, password) {
+  if (!initAuth()) return { user: null, error: { message: 'Auth not initialized' } };
+  
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await window.supabaseClient.auth.signInWithPassword({
       email,
       password,
     });
@@ -165,7 +192,7 @@ async function signIn(email, password) {
     
     // Get the user's profile
     try {
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile, error: profileError } = await window.supabaseClient
         .from('profiles')
         .select('*')
         .eq('id', data.user.id)
@@ -220,8 +247,10 @@ async function signIn(email, password) {
  * @returns {Promise<{error}>} - Error if any
  */
 async function signOut() {
+  if (!initAuth()) return { error: { message: 'Auth not initialized' } };
+  
   try {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await window.supabaseClient.auth.signOut();
     if (error) throw error;
     return { error: null };
   } catch (error) {
@@ -235,45 +264,34 @@ async function signOut() {
  * @returns {Promise<{user, profile, error}>} - The current user and profile
  */
 async function getCurrentUser() {
+  if (!initAuth()) return { user: null, profile: null, error: { message: 'Auth not initialized' } };
+  
   try {
-    // First check the session
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    // Get the user
+    const { data: userData, error: userError } = await window.supabaseClient.auth.getUser();
     
-    if (sessionError) {
-      console.error('Session error:', sessionError);
-      return { user: null, profile: null, error: sessionError };
+    if (userError || !userData?.user) {
+      console.error('User error:', userError);
+      return { user: null, profile: null, error: userError };
     }
     
-    // If no session, return early
-    if (!sessionData?.session?.user) {
-      return { user: null, profile: null, error: null };
-    }
-    
-    // Get user from session
-    const user = sessionData.session.user;
-    
-    // Get the profile
-    try {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+    // Get the user's profile
+    const { data: profile, error: profileError } = await window.supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', userData.user.id)
+      .single();
       
-      if (profileError) {
-        console.warn('Profile fetch error:', profileError);
-        return { user, profile: null, error: profileError };
-      }
-      
-      return { 
-        user, 
-        profile,
-        error: null 
-      };
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      return { user, profile: null, error };
+    if (profileError) {
+      console.warn('Profile fetch error:', profileError);
+      return { user: userData.user, profile: null, error: profileError };
     }
+    
+    return { 
+      user: userData.user, 
+      profile,
+      error: null 
+    };
   } catch (error) {
     console.error('Error getting current user:', error);
     return { user: null, profile: null, error };
@@ -287,8 +305,10 @@ async function getCurrentUser() {
  * @returns {Promise<{profile, error}>} - The updated profile or error
  */
 async function updateProfile(userId, updates) {
+  if (!initAuth()) return { profile: null, error: { message: 'Auth not initialized' } };
+  
   try {
-    const { data, error } = await supabase
+    const { data, error } = await window.supabaseClient
       .from('profiles')
       .update(updates)
       .eq('id', userId)
@@ -313,7 +333,9 @@ window.updateProfile = updateProfile;
 
 // Set up auth state change listener
 function setupAuthListener(callback) {
-  return supabase.auth.onAuthStateChange((event, session) => {
+  if (!initAuth()) return null;
+  
+  return window.supabaseClient.auth.onAuthStateChange((event, session) => {
     callback(event, session);
   });
 }
