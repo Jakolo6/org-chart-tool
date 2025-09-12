@@ -45,8 +45,15 @@
         </div>
     </div>
     
-    <script type="module">
-        import { getCurrentUser, updateProfile, signOut } from '../js/auth.js';
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase.js"></script>
+    <script src="../js/auth.js"></script>
+    
+    <script>
+        // Access global functions
+        const getCurrentUser = window.getCurrentUser;
+        const updateProfile = window.updateProfile;
+        const signOut = window.signOut;
         
         const profileForm = document.getElementById('profileForm');
         const profileError = document.getElementById('profileError');

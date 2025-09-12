@@ -197,8 +197,15 @@
         </div>
     </div>
     
-    <script type="module">
-        import { signUp } from '../js/auth.js';
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/supabase.js"></script>
+    <script src="../js/auth.js"></script>
+    
+    <script>
+        // Access global functions
+        const signUp = window.signUp;
+        const getCurrentUser = window.getCurrentUser;
         
         const registerForm = document.getElementById('registerForm');
         const registerError = document.getElementById('registerError');
@@ -210,7 +217,6 @@
         // Check if user is already logged in
         const checkExistingSession = async () => {
             try {
-                const { getCurrentUser } = await import('../js/auth.js');
                 const { user } = await getCurrentUser();
                 
                 if (user) {
