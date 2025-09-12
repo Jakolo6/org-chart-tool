@@ -15,7 +15,7 @@ import { getCurrentUser } from './auth.js';
 export async function createDraftProject(parsedData, projectInfo, existingProjectId = null) {
   try {
     // Get current user
-    const { user, profile, error: userError } = await getCurrentUser();
+    const { user, error: userError } = await getCurrentUser();
     
     if (userError || !user) {
       throw new Error('User not authenticated');
@@ -32,41 +32,71 @@ export async function createDraftProject(parsedData, projectInfo, existingProjec
       return await updateExistingProject(existingProjectId, headers, dataRows, projectInfo, user.id);
     }
     
+    // Create new project with minimal fields
+    const projectData = {
+      owner_id: user.id,
+      name: projectInfo.name,
+      description: projectInfo.description || '',
+      created_by: user.id
+    };
+    
+    // Only add optional fields if they exist
+    if (projectInfo.isBaseline !== undefined) {
+      projectData.is_baseline = projectInfo.isBaseline;
+    }
+    
+    if (projectInfo.isTarget !== undefined) {
+      projectData.is_target = projectInfo.isTarget;
+    }
+    
     // Create new project
     const { data: project, error: projectError } = await supabase
       .from('org_charts')
-      .insert({
-        owner_id: user.id,
-        name: projectInfo.name,
-        description: projectInfo.description || '',
-        is_baseline: projectInfo.isBaseline,
-        is_target: projectInfo.isTarget,
-        created_by: user.id
-      })
+      .insert(projectData)
       .select()
       .single();
     
     if (projectError) throw projectError;
     
     // Create initial version with raw data
+    const versionData = {
+      chart_id: project.id,
+      version_number: 1,
+      created_by: user.id
+    };
+    
+    // Only add data fields if they exist
+    if (dataRows && dataRows.length > 0) {
+      versionData.raw_data = dataRows;
+    }
+    
+    if (headers && headers.length > 0) {
+      versionData.raw_headers = headers;
+    }
+    
+    if (projectInfo.fileName) {
+      versionData.file_name = projectInfo.fileName;
+    }
+    
+    if (projectInfo.fileSize) {
+      versionData.file_size = projectInfo.fileSize;
+    }
+    
     const { data: version, error: versionError } = await supabase
       .from('chart_versions')
-      .insert({
-        chart_id: project.id,
-        version_number: 1,
-        raw_data: dataRows,
-        raw_headers: headers,
-        file_name: projectInfo.fileName,
-        file_size: projectInfo.fileSize,
-        created_by: user.id
-      })
+      .insert(versionData)
       .select()
       .single();
     
     if (versionError) throw versionError;
     
     // Update user's last accessed project
-    await updateLastAccessedProject(user.id, project.id);
+    try {
+      await updateLastAccessedProject(user.id, project.id);
+    } catch (e) {
+      console.warn('Could not update last accessed project:', e);
+      // Non-critical error, continue
+    }
     
     return { project, version, error: null };
   } catch (error) {

@@ -471,9 +471,14 @@
           throw new Error('No versions found for this project');
         }
         
+        console.log('Latest version:', latestVersion);
+        
         // Get raw headers and data
         rawHeaders = latestVersion.raw_headers || [];
-        rawData = project.chart_versions[0].raw_data || [];
+        rawData = latestVersion.raw_data || [];
+        
+        console.log('Raw headers:', rawHeaders);
+        console.log('Raw data sample:', rawData.slice(0, 2));
         
         // Get existing mapping if available
         if (latestVersion.column_mapping) {
@@ -481,15 +486,25 @@
         }
         
         // Extract sample values for each column
-        if (rawData.length > 0) {
+        if (rawData && rawData.length > 0) {
           const firstRow = rawData[0];
-          rawHeaders.forEach((header, index) => {
-            sampleValues[header] = firstRow[index] || '';
-          });
+          if (rawHeaders && rawHeaders.length > 0) {
+            rawHeaders.forEach((header, index) => {
+              if (header) {
+                sampleValues[header] = firstRow[index] || '';
+              }
+            });
+          }
         }
         
         // Populate mapping table
         populateMappingTable();
+        
+        // Auto-detect mapping if no mapping exists
+        if (Object.keys(mappingConfig).length === 0) {
+          console.log('No existing mapping found, auto-detecting...');
+          autoDetectMapping();
+        }
         
         hideLoading();
       } catch (error) {
@@ -610,6 +625,8 @@
     
     // Auto-detect mapping
     function autoDetectMapping() {
+      console.log('Auto-detecting mapping...');
+      
       // Common column names for each field
       const fieldMappings = {
         id: ['id', 'employee_id', 'employeeid', 'employee id', 'emp id', 'emp_id', 'empid', 'staff id', 'staffid', 'person id', 'personid'],
@@ -624,9 +641,19 @@
         managementLevel: ['management level', 'managementlevel', 'management_level', 'level', 'grade', 'job level', 'joblevel', 'job_level']
       };
       
+      if (!rawHeaders || rawHeaders.length === 0) {
+        console.warn('No raw headers available for auto-detection');
+        return;
+      }
+      
+      console.log('Available headers for mapping:', rawHeaders);
+      
       // Try to match columns to fields
       rawHeaders.forEach(header => {
+        if (!header) return;
+        
         const headerLower = header.toLowerCase();
+        console.log('Checking header:', header);
         
         // Check each field
         Object.entries(fieldMappings).forEach(([fieldId, possibleNames]) => {
@@ -635,6 +662,8 @@
           
           // Check if header matches any possible name
           if (possibleNames.some(name => headerLower === name || headerLower.includes(name))) {
+            console.log(`Matched ${header} to ${fieldId}`);
+            
             // Update mapping
             mappingConfig[fieldId] = header;
             
@@ -652,6 +681,8 @@
           }
         });
       });
+      
+      console.log('Final mapping config:', mappingConfig);
       
       // Validate mapping
       validateMapping();
