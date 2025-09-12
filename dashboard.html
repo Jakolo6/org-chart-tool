@@ -652,13 +652,20 @@
         </main>
     </div>
     
-    <!-- Load Supabase client first -->
+    <!-- Load scripts in correct order -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./js/supabase.js"></script>
+    <script src="./js/auth.js"></script>
+    <script src="./js/orgChartService.js"></script>
+    <script src="./js/services/dashboardService.js"></script>
     
-    <script type="module">
-        import { getCurrentUser, signOut } from './js/auth.js';
-        import { getOrgCharts } from './js/orgChartService.js';
-        import { getDashboardStats, getRecentActivity } from './js/services/dashboardService.js';
+    <script>
+        // Access global functions
+        const getCurrentUser = window.getCurrentUser;
+        const signOut = window.signOut;
+        const getOrgCharts = window.getOrgCharts;
+        const getDashboardStats = window.getDashboardStats;
+        const getRecentActivity = window.getRecentActivity;
         
         // DOM elements
         const userInitials = document.getElementById('userInitials');

@@ -1,11 +1,12 @@
-import { supabase } from '../supabase.js';
-import { getCurrentUser } from '../auth.js';
+// Access global functions
+const supabase = window.supabaseClient;
+const getCurrentUser = window.getCurrentUser;
 
 /**
  * Get dashboard statistics for the current user
  * @returns {Promise<{stats: Object, error: Error}>}
  */
-export async function getDashboardStats() {
+async function getDashboardStats() {
   try {
     const { user, profile, error: userError } = await getCurrentUser();
     if (userError || !user) throw new Error('User not authenticated');
@@ -93,7 +94,7 @@ export async function getDashboardStats() {
  * Get recent activity for the dashboard
  * @returns {Promise<{activity: Array, error: Error}>}
  */
-export async function getRecentActivity() {
+async function getRecentActivity() {
   try {
     const { user, profile, error: userError } = await getCurrentUser();
     if (userError || !user) throw new Error('User not authenticated');
@@ -123,3 +124,9 @@ export async function getRecentActivity() {
     return { activity: [], error };
   }
 }
+
+// Make functions available globally
+window.getDashboardStats = getDashboardStats;
+window.getUserProjects = getUserProjects;
+window.deleteProject = deleteProject;
+window.getRecentActivity = getRecentActivity;
