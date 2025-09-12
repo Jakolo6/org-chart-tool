@@ -1,5 +1,5 @@
 // Global functions
-const getCurrentUser = window.getCurrentUser;
+// Access functions directly from window object to avoid redeclarations
 const createDraftProject = window.createDraftProject;
 const signOut = window.signOut;
 

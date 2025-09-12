@@ -250,7 +250,7 @@ async function updateLastAccessedProject(userId, projectId) {
  * @param {boolean} [includeDeleted=false] - Whether to include soft-deleted projects
  * @returns {Promise<{projects, error}>} - The projects or error
  */
-export async function getProjects(includeDeleted = false) {
+async function getProjects(includeDeleted = false) {
   try {
     // Get current user
     const { user, error: userError } = await getCurrentUser();
@@ -297,7 +297,7 @@ export async function getProjects(includeDeleted = false) {
  * @param {string} projectId - The project ID
  * @returns {Promise<{project, error}>} - The project or error
  */
-export async function getProject(projectId) {
+async function getProject(projectId) {
   try {
     const { data: project, error: projectError } = await supabase
       .from('org_charts')
@@ -342,7 +342,7 @@ export async function getProject(projectId) {
  * @param {string} projectId - The project ID
  * @returns {Promise<{success, error}>} - Success status or error
  */
-export async function updateProjectTimestamp(projectId) {
+async function updateProjectTimestamp(projectId) {
   try {
     const { error } = await supabase
       .from('org_charts')
@@ -365,7 +365,7 @@ export async function updateProjectTimestamp(projectId) {
  * @param {string} projectId - The project ID
  * @returns {Promise<{success, error}>} - Success status or error
  */
-export async function deleteProject(projectId) {
+async function deleteProject(projectId) {
   try {
     const { error } = await supabase
       .from('org_charts')
@@ -389,7 +389,7 @@ export async function deleteProject(projectId) {
  * @param {Object} mapping - The column mapping configuration
  * @returns {Promise<{success, error}>} - Success status or error
  */
-export async function saveColumnMapping(projectId, mapping) {
+async function saveColumnMapping(projectId, mapping) {
   try {
     // Get the latest version
     const { data: versions, error: versionError } = await supabase
@@ -434,7 +434,7 @@ export async function saveColumnMapping(projectId, mapping) {
  * @param {Array} employees - The validated employee data
  * @returns {Promise<{success, error}>} - Success status or error
  */
-export async function saveEmployeeData(projectId, employees) {
+async function saveEmployeeData(projectId, employees) {
   try {
     // First delete any existing employees for this project
     const { error: deleteError } = await supabase
@@ -475,7 +475,7 @@ export async function saveEmployeeData(projectId, employees) {
  * @param {string} projectId - The project ID
  * @returns {Promise<{success, error}>} - Success status or error
  */
-export async function finalizeProject(projectId) {
+async function finalizeProject(projectId) {
   try {
     // Update project timestamp
     const { error } = await supabase
@@ -522,3 +522,10 @@ export async function finalizeProject(projectId) {
 
 // Make functions available globally
 window.createDraftProject = createDraftProject;
+window.getProjects = getProjects;
+window.getProject = getProject;
+window.updateProjectTimestamp = updateProjectTimestamp;
+window.deleteProject = deleteProject;
+window.saveColumnMapping = saveColumnMapping;
+window.saveEmployeeData = saveEmployeeData;
+window.finalizeProject = finalizeProject;
