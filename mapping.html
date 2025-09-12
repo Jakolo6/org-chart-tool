@@ -98,6 +98,99 @@
       background-color: #fef2f2;
     }
     
+    .mapping-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    
+    .mapping-actions .action-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .mapping-help {
+      background-color: #f0f9ff;
+      border-left: 4px solid #3b82f6;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+    }
+    
+    .mapping-help h3 {
+      margin-top: 0;
+      color: #1e40af;
+      font-size: 16px;
+      margin-bottom: 8px;
+    }
+    
+    .mapping-help p {
+      margin: 0 0 8px 0;
+      color: #334155;
+      font-size: 14px;
+    }
+    
+    .mapping-help ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    
+    .mapping-help li {
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+    
+    .sample-data-preview {
+      margin-top: 20px;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 15px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .sample-data-preview h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 16px;
+      color: #1e293b;
+    }
+    
+    .sample-data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    
+    .sample-data-table th {
+      background-color: #e2e8f0;
+      padding: 8px 10px;
+      text-align: left;
+      font-weight: 500;
+    }
+    
+    .sample-data-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .clear-mapping-btn {
+      color: #ef4444;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      padding: 0;
+      margin-left: 10px;
+    }
+    
+    .clear-mapping-btn i {
+      margin-right: 5px;
+    }
+    
     .mapping-table .sample-value {
       font-size: 14px;
       color: #64748b;
@@ -247,23 +340,36 @@
         
         <div class="error-message" id="errorMessage"></div>
         
-        <div class="mapping-presets">
-          <div class="mapping-presets-header">
-            <div class="mapping-presets-title">Column Mapping Presets</div>
-            <div class="mapping-presets-actions">
-              <button id="autoDetectBtn" class="btn btn-sm btn-secondary">
-                <i class="fas fa-magic"></i> Auto-Detect
-              </button>
-              <button id="savePresetBtn" class="btn btn-sm btn-secondary">
-                <i class="fas fa-save"></i> Save Preset
-              </button>
-              <select id="loadPresetSelect" class="btn btn-sm btn-secondary">
-                <option value="">Load Preset</option>
-                <!-- Presets will be populated by JS -->
-              </select>
-            </div>
+        <div class="mapping-help">
+          <h3>How to Map Columns</h3>
+          <p>Match each column from your Excel file to the appropriate field in the org chart:</p>
+          <ul>
+            <li><strong>Required fields</strong> (marked with *) must be mapped to continue.</li>
+            <li>Use the dropdown menus to select which Excel column corresponds to each field.</li>
+            <li>Click "Auto-Detect Columns" to let the system try to match columns automatically.</li>
+            <li>You can manually adjust any mapping that doesn't look right.</li>
+          </ul>
+        </div>
+        
+        <div class="mapping-actions">
+          <div class="action-buttons">
+            <button id="autoDetectBtn" class="btn btn-secondary">
+              <i class="fas fa-magic"></i> Auto-Detect Columns
+            </button>
+            <button id="clearMappingBtn" class="btn btn-outline">
+              <i class="fas fa-eraser"></i> Clear All Mappings
+            </button>
           </div>
-          <p>Use presets to quickly map columns or let us try to auto-detect the mapping.</p>
+          <button id="savePresetBtn" class="btn btn-outline">
+            <i class="fas fa-save"></i> Save as Preset
+          </button>
+        </div>
+        
+        <div class="sample-data-preview">
+          <h3>Sample Data Preview</h3>
+          <div id="sampleDataContainer" style="overflow-x: auto;">
+            <!-- Sample data table will be inserted here -->
+          </div>
         </div>
         
         <table class="mapping-table">
@@ -551,9 +657,14 @@
       
       // Column select cell
       const columnSelectCell = document.createElement('td');
+      const selectWrapper = document.createElement('div');
+      selectWrapper.style.display = 'flex';
+      selectWrapper.style.alignItems = 'center';
+      
       const select = document.createElement('select');
       select.id = `mapping-${field.id}`;
       select.dataset.field = field.id;
+      select.style.flexGrow = '1';
       
       // Add empty option
       const emptyOption = document.createElement('option');
@@ -562,25 +673,47 @@
       select.appendChild(emptyOption);
       
       // Add options for each column
-      rawHeaders.forEach(header => {
-        const option = document.createElement('option');
-        option.value = header;
-        option.textContent = header;
-        
-        // Select if mapped
-        if (mappingConfig[field.id] === header) {
-          option.selected = true;
-        }
-        
-        select.appendChild(option);
-      });
+      if (rawHeaders && rawHeaders.length > 0) {
+        rawHeaders.forEach(header => {
+          if (!header) return;
+          
+          const option = document.createElement('option');
+          option.value = header;
+          option.textContent = header;
+          
+          // Select if mapped
+          if (mappingConfig[field.id] === header) {
+            option.selected = true;
+          }
+          
+          select.appendChild(option);
+        });
+      }
       
       // Add change event
       select.addEventListener('change', () => {
         updateMapping(field.id, select.value);
       });
       
-      columnSelectCell.appendChild(select);
+      selectWrapper.appendChild(select);
+      
+      // Add clear button if a value is selected
+      if (mappingConfig[field.id]) {
+        const clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.className = 'clear-mapping-btn';
+        clearBtn.innerHTML = '<i class="fas fa-times"></i>';
+        clearBtn.title = 'Clear this mapping';
+        clearBtn.addEventListener('click', () => {
+          updateMapping(field.id, '');
+          select.value = '';
+          clearBtn.remove();
+          validateMapping();
+        });
+        selectWrapper.appendChild(clearBtn);
+      }
+      
+      columnSelectCell.appendChild(selectWrapper);
       row.appendChild(columnSelectCell);
       
       // Sample value cell
@@ -603,7 +736,7 @@
     // Update mapping
     function updateMapping(fieldId, columnName) {
       // Update mapping config
-      if (columnName) {
+      if (columnName && columnName.trim() !== '') {
         mappingConfig[fieldId] = columnName;
       } else {
         delete mappingConfig[fieldId];
@@ -611,16 +744,48 @@
       
       // Update sample value
       const sampleValueCell = document.getElementById(`sample-${fieldId}`);
-      if (sampleValueCell) {
-        if (columnName && sampleValues[columnName]) {
-          sampleValueCell.textContent = sampleValues[columnName];
-        } else {
-          sampleValueCell.textContent = '—';
-        }
+      
+      if (columnName && sampleValues[columnName]) {
+        sampleValueCell.textContent = sampleValues[columnName];
+      } else {
+        sampleValueCell.textContent = '—';
       }
+      
+      // Refresh the row to update UI elements
+      refreshMappingRow(fieldId);
       
       // Check if all required fields are mapped
       validateMapping();
+    }
+    
+    // Refresh a mapping row
+    function refreshMappingRow(fieldId) {
+      const select = document.getElementById(`mapping-${fieldId}`);
+      if (!select) return;
+      
+      const selectWrapper = select.parentElement;
+      
+      // Remove existing clear button if any
+      const existingClearBtn = selectWrapper.querySelector('.clear-mapping-btn');
+      if (existingClearBtn) {
+        existingClearBtn.remove();
+      }
+      
+      // Add clear button if a value is selected
+      if (mappingConfig[fieldId]) {
+        const clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.className = 'clear-mapping-btn';
+        clearBtn.innerHTML = '<i class="fas fa-times"></i>';
+        clearBtn.title = 'Clear this mapping';
+        clearBtn.addEventListener('click', () => {
+          updateMapping(fieldId, '');
+          select.value = '';
+          clearBtn.remove();
+          validateMapping();
+        });
+        selectWrapper.appendChild(clearBtn);
+      }
     }
     
     // Auto-detect mapping
@@ -741,6 +906,32 @@
       autoDetectMapping();
     });
     
+    // Handle clear mapping button
+    document.getElementById('clearMappingBtn').addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear all mappings?')) {
+        // Clear mapping config
+        mappingConfig = {};
+        
+        // Reset all select elements
+        requiredFields.concat(optionalFields).forEach(field => {
+          const select = document.getElementById(`mapping-${field.id}`);
+          if (select) {
+            select.value = '';
+            refreshMappingRow(field.id);
+          }
+          
+          // Reset sample values
+          const sampleValueCell = document.getElementById(`sample-${field.id}`);
+          if (sampleValueCell) {
+            sampleValueCell.textContent = '—';
+          }
+        });
+        
+        // Validate mapping
+        validateMapping();
+      }
+    });
+    
     // Handle save preset button
     savePresetBtn.addEventListener('click', () => {
       // This will be implemented in future
@@ -779,6 +970,62 @@
       }
     });
     
+    // Create sample data preview
+    function createSampleDataPreview() {
+      const container = document.getElementById('sampleDataContainer');
+      if (!container) return;
+      
+      // Clear container
+      container.innerHTML = '';
+      
+      // Check if we have data
+      if (!rawHeaders || !rawData || rawHeaders.length === 0 || rawData.length === 0) {
+        container.innerHTML = '<p>No sample data available</p>';
+        return;
+      }
+      
+      // Create table
+      const table = document.createElement('table');
+      table.className = 'sample-data-table';
+      
+      // Create header row
+      const thead = document.createElement('thead');
+      const headerRow = document.createElement('tr');
+      
+      rawHeaders.forEach(header => {
+        if (!header) return;
+        const th = document.createElement('th');
+        th.textContent = header;
+        headerRow.appendChild(th);
+      });
+      
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+      
+      // Create data rows (max 5)
+      const tbody = document.createElement('tbody');
+      const maxRows = Math.min(5, rawData.length);
+      
+      for (let i = 0; i < maxRows; i++) {
+        const row = document.createElement('tr');
+        const dataRow = rawData[i];
+        
+        if (Array.isArray(dataRow)) {
+          dataRow.forEach((cell, index) => {
+            if (index >= rawHeaders.length) return;
+            const td = document.createElement('td');
+            td.textContent = cell || '';
+            row.appendChild(td);
+          });
+        }
+        
+        tbody.appendChild(row);
+      }
+      
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+    
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
       // Check authentication
@@ -794,6 +1041,9 @@
       if (validProjectId) {
         // Load project data
         await loadProjectData();
+        
+        // Create sample data preview
+        createSampleDataPreview();
       }
     });
   </script>
