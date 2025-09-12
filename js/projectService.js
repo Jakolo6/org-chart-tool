@@ -1,5 +1,6 @@
-import { supabase } from './supabase.js';
-import { getCurrentUser } from './auth.js';
+// Access global functions
+const supabase = window.supabase;
+const getCurrentUser = window.getCurrentUser;
 
 /**
  * Service for managing projects and their data in Supabase
@@ -12,7 +13,7 @@ import { getCurrentUser } from './auth.js';
  * @param {string} [existingProjectId] - Optional existing project ID for updates
  * @returns {Promise<{project, version, error}>} - The created project or error
  */
-export async function createDraftProject(parsedData, projectInfo, existingProjectId = null) {
+async function createDraftProject(parsedData, projectInfo, existingProjectId = null) {
   try {
     console.log('Starting createDraftProject with:', { 
       projectInfo, 
@@ -518,3 +519,6 @@ export async function finalizeProject(projectId) {
     return { success: false, error };
   }
 }
+
+// Make functions available globally
+window.createDraftProject = createDraftProject;

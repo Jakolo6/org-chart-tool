@@ -1,5 +1,6 @@
-import { supabase } from './supabase.js';
-import { getCurrentUser } from './auth.js';
+// Access global functions
+const supabase = window.supabase;
+const getCurrentUser = window.getCurrentUser;
 
 /**
  * Service for managing org chart data in Supabase
@@ -14,7 +15,7 @@ import { getCurrentUser } from './auth.js';
  * @param {boolean} isTarget - Whether this is a target chart
  * @returns {Promise<{chart, version, error}>} - The created chart, version, and error if any
  */
-export async function saveOrgChart(name, description, chartData, isBaseline = false, isTarget = false) {
+async function saveOrgChart(name, description, chartData, isBaseline = false, isTarget = false) {
   try {
     // Get current user
     const { user, error: userError } = await getCurrentUser();
@@ -92,7 +93,7 @@ export async function saveOrgChart(name, description, chartData, isBaseline = fa
  * Get all org charts for the current user
  * @returns {Promise<{charts: Array, error: Error}>} - The org charts or error
  */
-export async function getOrgCharts() {
+async function getOrgCharts() {
   try {
     // Get current user
     const { user, profile, error: userError } = await getCurrentUser();
@@ -122,7 +123,7 @@ export async function getOrgCharts() {
  * @param {string} chartId - The chart ID
  * @returns {Promise<{chart, employees, error}>} - The chart, employees, and error if any
  */
-export async function getOrgChart(chartId) {
+async function getOrgChartById(chartId) {
   try {
     // Get current user
     const { user, error: userError } = await getCurrentUser();
@@ -300,7 +301,7 @@ export async function updateOrgChart(chartId, chartData, updates = {}) {
  * @param {string} chartId - The chart ID
  * @returns {Promise<{success, error}>} - Success status or error
  */
-export async function deleteOrgChart(chartId) {
+async function deleteOrgChart(chartId) {
   try {
     // Get current user
     const { user, error: userError } = await getCurrentUser();
@@ -371,3 +372,12 @@ export async function exportToExcel(chartId) {
     return { data: null, fileName: null, error };
   }
 }
+
+// Make functions available globally
+window.saveOrgChart = saveOrgChart;
+window.getOrgCharts = getOrgCharts;
+window.getOrgChartById = getOrgChartById;
+window.getOrgChartVersions = getOrgChartVersions;
+window.getOrgChartVersionById = getOrgChartVersionById;
+window.deleteOrgChart = deleteOrgChart;
+window.exportOrgChartToExcel = exportOrgChartToExcel;
