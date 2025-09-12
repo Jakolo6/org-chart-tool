@@ -541,17 +541,19 @@
         .substring(0, 2);
     }
     
-    // Check URL parameters for project ID
+    // Check URL parameters for project ID and mapping mode
     function checkUrlParams() {
       const urlParams = new URLSearchParams(window.location.search);
       projectId = urlParams.get('project');
+      const isManualMapping = urlParams.get('manual') === 'true';
       
       if (!projectId) {
         // No project ID provided, redirect to upload
         window.location.href = 'upload.html';
       }
       
-      return projectId;
+      console.log('URL parameters:', { projectId, isManualMapping });
+      return { projectId, isManualMapping };
     }
     
     // Load project data
@@ -1042,9 +1044,9 @@
       }
       
       // Check URL parameters
-      const validProjectId = checkUrlParams();
+      const { projectId, isManualMapping } = checkUrlParams();
       
-      if (validProjectId) {
+      if (projectId) {
         try {
           // Load project data
           await loadProjectData();
@@ -1055,8 +1057,16 @@
           // Make sure the mapping table is populated
           populateMappingTable();
           
-          // If no auto-detection happened, do it now
-          if (Object.keys(mappingConfig).length === 0) {
+          // If manual mapping was requested or no mapping exists, don't auto-detect
+          if (isManualMapping) {
+            console.log('Manual mapping requested - skipping auto-detection');
+            // Add a helpful message for manual mapping
+            document.querySelector('.mapping-help').innerHTML += `
+              <div style="margin-top: 10px; padding: 8px; background-color: #e6f7ff; border-left: 4px solid #1890ff;">
+                <strong>Manual Mapping Mode:</strong> Please map each column manually using the dropdown selectors below.
+              </div>
+            `;
+          } else if (Object.keys(mappingConfig).length === 0) {
             console.log('No mapping detected, running auto-detection...');
             autoDetectMapping();
           }

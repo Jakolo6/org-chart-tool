@@ -366,6 +366,20 @@
             </div>
           </div>
           
+          <div class="form-group">
+            <label>Column Mapping</label>
+            <div class="radio-group">
+              <label class="radio-label">
+                <input type="radio" name="mappingType" id="autoMapping" checked>
+                <span>Auto-detect columns</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="mappingType" id="manualMapping">
+                <span>Map columns manually</span>
+              </label>
+            </div>
+          </div>
+          
           <div class="form-actions">
             <button type="button" id="cancelBtn" class="btn btn-secondary">Cancel</button>
             <button type="submit" id="continueBtn" class="btn btn-primary" disabled>Continue</button>
@@ -764,6 +778,7 @@
       const name = projectName.value.trim();
       const description = projectDescription.value.trim();
       const isBaseline = document.getElementById('typeBaseline').checked;
+      const isManualMapping = document.getElementById('manualMapping').checked;
       
       if (!name) {
         showError('Please enter a project name.');
@@ -786,7 +801,8 @@
             isBaseline,
             isTarget: !isBaseline,
             fileName,
-            fileSize
+            fileSize,
+            skipAutoMapping: isManualMapping // Add flag for manual mapping
           },
           existingProjectId
         );
@@ -800,7 +816,12 @@
         
         // Redirect to mapping page
         updateProgress(100, 'Redirecting to column mapping...');
-        window.location.href = `mapping.html?project=${result.project.id}`;
+        window.location.href = `mapping.html?project=${result.project.id}&manual=${isManualMapping}`;
+        
+        // Add a note about manual mapping
+        if (isManualMapping) {
+          console.log('Manual mapping selected - redirecting to mapping page');
+        }
       } catch (error) {
         console.error('Error creating project:', error);
         hideLoading();
