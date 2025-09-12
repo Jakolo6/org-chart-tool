@@ -104,8 +104,8 @@ async function signUp(email, password, displayName) {
         return { user: authData.user, profile: updatedProfile, error: null };
       }
       
-      // Create new profile - don't use single() as it causes errors when no rows are returned
-      const { data: profileData, error: profileError } = await window.supabaseClient
+      // Create new profile - don't use select() or single() as they can cause errors
+      const { error: profileError } = await window.supabaseClient
         .from('profiles')
         .insert({
           id: authData.user.id,
@@ -349,7 +349,8 @@ async function updateProfile(userId, updates) {
     // If profile doesn't exist, create it
     if (!existingProfile) {
       console.log('Profile does not exist, creating new profile');
-      const { data: newProfile, error: insertError } = await window.supabaseClient
+      // Don't use select() or single() as they can cause errors
+      const { error: insertError } = await window.supabaseClient
         .from('profiles')
         .insert({
           id: userId,
@@ -368,8 +369,8 @@ async function updateProfile(userId, updates) {
       };
     }
     
-    // Update existing profile
-    const { data, error } = await window.supabaseClient
+    // Update existing profile - don't use select() or single() as they can cause errors
+    const { error } = await window.supabaseClient
       .from('profiles')
       .update(updates)
       .eq('id', userId);
