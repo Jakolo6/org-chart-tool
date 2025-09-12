@@ -548,13 +548,13 @@ function validateRelations(rows, workerColumn, managerColumn) {
     const workerId = row[workerColumn]?.toString().trim();
     const managerId = row[managerColumn]?.toString().trim();
     
-    if (!workerId) {
-      errors.push({ 
-        type: 'Missing Employee ID', 
-        message: 'An employee is missing their unique ID.', 
-        details: `Row ${index+2}` 
-      });
-    } else {
+    // Skip empty rows
+    if (!workerId && !managerId) {
+      return;
+    }
+    
+    // Only check for duplicates if there is a worker ID
+    if (workerId) {
       if (workerIdMap.has(workerId)) {
         errors.push({
           type: 'Duplicate Employee ID',
@@ -577,18 +577,21 @@ function validateRelations(rows, workerColumn, managerColumn) {
     if (!managerId) rootNodes.push(workerId);
   });
   
-  if (rootNodes.length > 1) {
-    errors.push({ 
-      type: 'Multiple CEOs Found', 
-      message: 'More than one person without a manager.', 
-      details: `Found ${rootNodes.length}: ${rootNodes.join(', ')}` 
-    });
-  } else if (rootNodes.length === 0 && rows.length > 0) {
-    errors.push({ 
-      type: 'No CEO Found', 
-      message: 'No employee without a manager.', 
-      details: 'Ensure at least one employee has a blank manager field.' 
-    });
+  // Only check for CEO issues if we have valid data
+  if (workerIdMap.size > 0) {
+    if (rootNodes.length > 1) {
+      errors.push({ 
+        type: 'Multiple CEOs Found', 
+        message: 'More than one person without a manager.', 
+        details: `Found ${rootNodes.length}: ${rootNodes.join(', ')}` 
+      });
+    } else if (rootNodes.length === 0) {
+      errors.push({ 
+        type: 'No CEO Found', 
+        message: 'No employee without a manager.', 
+        details: 'Ensure at least one employee has a blank manager field.' 
+      });
+    }
   }
   
   rows.forEach((row, index) => {
