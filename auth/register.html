@@ -232,10 +232,13 @@
                 // Check if user is already logged in
                 const checkExistingSession = async () => {
                     try {
-                        const { user } = await getCurrentUser();
+                        const { user, error } = await getCurrentUser();
                         
                         if (user) {
+                            console.log('User already logged in, redirecting to dashboard');
                             window.location.href = '../dashboard.html';
+                        } else {
+                            console.log('No active session, showing registration form');
                         }
                     } catch (error) {
                         console.error('Session check error:', error);

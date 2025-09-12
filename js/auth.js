@@ -267,12 +267,24 @@ async function getCurrentUser() {
   if (!initAuth()) return { user: null, profile: null, error: { message: 'Auth not initialized' } };
   
   try {
+    // First check the session
+    const { data: sessionData, error: sessionError } = await window.supabaseClient.auth.getSession();
+    
+    // If no session or session error, user is not logged in (this is normal)
+    if (sessionError || !sessionData?.session) {
+      // This is not an error, just means user is not logged in
+      return { user: null, profile: null, error: null };
+    }
+    
     // Get the user
     const { data: userData, error: userError } = await window.supabaseClient.auth.getUser();
     
     if (userError || !userData?.user) {
-      console.error('User error:', userError);
-      return { user: null, profile: null, error: userError };
+      // Only log as error if it's not an auth session missing error
+      if (userError && !userError.message?.includes('Auth session missing')) {
+        console.error('User error:', userError);
+      }
+      return { user: null, profile: null, error: null };
     }
     
     // Get the user's profile

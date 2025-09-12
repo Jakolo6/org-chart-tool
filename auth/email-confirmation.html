@@ -86,6 +86,13 @@
         // Access global supabase client
         const supabase = window.supabaseClient;
         
+        // Make sure supabaseClient is available
+        if (!window.supabaseClient) {
+            console.error('Supabase client not found. Make sure supabase.js is loaded first.');
+            showError('Authentication service unavailable. Please try again later.');
+            return;
+        }
+        
         const confirmationContent = document.getElementById('confirmationContent');
         
         // Function to parse hash parameters
@@ -142,7 +149,7 @@
                     // to prevent automatic login
                     
                     // Sign out first to clear any session
-                    await supabase.auth.signOut();
+                    await window.supabaseClient.auth.signOut();
                     
                     // Show success message
                     showSuccess();
