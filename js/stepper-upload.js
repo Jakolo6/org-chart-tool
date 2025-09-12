@@ -95,7 +95,7 @@ async function checkAuth() {
     const { user, profile, error } = await getCurrentUser();
     
     if (error || !user) {
-      window.location.href = 'login.html';
+      window.location.href = 'auth/login.html';
       return false;
     }
     
@@ -153,7 +153,7 @@ async function checkAuth() {
     return true;
   } catch (error) {
     console.error('Authentication error:', error);
-    window.location.href = 'login.html';
+    window.location.href = 'auth/login.html';
     return false;
   }
 }
