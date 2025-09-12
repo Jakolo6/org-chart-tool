@@ -14,21 +14,32 @@ import { getCurrentUser } from './auth.js';
  */
 export async function createDraftProject(parsedData, projectInfo, existingProjectId = null) {
   try {
+    console.log('Starting createDraftProject with:', { 
+      projectInfo, 
+      existingProjectId,
+      dataRowsCount: parsedData ? parsedData.length - 1 : 0 
+    });
+    
     // Get current user
     const { user, error: userError } = await getCurrentUser();
+    console.log('Current user:', user ? { id: user.id, email: user.email } : 'No user');
     
     if (userError || !user) {
+      console.error('Authentication error:', userError);
       throw new Error('User not authenticated');
     }
     
     // Extract headers (first row)
     const headers = parsedData[0];
+    console.log('Excel headers:', headers);
     
     // Extract data rows (all except first row)
     const dataRows = parsedData.slice(1);
+    console.log(`Extracted ${dataRows.length} data rows`);
     
     // If updating existing project
     if (existingProjectId) {
+      console.log('Updating existing project:', existingProjectId);
       return await updateExistingProject(existingProjectId, headers, dataRows, projectInfo, user.id);
     }
     
@@ -36,9 +47,11 @@ export async function createDraftProject(parsedData, projectInfo, existingProjec
     const projectData = {
       owner_id: user.id,
       name: projectInfo.name,
-      description: projectInfo.description || '',
-      created_by: user.id
+      description: projectInfo.description || ''
+      // Removed created_by as it might be causing issues
     };
+    
+    console.log('Project data to insert:', projectData);
     
     // Only add optional fields if they exist
     if (projectInfo.isBaseline !== undefined) {
@@ -50,19 +63,25 @@ export async function createDraftProject(parsedData, projectInfo, existingProjec
     }
     
     // Create new project
+    console.log('Inserting into org_charts table...');
     const { data: project, error: projectError } = await supabase
       .from('org_charts')
       .insert(projectData)
       .select()
       .single();
     
-    if (projectError) throw projectError;
+    if (projectError) {
+      console.error('Project creation error:', projectError);
+      throw projectError;
+    }
+    
+    console.log('Project created successfully:', project);
     
     // Create initial version with raw data
     const versionData = {
       chart_id: project.id,
-      version_number: 1,
-      created_by: user.id
+      version_number: 1
+      // Removed created_by as it might be causing issues
     };
     
     // Only add data fields if they exist
@@ -82,17 +101,30 @@ export async function createDraftProject(parsedData, projectInfo, existingProjec
       versionData.file_size = projectInfo.fileSize;
     }
     
+    console.log('Version data to insert:', { 
+      chart_id: versionData.chart_id,
+      version_number: versionData.version_number,
+      has_raw_data: !!versionData.raw_data,
+      has_raw_headers: !!versionData.raw_headers
+    });
+    
     const { data: version, error: versionError } = await supabase
       .from('chart_versions')
       .insert(versionData)
       .select()
       .single();
     
-    if (versionError) throw versionError;
+    if (versionError) {
+      console.error('Version creation error:', versionError);
+      throw versionError;
+    }
+    
+    console.log('Version created successfully:', version);
     
     // Update user's last accessed project
     try {
       await updateLastAccessedProject(user.id, project.id);
+      console.log('Updated last accessed project');
     } catch (e) {
       console.warn('Could not update last accessed project:', e);
       // Non-critical error, continue
