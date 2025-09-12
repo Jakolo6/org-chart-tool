@@ -1,6 +1,11 @@
 // Use the supabase instance from supabase.js
 // Access supabase from the global scope
-const supabase = window.supabase;
+const supabase = window.supabase || {};
+
+// Make sure supabase is available
+if (!window.supabase) {
+  console.error('Supabase client not found. Make sure supabase.js is loaded first.');
+}
 
 /**
  * Authentication module for handling user registration, login, and profile management

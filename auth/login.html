@@ -112,9 +112,20 @@
     </div>
     
     <script src="../js/supabase.js"></script>
-    <script src="../js/auth.js"></script>
+    <script src="../js/auth.js" defer></script>
     
     <script>
+        // Make sure functions are available
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.signIn || !window.getCurrentUser) {
+                console.error('Auth functions not available. Trying to load them again...');
+                // Try to reload auth.js
+                const script = document.createElement('script');
+                script.src = '../js/auth.js';
+                document.head.appendChild(script);
+            }
+        });
+        
         // Access global functions
         const signIn = window.signIn;
         const getCurrentUser = window.getCurrentUser;
@@ -137,8 +148,16 @@
             }
         };
         
-        // Run session check
-        checkExistingSession();
+        // Run session check when everything is loaded
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (window.getCurrentUser) {
+                    checkExistingSession();
+                } else {
+                    console.error('getCurrentUser function not available');
+                }
+            }, 500); // Give a small delay to ensure everything is loaded
+        });
         
         // Handle form submission
         loginForm.addEventListener('submit', async (e) => {
