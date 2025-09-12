@@ -536,6 +536,10 @@ function confirmColumnMapping() {
     // since the structure should be the same
     showToast('✓ Target file validated successfully!');
   }
+
+// Helper function to check if a value is blank or empty
+function isBlankOrEmpty(value) {
+  return value === undefined || value === null || value === '';
 }
 
 // Validation functions
@@ -544,28 +548,30 @@ function validateRelations(rows, workerColumn, managerColumn) {
   const workerIdMap = new Map();
   const rootNodes = [];
   
+  // First pass: check for duplicates, blanks, and self-references
   rows.forEach((row, index) => {
     const workerId = row[workerColumn]?.toString().trim();
     const managerId = row[managerColumn]?.toString().trim();
     
     // Skip empty rows
-    if (!workerId && !managerId) {
+    if (isBlankOrEmpty(workerId) && isBlankOrEmpty(managerId)) {
       return;
     }
     
     // Only check for duplicates if there is a worker ID
-    if (workerId) {
+    if (!isBlankOrEmpty(workerId)) {
       if (workerIdMap.has(workerId)) {
         errors.push({
           type: 'Duplicate Employee ID',
-          message: `The employee ID "${workerId}" is used more than once.`,
-          details: `Row ${index+2} duplicates row ${workerIdMap.get(workerId).rowIndex+2}`
+          message: `The employee ID "${workerId}" is used more than once. All IDs must be unique.`,
+          details: `Row ${index+2} is a duplicate of row ${workerIdMap.get(workerId).rowIndex+2}`
         });
       } else {
         workerIdMap.set(workerId, { row, rowIndex: index });
       }
     }
     
+    // Check for self-reference
     if (workerId && managerId && workerId === managerId) {
       errors.push({ 
         type: 'Self-Reference Error', 
@@ -574,45 +580,56 @@ function validateRelations(rows, workerColumn, managerColumn) {
       });
     }
     
-    if (!managerId) rootNodes.push(workerId);
+    // Identify potential root nodes
+    if (isBlankOrEmpty(managerId) && !isBlankOrEmpty(workerId)) {
+      rootNodes.push(workerId);
+    }
   });
   
-  // Only check for CEO issues if we have valid data
+  // Check for multiple root nodes or no root nodes
   if (workerIdMap.size > 0) {
     if (rootNodes.length > 1) {
       errors.push({ 
         type: 'Multiple CEOs Found', 
-        message: 'More than one person without a manager.', 
-        details: `Found ${rootNodes.length}: ${rootNodes.join(', ')}` 
+        message: 'Your organization has more than one person without a manager. There should be only one CEO.', 
+        details: `Found ${rootNodes.length} top-level employees: ${rootNodes.join(', ')}` 
       });
     } else if (rootNodes.length === 0) {
       errors.push({ 
         type: 'No CEO Found', 
-        message: 'No employee without a manager.', 
-        details: 'Ensure at least one employee has a blank manager field.' 
+        message: 'No employee was found without a manager. Your organization must have one top-level person (CEO).', 
+        details: 'Please ensure at least one employee has a blank manager field.' 
       });
     }
   }
   
+  // Second pass: check manager references
   rows.forEach((row, index) => {
+    const workerId = row[workerColumn]?.toString().trim();
     const managerId = row[managerColumn]?.toString().trim();
-    if (managerId && !workerIdMap.has(managerId)) {
-      errors.push({
-        type: 'Manager Does Not Exist',
-        message: `Manager listed does not exist as an employee.`,
-        details: `Row ${index+2}: Manager "${managerId}" for Employee "${row[workerColumn]}".`
-      });
+    
+    if (!isBlankOrEmpty(managerId) && !isBlankOrEmpty(workerId)) {
+      if (!workerIdMap.has(managerId)) {
+        errors.push({
+          type: 'Manager Does Not Exist',
+          message: `A manager listed for an employee does not exist as an employee in the file.`,
+          details: `Row ${index+2}: Manager "${managerId}" for Employee "${workerId}" is not a valid employee.`
+        });
+      }
     }
   });
   
+  // Third pass: check for cycles
   const cycles = detectCycles(rows, workerColumn, managerColumn);
-  cycles.forEach(cycle => {
-    errors.push({ 
-      type: 'Circular Reference Found', 
-      message: 'A circular reporting loop was detected.', 
-      details: `Cycle: ${cycle.join(' → ')} → ${cycle[0]}` 
+  if (cycles.length > 0) {
+    cycles.forEach(cycle => {
+      errors.push({ 
+        type: 'Circular Reference Found', 
+        message: 'A circular reporting structure (a loop) was detected.', 
+        details: `Cycle path: ${cycle.join(' → ')} → ${cycle[0]}` 
+      });
     });
-  });
+  }
   
   return errors;
 }
@@ -646,37 +663,81 @@ function detectCycles(rows, workerColumn, managerColumn) {
     }
   }
   
-  const unique = [];
-  const seen = new Set();
+  const uniqueCycles = [];
+  const seenCycles = new Set();
   cycles.forEach(cycle => {
-    const key = [...cycle].sort().join(',');
-    if (!seen.has(key)) { 
-      unique.push(cycle); 
-      seen.add(key); 
+    const sortedCycle = [...cycle].sort().join(',');
+    if (!seenCycles.has(sortedCycle)) {
+      uniqueCycles.push(cycle);
+      seenCycles.add(sortedCycle);
     }
   });
   
-  return unique;
+  return uniqueCycles;
 }
 
-function findCycleUtil(node, visited, stack, path, adjList, cycles) {
+function findCycleUtil(node, visited, recursionStack, path, adjList, cycles) {
   visited.add(node);
-  stack.add(node);
+  recursionStack.add(node);
   path.push(node);
   
   const neighbors = adjList.get(node) || [];
-  for (const n of neighbors) {
-    if (stack.has(n)) {
-      const cycle = path.slice(path.indexOf(n));
+  for (const neighbor of neighbors) {
+    if (recursionStack.has(neighbor)) {
+      const cycle = path.slice(path.indexOf(neighbor));
       cycles.push(cycle);
-    } else if (!visited.has(n)) {
-      findCycleUtil(n, visited, stack, path, adjList, cycles);
+    } else if (!visited.has(neighbor)) {
+      findCycleUtil(neighbor, visited, recursionStack, path, adjList, cycles);
     }
   }
   
-  stack.delete(node);
+  recursionStack.delete(node);
   path.pop();
   return false;
+}
+
+// Confirm column mapping
+function confirmColumnMapping() {
+  const mapping = {
+    employeeName: document.getElementById('employeeNameMapping').value,
+    manager: document.getElementById('managerMapping').value,
+    jobTitle: document.getElementById('jobTitleMapping').value,
+    fte: document.getElementById('fteMapping').value,
+    location: document.getElementById('locationMapping').value,
+    jobFamily: document.getElementById('jobFamilyMapping').value,
+    managementLevel: document.getElementById('managementLevelMapping').value
+  };
+  
+  if (!mapping.employeeName || !mapping.manager) {
+    alert('Worker and Manager columns are required. Please select them.');
+    return;
+  }
+  
+  // Validate the current file's rows against mapping
+  const errors = validateRelations(currentFileData.slice(1), mapping.employeeName, mapping.manager);
+  
+  if (errors.length > 0) {
+    showValidationErrors(errors);
+    return;
+  }
+  
+  // If validation passes
+  columnMappingModal.classList.remove('show');
+  
+  if (currentFileType === 'baseline') {
+    columnMapping = mapping;
+    markStepCompleted(2);
+    showToast('✓ Status Quo file validated successfully!');
+    
+    // Enable target upload and next button
+    enableTargetUpload();
+    step2NextBtn.disabled = false;
+  } else {
+    // For target file, store mapping in the same format
+    // but we'll use the same columnMapping object for both files
+    // since the structure should be the same
+    showToast('✓ Target file validated successfully!');
+  }
 }
 
 // Show validation errors
