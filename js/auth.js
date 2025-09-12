@@ -104,32 +104,29 @@ async function signUp(email, password, displayName) {
         return { user: authData.user, profile: updatedProfile, error: null };
       }
       
-      // Create new profile
-      const { data: profile, error: profileError } = await window.supabaseClient
+      // Create new profile - don't use single() as it causes errors when no rows are returned
+      const { data: profileData, error: profileError } = await window.supabaseClient
         .from('profiles')
-        .insert([
-          {
-            id: authData.user.id,
-            display_name: displayName,
-            email: email,
-            created_at: new Date().toISOString()
-          }
-        ])
-        .select()
-        .single();
+        .insert({
+          id: authData.user.id,
+          display_name: displayName,
+          email: email,
+          created_at: new Date().toISOString()
+        });
       
       if (profileError) {
         console.error('Profile creation error:', profileError);
-        // Try a simpler approach
+        // Try a simpler approach with minimal fields
         const { error: simpleProfileError } = await window.supabaseClient
           .from('profiles')
           .insert({
             id: authData.user.id,
-            display_name: authData.user.email.split('@')[0]
+            display_name: displayName || authData.user.email.split('@')[0]
           });
           
         if (simpleProfileError) {
           console.error('Simple profile creation also failed:', simpleProfileError);
+          // Even if profile creation fails, the account is created and user can still log in
           return { 
             user: authData.user,
             partialSuccess: true,
@@ -138,10 +135,27 @@ async function signUp(email, password, displayName) {
           };
         }
         
-        return { user: authData.user, profile: { id: authData.user.id }, error: null };
+        // Profile created with minimal fields
+        return { 
+          user: authData.user, 
+          profile: { 
+            id: authData.user.id,
+            display_name: displayName || authData.user.email.split('@')[0]
+          }, 
+          error: null 
+        };
       }
       
-      return { user: authData.user, profile, error: null };
+      // Profile created successfully
+      return { 
+        user: authData.user, 
+        profile: { 
+          id: authData.user.id,
+          display_name: displayName,
+          email: email
+        }, 
+        error: null 
+      };
     } catch (profileError) {
       console.error('Profile creation exception:', profileError);
       return { 
@@ -320,16 +334,56 @@ async function updateProfile(userId, updates) {
   if (!initAuth()) return { profile: null, error: { message: 'Auth not initialized' } };
   
   try {
+    // First check if profile exists
+    const { data: existingProfile, error: checkError } = await window.supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle(); // Use maybeSingle instead of single to avoid errors
+    
+    if (checkError) {
+      console.error('Error checking profile:', checkError);
+      return { profile: null, error: checkError };
+    }
+    
+    // If profile doesn't exist, create it
+    if (!existingProfile) {
+      console.log('Profile does not exist, creating new profile');
+      const { data: newProfile, error: insertError } = await window.supabaseClient
+        .from('profiles')
+        .insert({
+          id: userId,
+          ...updates,
+          created_at: new Date().toISOString()
+        });
+      
+      if (insertError) {
+        console.error('Error creating profile:', insertError);
+        return { profile: null, error: insertError };
+      }
+      
+      return { 
+        profile: { id: userId, ...updates },
+        error: null 
+      };
+    }
+    
+    // Update existing profile
     const { data, error } = await window.supabaseClient
       .from('profiles')
       .update(updates)
-      .eq('id', userId)
-      .select()
-      .single();
+      .eq('id', userId);
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error updating profile:', error);
+      return { profile: null, error };
+    }
     
-    return { profile: data, error: null };
+    // Return updated profile
+    return { 
+      profile: { ...existingProfile, ...updates },
+      error: null 
+    };
   } catch (error) {
     console.error('Error updating profile:', error);
     return { profile: null, error };
