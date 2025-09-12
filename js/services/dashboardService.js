@@ -1,6 +1,5 @@
 // Access global functions
 const supabase = window.supabaseClient;
-const getCurrentUser = window.getCurrentUser;
 
 /**
  * Get dashboard statistics for the current user

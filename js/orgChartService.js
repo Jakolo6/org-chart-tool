@@ -183,7 +183,7 @@ async function getOrgChartById(chartId) {
  * @param {Object} updates - Updates to the chart metadata
  * @returns {Promise<{chart, error}>} - The updated chart or error
  */
-export async function updateOrgChart(chartId, chartData, updates = {}) {
+async function updateOrgChart(chartId, chartData, updates = {}) {
   try {
     // Get current user
     const { user, error: userError } = await getCurrentUser();
@@ -344,7 +344,7 @@ async function deleteOrgChart(chartId) {
  * @param {string} chartId - The chart ID
  * @returns {Promise<{data, fileName, error}>} - The Excel data, filename, or error
  */
-export async function exportToExcel(chartId) {
+async function exportToExcel(chartId) {
   try {
     // Get the chart data
     const { chart, employees, error } = await getOrgChart(chartId);
@@ -380,4 +380,5 @@ window.getOrgChartById = getOrgChartById;
 window.getOrgChartVersions = getOrgChartVersions;
 window.getOrgChartVersionById = getOrgChartVersionById;
 window.deleteOrgChart = deleteOrgChart;
-window.exportOrgChartToExcel = exportOrgChartToExcel;
+window.updateOrgChart = updateOrgChart;
+window.exportToExcel = exportToExcel;
