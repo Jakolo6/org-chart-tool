@@ -1,5 +1,5 @@
 import { supabase } from './supabase.js';
-import { getCurrentUser } from './auth-user-based.js';
+import { getCurrentUser } from './auth.js';
 
 /**
  * Service for managing org chart data in Supabase

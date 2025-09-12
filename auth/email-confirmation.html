@@ -134,14 +134,16 @@
                 
                 if (params.access_token && params.type === 'signup') {
                     // The user has clicked the confirmation link
-                    // Supabase automatically handles the confirmation
-                    // We just need to show a success message
+                    // Supabase automatically handles the confirmation, but we need to sign out
+                    // to prevent automatic login
+                    
+                    // Sign out first to clear any session
+                    await supabase.auth.signOut();
+                    
+                    // Show success message
                     showSuccess();
                     
-                    // Redirect to login after 3 seconds
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 3000);
+                    // No automatic redirect - let the user click the sign in button
                 } else {
                     showError('Invalid confirmation link. Please check your email and try again.');
                 }

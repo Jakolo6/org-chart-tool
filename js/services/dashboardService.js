@@ -1,5 +1,5 @@
 import { supabase } from '../supabase.js';
-import { getCurrentUser } from '../auth-user-based.js';
+import { getCurrentUser } from '../auth.js';
 
 /**
  * Get dashboard statistics for the current user
