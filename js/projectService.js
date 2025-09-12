@@ -41,7 +41,6 @@ export async function createDraftProject(parsedData, projectInfo, existingProjec
         description: projectInfo.description || '',
         is_baseline: projectInfo.isBaseline,
         is_target: projectInfo.isTarget,
-        status: 'draft', // Initial status is draft
         created_by: user.id
       })
       .select()
@@ -212,7 +211,6 @@ export async function getProjects(includeDeleted = false) {
         employees (count)
       `)
       .eq('owner_id', user.id)
-      .eq('status', 'ready') // Only get ready projects, not drafts
       .order('updated_at', { ascending: false });
     
     // Exclude deleted projects unless specified
@@ -277,17 +275,15 @@ export async function getProject(projectId) {
 }
 
 /**
- * Update project status
+ * Update project timestamp
  * @param {string} projectId - The project ID
- * @param {string} status - The new status ('draft', 'mapped', 'ready')
  * @returns {Promise<{success, error}>} - Success status or error
  */
-export async function updateProjectStatus(projectId, status) {
+export async function updateProjectTimestamp(projectId) {
   try {
     const { error } = await supabase
       .from('org_charts')
       .update({
-        status,
         updated_at: new Date().toISOString()
       })
       .eq('id', projectId);
@@ -296,7 +292,7 @@ export async function updateProjectStatus(projectId, status) {
     
     return { success: true, error: null };
   } catch (error) {
-    console.error('Error updating project status:', error);
+    console.error('Error updating project timestamp:', error);
     return { success: false, error };
   }
 }
@@ -359,8 +355,8 @@ export async function saveColumnMapping(projectId, mapping) {
     
     if (error) throw error;
     
-    // Update project status to 'mapped'
-    await updateProjectStatus(projectId, 'mapped');
+    // Update project timestamp
+    await updateProjectTimestamp(projectId);
     
     return { success: true, error: null };
   } catch (error) {
@@ -418,11 +414,10 @@ export async function saveEmployeeData(projectId, employees) {
  */
 export async function finalizeProject(projectId) {
   try {
-    // Update project status to 'ready'
+    // Update project timestamp
     const { error } = await supabase
       .from('org_charts')
       .update({
-        status: 'ready',
         updated_at: new Date().toISOString()
       })
       .eq('id', projectId);
