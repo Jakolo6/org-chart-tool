@@ -200,147 +200,145 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase.js"></script>
-    <script src="../js/auth.js" defer></script>
+    <script>
+        // Wait for supabase.js to initialize
+        setTimeout(() => {
+            const authScript = document.createElement('script');
+            authScript.src = '../js/auth.js';
+            document.head.appendChild(authScript);
+        }, 100);
+    </script>
     
     <script>
-        // Make sure functions are available
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!window.signUp || !window.getCurrentUser) {
-                console.error('Auth functions not available. Trying to load them again...');
-                // Try to reload auth.js
-                const script = document.createElement('script');
-                script.src = '../js/auth.js';
-                document.head.appendChild(script);
-            }
-        });
-        
-        // Access global functions
-        const signUp = window.signUp;
-        const getCurrentUser = window.getCurrentUser;
-        
-        const registerForm = document.getElementById('registerForm');
-        const registerError = document.getElementById('registerError');
-        const registerSuccess = document.getElementById('registerSuccess');
-        const registerSpinner = document.getElementById('registerSpinner');
-        const submitButton = registerForm.querySelector('button[type="submit"]');
-        const steps = document.querySelectorAll('.step');
-        
-        // Check if user is already logged in
-        const checkExistingSession = async () => {
-            try {
-                const { user } = await getCurrentUser();
-                
-                if (user) {
-                    window.location.href = '../dashboard.html';
-                }
-            } catch (error) {
-                console.error('Session check error:', error);
-            }
-        };
-        
-        // Run session check when everything is loaded
+        // Initialize after all scripts are loaded
         window.addEventListener('load', () => {
             setTimeout(() => {
-                if (window.getCurrentUser) {
-                    checkExistingSession();
-                } else {
-                    console.error('getCurrentUser function not available');
-                }
-            }, 500); // Give a small delay to ensure everything is loaded
-        });
-        
-        // Password validation
-        const passwordInput = document.getElementById('password');
-        passwordInput.addEventListener('input', () => {
-            const password = passwordInput.value;
-            const hasMinLength = password.length >= 8;
-            const hasLetter = /[a-zA-Z]/.test(password);
-            const hasNumber = /[0-9]/.test(password);
-            
-            if (password && (!hasMinLength || !hasLetter || !hasNumber)) {
-                passwordInput.setCustomValidity('Password must be at least 8 characters with letters and numbers');
-            } else {
-                passwordInput.setCustomValidity('');
-            }
-        });
-        
-        // Handle form submission
-        registerForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const displayName = document.getElementById('displayName').value;
-            
-            // Show loading state
-            registerError.textContent = '';
-            registerSuccess.textContent = '';
-            registerSpinner.style.display = 'inline-block';
-            submitButton.disabled = true;
-            
-            try {
-                const { user, error, message, emailConfirmationRequired, partialSuccess } = await signUp(email, password, displayName);
+                // Access global functions
+                const signUp = window.signUp;
+                const getCurrentUser = window.getCurrentUser;
                 
-                if (error) {
-                    // Handle error with user-friendly message
-                    if (error?.message) {
-                        if (error.message.includes('already registered')) {
-                            registerError.textContent = 'This email is already registered. Please log in or use a different email.';
-                        } else if (error.message.includes('password')) {
-                            registerError.textContent = 'Password does not meet requirements. Please use at least 8 characters with letters and numbers.';
-                        } else if (error.message.includes('Too many registration attempts')) {
-                            registerError.textContent = error.message;
-                        } else {
-                            registerError.textContent = error.message;
-                        }
-                    } else {
-                        registerError.textContent = 'Failed to register. Please try again.';
-                    }
+                if (!signUp || !getCurrentUser) {
+                    console.error('Auth functions not available after loading');
                     return;
                 }
                 
-                // Handle email confirmation required case
-                if (emailConfirmationRequired || !user) {
-                    // Show success message for email confirmation
-                    registerSuccess.textContent = message || 'Please check your email to confirm your account.';
-                }
+                const registerForm = document.getElementById('registerForm');
+                const registerError = document.getElementById('registerError');
+                const registerSuccess = document.getElementById('registerSuccess');
+                const registerSpinner = document.getElementById('registerSpinner');
+                const submitButton = registerForm.querySelector('button[type="submit"]');
+                const steps = document.querySelectorAll('.step');
                 
-                // Update steps to show verification step
-                steps[0].classList.remove('active');
-                steps[1].classList.add('active');
+                // Check if user is already logged in
+                const checkExistingSession = async () => {
+                    try {
+                        const { user } = await getCurrentUser();
+                        
+                        if (user) {
+                            window.location.href = '../dashboard.html';
+                        }
+                    } catch (error) {
+                        console.error('Session check error:', error);
+                    }
+                };
                 
-                // Show success message
-                registerSuccess.textContent = 'Account created successfully! Please check your email to verify your account.';
-                registerForm.reset();
+                // Run session check
+                checkExistingSession();
                 
-                // If we have partial success (e.g., user created but profile/org failed)
-                if (partialSuccess && message) {
-                    console.warn('Partial registration success:', message);
-                    registerError.textContent = message;
-                    registerError.style.color = '#f59e0b'; // Warning color
-                }
-                
-                // Disable form fields
-                Array.from(registerForm.elements).forEach(element => {
-                    if (element.tagName !== 'BUTTON') {
-                        element.disabled = true;
+                // Password validation
+                const passwordInput = document.getElementById('password');
+                passwordInput.addEventListener('input', () => {
+                    const password = passwordInput.value;
+                    const hasMinLength = password.length >= 8;
+                    const hasLetter = /[a-zA-Z]/.test(password);
+                    const hasNumber = /[0-9]/.test(password);
+                    
+                    if (password && (!hasMinLength || !hasLetter || !hasNumber)) {
+                        passwordInput.setCustomValidity('Password must be at least 8 characters with letters and numbers');
+                    } else {
+                        passwordInput.setCustomValidity('');
                     }
                 });
                 
-                // Change button text
-                submitButton.querySelector('span').textContent = 'Check Email';
-                submitButton.addEventListener('click', () => {
-                    window.location.href = 'login.html';
-                }, { once: true });
-                
-            } catch (error) {
-                registerError.textContent = 'An unexpected error occurred. Please try again.';
-                console.error('Registration error:', error);
-            } finally {
-                // Hide loading state
-                registerSpinner.style.display = 'none';
-                submitButton.disabled = false;
-            }
+                // Handle form submission
+                registerForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    const displayName = document.getElementById('displayName').value;
+                    
+                    // Show loading state
+                    registerError.textContent = '';
+                    registerSuccess.textContent = '';
+                    registerSpinner.style.display = 'inline-block';
+                    submitButton.disabled = true;
+                    
+                    try {
+                        const { user, error, message, emailConfirmationRequired, partialSuccess } = await signUp(email, password, displayName);
+                        
+                        if (error) {
+                            // Handle error with user-friendly message
+                            if (error?.message) {
+                                if (error.message.includes('already registered')) {
+                                    registerError.textContent = 'This email is already registered. Please log in or use a different email.';
+                                } else if (error.message.includes('password')) {
+                                    registerError.textContent = 'Password does not meet requirements. Please use at least 8 characters with letters and numbers.';
+                                } else if (error.message.includes('Too many registration attempts')) {
+                                    registerError.textContent = error.message;
+                                } else {
+                                    registerError.textContent = error.message;
+                                }
+                            } else {
+                                registerError.textContent = 'Failed to register. Please try again.';
+                            }
+                            return;
+                        }
+                        
+                        // Handle email confirmation required case
+                        if (emailConfirmationRequired || !user) {
+                            // Show success message for email confirmation
+                            registerSuccess.textContent = message || 'Please check your email to confirm your account.';
+                        }
+                        
+                        // Update steps to show verification step
+                        steps[0].classList.remove('active');
+                        steps[1].classList.add('active');
+                        
+                        // Show success message
+                        registerSuccess.textContent = 'Account created successfully! Please check your email to verify your account.';
+                        registerForm.reset();
+                        
+                        // If we have partial success (e.g., user created but profile/org failed)
+                        if (partialSuccess && message) {
+                            console.warn('Partial registration success:', message);
+                            registerError.textContent = message;
+                            registerError.style.color = '#f59e0b'; // Warning color
+                        }
+                        
+                        // Disable form fields
+                        Array.from(registerForm.elements).forEach(element => {
+                            if (element.tagName !== 'BUTTON') {
+                                element.disabled = true;
+                            }
+                        });
+                        
+                        // Change button text
+                        submitButton.querySelector('span').textContent = 'Check Email';
+                        submitButton.addEventListener('click', () => {
+                            window.location.href = 'login.html';
+                        }, { once: true });
+                        
+                    } catch (error) {
+                        registerError.textContent = 'An unexpected error occurred. Please try again.';
+                        console.error('Registration error:', error);
+                    } finally {
+                        // Hide loading state
+                        registerSpinner.style.display = 'none';
+                        submitButton.disabled = false;
+                    }
+                });
+            }, 500); // Give a small delay to ensure everything is loaded
         });
     </script>
 </body>

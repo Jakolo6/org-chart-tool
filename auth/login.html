@@ -111,115 +111,109 @@
         </div>
     </div>
     
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/supabase.js"></script>
-    <script src="../js/auth.js" defer></script>
+    <script>
+        // Wait for supabase.js to initialize
+        setTimeout(() => {
+            const authScript = document.createElement('script');
+            authScript.src = '../js/auth.js';
+            document.head.appendChild(authScript);
+        }, 100);
+    </script>
     
     <script>
-        // Make sure functions are available
-        document.addEventListener('DOMContentLoaded', () => {
-            if (!window.signIn || !window.getCurrentUser) {
-                console.error('Auth functions not available. Trying to load them again...');
-                // Try to reload auth.js
-                const script = document.createElement('script');
-                script.src = '../js/auth.js';
-                document.head.appendChild(script);
-            }
-        });
-        
-        // Access global functions
-        const signIn = window.signIn;
-        const getCurrentUser = window.getCurrentUser;
-        
-        const loginForm = document.getElementById('loginForm');
-        const loginError = document.getElementById('loginError');
-        const loginSpinner = document.getElementById('loginSpinner');
-        const submitButton = loginForm.querySelector('button[type="submit"]');
-        
-        // Check if user is already logged in
-        const checkExistingSession = async () => {
-            try {
-                const { user } = await getCurrentUser();
-                
-                if (user) {
-                    window.location.href = '../dashboard.html';
-                }
-            } catch (error) {
-                console.error('Session check error:', error);
-            }
-        };
-        
-        // Run session check when everything is loaded
+        // Initialize after all scripts are loaded
         window.addEventListener('load', () => {
             setTimeout(() => {
-                if (window.getCurrentUser) {
-                    checkExistingSession();
-                } else {
-                    console.error('getCurrentUser function not available');
-                }
-            }, 500); // Give a small delay to ensure everything is loaded
-        });
-        
-        // Handle form submission
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            // Show loading state
-            loginError.textContent = '';
-            loginSpinner.style.display = 'inline-block';
-            submitButton.disabled = true;
-            
-            try {
-                const { user, profile, organization, error, message, partialSuccess } = await signIn(email, password);
+                // Access global functions
+                const signIn = window.signIn;
+                const getCurrentUser = window.getCurrentUser;
                 
-                if (error || !user) {
-                    // Handle error with user-friendly message
-                    if (error?.message) {
-                        if (error.message.includes('Invalid login')) {
-                            loginError.textContent = 'Invalid email or password. Please try again.';
-                        } else if (error.message.includes('Email not confirmed')) {
-                            loginError.textContent = 'Please confirm your email address before logging in.';
-                        } else {
-                            loginError.textContent = error.message;
-                        }
-                    } else {
-                        loginError.textContent = 'Failed to login. Please check your credentials.';
-                    }
+                if (!signIn || !getCurrentUser) {
+                    console.error('Auth functions not available after loading');
                     return;
                 }
                 
-                if (partialSuccess && message) {
-                    // Handle partial success (e.g., logged in but profile not loaded)
-                    console.warn('Partial login success:', message);
-                }
+                const loginForm = document.getElementById('loginForm');
+                const loginError = document.getElementById('loginError');
+                const loginSpinner = document.getElementById('loginSpinner');
+                const submitButton = loginForm.querySelector('button[type="submit"]');
                 
-                // Store user data in session storage
-                sessionStorage.setItem('currentUser', JSON.stringify({
-                    id: user.id,
-                    email: user.email,
-                    displayName: profile?.display_name,
-                    organizationId: profile?.organization_id,
-                    organizationName: organization?.name
-                }));
+                // Check if user is already logged in
+                const checkExistingSession = async () => {
+                    try {
+                        const { user } = await getCurrentUser();
+                        
+                        if (user) {
+                            window.location.href = '../dashboard.html';
+                        }
+                    } catch (error) {
+                        console.error('Session check error:', error);
+                    }
+                };
                 
-                // Show success message briefly before redirect
-                loginError.textContent = 'Login successful! Redirecting...';
-                loginError.style.color = '#10b981';
+                // Run session check
+                checkExistingSession();
                 
-                // Redirect to the dashboard on successful login
-                setTimeout(() => {
-                    window.location.href = '../dashboard.html';
-                }, 500);
-            } catch (error) {
-                loginError.textContent = 'An unexpected error occurred. Please try again.';
-                console.error('Login error:', error);
-            } finally {
-                // Hide loading state
-                loginSpinner.style.display = 'none';
-                submitButton.disabled = false;
-            }
+                // Handle form submission
+                loginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    
+                    // Show loading state
+                    loginError.textContent = '';
+                    loginSpinner.style.display = 'inline-block';
+                    submitButton.disabled = true;
+                    
+                    try {
+                        const { user, profile, organization, error, message, partialSuccess } = await signIn(email, password);
+                        
+                        if (error || !user) {
+                            // Handle error with user-friendly message
+                            if (error?.message) {
+                                if (error.message.includes('Invalid login')) {
+                                    loginError.textContent = 'Invalid email or password. Please try again.';
+                                } else if (error.message.includes('Email not confirmed')) {
+                                    loginError.textContent = 'Please confirm your email address before logging in.';
+                                } else {
+                                    loginError.textContent = error.message;
+                                }
+                            } else {
+                                loginError.textContent = 'Failed to login. Please check your credentials.';
+                            }
+                            return;
+                        }
+                        
+                        if (partialSuccess && message) {
+                            // Handle partial success (e.g., logged in but profile not loaded)
+                            console.warn('Partial login success:', message);
+                        }
+                        
+                        // Store user data in session storage
+                        sessionStorage.setItem('currentUser', JSON.stringify({
+                            id: user.id,
+                            email: user.email,
+                            displayName: profile?.display_name,
+                            organizationId: organization?.id,
+                            organizationName: organization?.name
+                        }));
+                        
+                        // Redirect to dashboard
+                        window.location.href = '../dashboard.html';
+                        
+                    } catch (error) {
+                        loginError.textContent = 'An unexpected error occurred. Please try again.';
+                        console.error('Login error:', error);
+                    } finally {
+                        // Hide loading state
+                        loginSpinner.style.display = 'none';
+                        submitButton.disabled = false;
+                    }
+                });
+            }, 500); // Give a small delay to ensure everything is loaded
         });
     </script>
 </body>
