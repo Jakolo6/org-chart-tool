@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="40px" viewBox="0 0 200 40" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Org Chart Tool</title>
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g transform="translate(10.000000, 5.000000)">
+            <rect stroke="#0066CC" stroke-width="2" fill="#FFFFFF" x="0" y="0" width="30" height="30" rx="4"></rect>
+            <rect stroke="#0066CC" stroke-width="2" fill="#FFFFFF" x="50" y="0" width="30" height="30" rx="4"></rect>
+            <rect stroke="#0066CC" stroke-width="2" fill="#FFFFFF" x="100" y="0" width="30" height="30" rx="4"></rect>
+            <line x1="15" y1="30" x2="15" y2="40" stroke="#0066CC" stroke-width="2"></line>
+            <line x1="65" y1="30" x2="65" y2="40" stroke="#0066CC" stroke-width="2"></line>
+            <line x1="115" y1="30" x2="115" y2="40" stroke="#0066CC" stroke-width="2"></line>
+            <line x1="15" y1="40" x2="115" y2="40" stroke="#0066CC" stroke-width="2"></line>
+            <text font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#0066CC">
+                <tspan x="140" y="20">Org Chart Tool</tspan>
+            </text>
+        </g>
+    </g>
+</svg>

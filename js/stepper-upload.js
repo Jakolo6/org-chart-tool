@@ -905,3 +905,4 @@ function showToast(message) {
 window.cancelColumnMapping = cancelColumnMapping;
 window.confirmColumnMapping = confirmColumnMapping;
 window.closeValidationErrors = closeValidationErrors;
+}
