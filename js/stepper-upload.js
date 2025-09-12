@@ -1,12 +1,7 @@
 // Global functions
-const getCurrentUser = window.getCurrentUser || function() {
-  return { user: null, profile: null, error: 'Auth not available' };
-};
-
-const createDraftProject = window.createDraftProject || function(data, options) {
-  console.log('Creating draft project with:', options);
-  return { project: { id: 'test-id' }, error: null };
-};
+const getCurrentUser = window.getCurrentUser;
+const createDraftProject = window.createDraftProject;
+const signOut = window.signOut;
 
 // Global variables
 let currentStep = 1;
@@ -141,7 +136,6 @@ async function checkAuth() {
       signOutLink.addEventListener('click', async (e) => {
         e.preventDefault();
         try {
-          const { signOut } = await import('./auth.js');
           await signOut();
           window.location.href = './landing.html';
         } catch (error) {

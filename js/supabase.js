@@ -12,5 +12,5 @@ const supabase = window.supabase.createClient(supabaseUrl, supabaseKey, {
   }
 })
 
-// Export for use in other modules
-export { supabase }
+// Make supabase available globally
+window.supabase = supabase;

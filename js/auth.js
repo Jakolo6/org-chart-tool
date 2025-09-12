@@ -1,5 +1,6 @@
 // Use the supabase instance from supabase.js
-import { supabase } from './supabase.js';
+// Access supabase from the global scope
+const supabase = window.supabase;
 
 /**
  * Authentication module for handling user registration, login, and profile management
@@ -12,7 +13,7 @@ import { supabase } from './supabase.js';
  * @param {string} displayName - User's display name
  * @returns {Promise<{user, error}>} - The created user or error
  */
-export async function signUp(email, password, displayName) {
+async function signUp(email, password, displayName) {
   try {
     // 1. Sign up the user with Supabase Auth with improved email confirmation
     const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -148,7 +149,7 @@ export async function signUp(email, password, displayName) {
  * @param {string} password - User's password
  * @returns {Promise<{user, error}>} - The authenticated user or error
  */
-export async function signIn(email, password) {
+async function signIn(email, password) {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -213,7 +214,7 @@ export async function signIn(email, password) {
  * Sign out the current user
  * @returns {Promise<{error}>} - Error if any
  */
-export async function signOut() {
+async function signOut() {
   try {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
@@ -228,7 +229,7 @@ export async function signOut() {
  * Get the current authenticated user
  * @returns {Promise<{user, profile, error}>} - The current user and profile
  */
-export async function getCurrentUser() {
+async function getCurrentUser() {
   try {
     // First check the session
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -280,7 +281,7 @@ export async function getCurrentUser() {
  * @param {Object} updates - Profile updates
  * @returns {Promise<{profile, error}>} - The updated profile or error
  */
-export async function updateProfile(userId, updates) {
+async function updateProfile(userId, updates) {
   try {
     const { data, error } = await supabase
       .from('profiles')
@@ -298,9 +299,19 @@ export async function updateProfile(userId, updates) {
   }
 }
 
+// Make functions available globally
+window.signUp = signUp;
+window.signIn = signIn;
+window.signOut = signOut;
+window.getCurrentUser = getCurrentUser;
+window.updateProfile = updateProfile;
+
 // Set up auth state change listener
-export function setupAuthListener(callback) {
+function setupAuthListener(callback) {
   return supabase.auth.onAuthStateChange((event, session) => {
     callback(event, session);
   });
 }
+
+// Add to global scope
+window.setupAuthListener = setupAuthListener;
