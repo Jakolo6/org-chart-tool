@@ -372,6 +372,9 @@
           </div>
         </div>
         
+        <h3 style="margin-top: 30px; margin-bottom: 15px;">Column Mapping</h3>
+        <p style="margin-bottom: 20px;">Use the dropdowns below to map your Excel columns to the required org chart fields.</p>
+        
         <table class="mapping-table">
           <thead>
             <tr>
@@ -622,6 +625,7 @@
     
     // Populate mapping table
     function populateMappingTable() {
+      console.log('Populating mapping table...');
       mappingTableBody.innerHTML = '';
       
       // Add required fields
@@ -636,10 +640,10 @@
         mappingTableBody.appendChild(row);
       });
       
-      // Auto-detect if no mapping exists
-      if (Object.keys(mappingConfig).length === 0) {
-        autoDetectMapping();
-      }
+      console.log('Mapping table populated with', requiredFields.length + optionalFields.length, 'rows');
+      
+      // Make sure the table is visible
+      document.querySelector('.mapping-table').style.display = 'table';
     }
     
     // Create mapping row
@@ -1028,6 +1032,8 @@
     
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
+      console.log('DOM content loaded, initializing mapping page...');
+      
       // Check authentication
       const isAuthenticated = await checkAuth();
       
@@ -1039,11 +1045,27 @@
       const validProjectId = checkUrlParams();
       
       if (validProjectId) {
-        // Load project data
-        await loadProjectData();
-        
-        // Create sample data preview
-        createSampleDataPreview();
+        try {
+          // Load project data
+          await loadProjectData();
+          
+          // Create sample data preview
+          createSampleDataPreview();
+          
+          // Make sure the mapping table is populated
+          populateMappingTable();
+          
+          // If no auto-detection happened, do it now
+          if (Object.keys(mappingConfig).length === 0) {
+            console.log('No mapping detected, running auto-detection...');
+            autoDetectMapping();
+          }
+          
+          console.log('Mapping page initialized successfully');
+        } catch (error) {
+          console.error('Error initializing mapping page:', error);
+          showError('Error initializing mapping page: ' + (error.message || 'Unknown error'));
+        }
       }
     });
   </script>
