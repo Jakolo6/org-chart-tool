@@ -1,6 +1,5 @@
 // Global functions
 // Access functions directly from window object to avoid redeclarations
-const createDraftProject = window.createDraftProject;
 
 // Global variables
 let currentStep = 1;
@@ -773,7 +772,7 @@ async function createProject() {
   
   try {
     // Create project with status quo data
-    const statusQuoResult = await createDraftProject(
+    const statusQuoResult = await window.createDraftProject(
       statusQuoData,
       {
         name: projectData.name,
@@ -805,7 +804,7 @@ async function createProject() {
     
     // If target data exists, create target project
     if (targetData) {
-      const targetResult = await createDraftProject(
+      const targetResult = await window.createDraftProject(
         targetData,
         {
           name: `${projectData.name} (Target)`,
