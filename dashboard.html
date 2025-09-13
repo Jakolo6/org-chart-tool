@@ -660,8 +660,7 @@
     <script src="./js/services/dashboardService.js"></script>
     
     <script>
-        // Access global functions directly to avoid redeclarations
-        const getOrgCharts = window.getOrgCharts;
+        // Access global functions directly from window object
         const getDashboardStats = window.getDashboardStats;
         const getRecentActivity = window.getRecentActivity;
         
@@ -900,7 +899,7 @@
                     projectsContainer.removeChild(projectsContainer.firstChild);
                 }
 
-                const { charts, error } = await getOrgCharts();
+                const { charts, error } = await window.getOrgCharts();
                 if (error) throw error;
 
                 // Update UI based on whether we have charts

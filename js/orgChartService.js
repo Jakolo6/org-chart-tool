@@ -372,6 +372,58 @@ async function exportToExcel(chartId) {
   }
 }
 
+/**
+ * Get versions for a specific org chart
+ * @param {string} chartId - The chart ID
+ * @returns {Promise<{versions, error}>} - The versions or error
+ */
+async function getOrgChartVersions(chartId) {
+  try {
+    const { data: versions, error } = await supabase
+      .from('chart_versions')
+      .select('*')
+      .eq('chart_id', chartId)
+      .order('version_number', { ascending: false });
+    
+    if (error) throw error;
+    
+    return { versions, error: null };
+  } catch (error) {
+    console.error('Error getting chart versions:', error);
+    return { versions: [], error };
+  }
+}
+
+/**
+ * Get a specific chart version by ID
+ * @param {string} versionId - The version ID
+ * @returns {Promise<{version, employees, error}>} - The version data or error
+ */
+async function getOrgChartVersionById(versionId) {
+  try {
+    const { data: version, error: versionError } = await supabase
+      .from('chart_versions')
+      .select('*')
+      .eq('id', versionId)
+      .single();
+    
+    if (versionError) throw versionError;
+    
+    // Get employees for this version
+    const { data: employees, error: employeesError } = await supabase
+      .from('employees')
+      .select('*')
+      .eq('version_id', versionId);
+    
+    if (employeesError) throw employeesError;
+    
+    return { version, employees, error: null };
+  } catch (error) {
+    console.error('Error getting chart version:', error);
+    return { version: null, employees: [], error };
+  }
+}
+
 // Make functions available globally
 window.saveOrgChart = saveOrgChart;
 window.getOrgCharts = getOrgCharts;

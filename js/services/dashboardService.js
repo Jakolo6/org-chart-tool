@@ -1,5 +1,4 @@
-// Access global functions
-const supabase = window.supabaseClient;
+// Access global functions directly
 
 /**
  * Get dashboard statistics for the current user
@@ -99,7 +98,7 @@ async function getRecentActivity() {
     if (userError || !user) throw new Error('User not authenticated');
 
     // Get recent chart activity
-    const { data: recentCharts, error: chartsError } = await supabase
+    const { data: recentCharts, error: chartsError } = await window.supabaseClient
       .from('org_charts')
       .select('id, name, created_at, updated_at')
       .eq('owner_id', user.id)
@@ -134,7 +133,7 @@ async function getUserProjects() {
     if (userError || !user) throw new Error('User not authenticated');
 
     // Get projects from the database
-    const { data: projects, error } = await supabase
+    const { data: projects, error } = await window.supabaseClient
       .from('org_charts')
       .select('*')
       .eq('owner_id', user.id)
