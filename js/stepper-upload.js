@@ -105,6 +105,7 @@ function goToStep(step) {
   // Update current step
   currentStep = step;
 }
+
 const statusQuoUpload = document.getElementById('statusQuoUpload');
 const statusQuoFileInput = document.getElementById('statusQuoFileInput');
 const statusQuoFileInfo = document.getElementById('statusQuoFileInfo');
@@ -120,6 +121,11 @@ const targetRemoveBtn = document.getElementById('targetRemoveBtn');
 const columnMappingModal = document.getElementById('columnMappingModal');
 const validationErrorsModal = document.getElementById('validationErrorsModal');
 const validationErrorsList = document.getElementById('validationErrorsList');
+const toast = document.getElementById('toast');
+const toastMessage = document.getElementById('toastMessage');
+const loadingOverlay = document.getElementById('loadingOverlay');
+const loadingText = document.getElementById('loadingText');
+const userInfo = document.getElementById('userInfo');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
@@ -137,47 +143,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Check authentication
 async function checkAuth() {
   try {
-    const { user, profile, error } = await getCurrentUser();
+    // Get current user
+    const { user, profile, error } = await window.getCurrentUser();
     
     if (error || !user) {
-      window.location.href = 'auth/login.html';
+      console.error('Authentication error:', error);
+      window.location.href = './auth/login.html?redirect=upload.html';
       return false;
     }
     
-    // Update user info
-    if (profile) {
-      userInfo.innerHTML = `
-        <div class="user-avatar">${getInitials(profile.display_name || user.email)}</div>
-        <div class="user-info-trigger">
-          <div class="user-name">${profile.display_name || user.email}</div>
-          <i class="fas fa-chevron-down"></i>
-          <div class="user-dropdown">
-            <a href="profile.html" class="dropdown-item">
-              <i class="fas fa-user"></i> Profile
-            </a>
-            <a href="#" id="signOutLink" class="dropdown-item">
-              <i class="fas fa-sign-out-alt"></i> Sign Out
-            </a>
-          </div>
-        </div>
-      `;
+    // Update UI with user info
+    if (userInfo) {
+      if (profile?.display_name) {
+        userInfo.textContent = profile.display_name;
+      } else if (user?.email) {
+        userInfo.textContent = user.email;
+      }
     }
     
-    // Add user dropdown toggle
-    const userDropdown = document.querySelector('.user-dropdown');
-    const userTrigger = document.querySelector('.user-info-trigger');
-    
-    if (userTrigger) {
-      userTrigger.addEventListener('click', () => {
-        userDropdown.classList.toggle('active');
-      });
-      
-      // Close dropdown when clicking outside
-      document.addEventListener('click', (e) => {
-        if (!userDropdown.contains(e.target) && !userTrigger.contains(e.target)) {
-          userDropdown.classList.remove('active');
-        }
-      });
+    // Set user initials
+    const userInitials = document.getElementById('userInitials');
+    if (userInitials) {
+      userInitials.textContent = getInitials(profile?.display_name || user.email);
     }
     
     // Add sign out event listener
@@ -197,19 +184,9 @@ async function checkAuth() {
     return true;
   } catch (error) {
     console.error('Authentication error:', error);
-    window.location.href = 'auth/login.html';
+    window.location.href = './auth/login.html?redirect=upload.html';
     return false;
   }
-}
-
-// Get initials from name
-function getInitials(name) {
-  return name
-    .split(' ')
-    .map(part => part[0])
-    .join('')
-    .toUpperCase()
-    .substring(0, 2);
 }
 
 // Set up event listeners
@@ -230,112 +207,73 @@ function setupEventListeners() {
     goToStep(3);
   });
   
-  statusQuoUpload.addEventListener('click', () => {
-    statusQuoFileInput.click();
-  });
-  
-  statusQuoFileInput.addEventListener('change', (e) => {
-    handleFileSelect(e, 'baseline');
-  });
-  
-  statusQuoRemoveBtn.addEventListener('click', () => {
-    removeFile('baseline');
-  });
-  
   // Step 3: Target Upload
   step3BackBtn.addEventListener('click', () => {
     goToStep(2);
   });
   
-  step3NextBtn.addEventListener('click', async () => {
-    await createProject();
+  step3NextBtn.addEventListener('click', () => {
+    createProject();
   });
   
+  // Status Quo file upload
+  statusQuoUpload.addEventListener('click', () => {
+    statusQuoFileInput.click();
+  });
+  
+  statusQuoFileInput.addEventListener('change', (e) => {
+    handleFileSelect(e.target.files[0], 'statusQuo');
+  });
+  
+  statusQuoRemoveBtn.addEventListener('click', () => {
+    removeFile('statusQuo');
+  });
+  
+  // Target file upload
   targetUpload.addEventListener('click', () => {
     targetFileInput.click();
   });
   
   targetFileInput.addEventListener('change', (e) => {
-    handleFileSelect(e, 'update');
+    handleFileSelect(e.target.files[0], 'target');
   });
   
   targetRemoveBtn.addEventListener('click', () => {
-    removeFile('update');
+    removeFile('target');
   });
   
-  // Drag and drop for file uploads
-  setupDragAndDrop();
+  // Project form
+  projectForm.addEventListener('input', () => {
+    projectData.name = projectNameInput.value;
+    projectData.description = projectDescriptionInput.value;
+  });
 }
 
-// Setup drag and drop
-function setupDragAndDrop() {
-  const preventDefaults = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
+// Get user initials
+function getInitials(name) {
+  if (!name) return '';
   
-  const highlight = (element) => {
-    element.classList.add('highlight');
-  };
-  
-  const unhighlight = (element) => {
-    element.classList.remove('highlight');
-  };
-  
-  const handleDrop = (e, fileType) => {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    
-    if (files.length) {
-      const file = files[0];
-      if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
-          file.type === 'application/vnd.ms-excel') {
-        processFile(file, fileType);
-      } else {
-        showToast('Please upload an Excel file (.xlsx or .xls)');
-      }
-    }
-  };
-  
-  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    statusQuoUpload.addEventListener(eventName, preventDefaults, false);
-    targetUpload.addEventListener(eventName, preventDefaults, false);
-  });
-  
-  ['dragenter', 'dragover'].forEach(eventName => {
-    statusQuoUpload.addEventListener(eventName, () => highlight(statusQuoUpload), false);
-    targetUpload.addEventListener(eventName, () => highlight(targetUpload), false);
-  });
-  
-  ['dragleave', 'drop'].forEach(eventName => {
-    statusQuoUpload.addEventListener(eventName, () => unhighlight(statusQuoUpload), false);
-    targetUpload.addEventListener(eventName, () => unhighlight(targetUpload), false);
-  });
-  
-  statusQuoUpload.addEventListener('drop', (e) => handleDrop(e, 'baseline'), false);
-  targetUpload.addEventListener('drop', (e) => handleDrop(e, 'update'), false);
+  return name
+    .split(' ')
+    .filter(part => part.length > 0)
+    .map(part => part[0])
+    .join('')
+    .toUpperCase()
+    .substring(0, 2);
 }
 
-// Validate Step 1
+// Validate step 1
 function validateStep1() {
-  const name = projectNameInput.value.trim();
-  
-  if (!name) {
+  if (!projectData.name) {
     showToast('Please enter a project name');
-    projectNameInput.focus();
     return false;
   }
-  
-  // Save project data
-  projectData.name = name;
-  projectData.description = projectDescriptionInput.value.trim();
   
   return true;
 }
 
 // Handle file select
-function handleFileSelect(e, fileType) {
-  const file = e.target.files[0];
+function handleFileSelect(file, fileType) {
   if (!file) return;
   
   if (file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
@@ -364,45 +302,36 @@ function processFile(file, fileType) {
       // Convert to JSON
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
       
-      if (jsonData.length < 2) {
-        showToast('Excel file must contain at least a header row and one data row');
-        hideLoading();
-        return;
-      }
-      
-      // Extract headers and data
-      const headers = jsonData[0];
-      const rows = jsonData.slice(1).filter(row => row.length > 0);
-      
-      if (fileType === 'baseline') {
+      // Store file and data
+      if (fileType === 'statusQuo') {
         statusQuoFile = file;
         statusQuoData = jsonData;
         statusQuoFileName.textContent = file.name;
         statusQuoFileSize.textContent = formatFileSize(file.size);
-        statusQuoFileInfo.style.display = 'block';
+        statusQuoFileInfo.style.display = 'flex';
+        statusQuoUpload.style.display = 'none';
+        
+        // Enable next button if file is uploaded
         step2NextBtn.disabled = false;
         
-        // Enable target upload
-        enableTargetUpload();
+        // Show column mapping modal for status quo
+        currentFileData = jsonData;
+        currentFileType = 'statusQuo';
+        currentFileHeaders = jsonData[0];
+        showColumnMappingModal();
       } else {
         targetFile = file;
         targetData = jsonData;
         targetFileName.textContent = file.name;
         targetFileSize.textContent = formatFileSize(file.size);
-        targetFileInfo.style.display = 'block';
+        targetFileInfo.style.display = 'flex';
+        targetUpload.style.display = 'none';
       }
       
-      // Set current file data for mapping
-      currentFileData = jsonData;
-      currentFileType = fileType;
-      currentFileHeaders = headers;
-      
-      // Show column mapping dialog
       hideLoading();
-      showColumnMappingDialog(headers);
     } catch (error) {
-      console.error('Error processing Excel file:', error);
-      showToast('Error processing Excel file');
+      console.error('Error processing file:', error);
+      showToast('Error processing file: ' + error.message);
       hideLoading();
     }
   };
@@ -418,120 +347,77 @@ function processFile(file, fileType) {
 
 // Remove file
 function removeFile(fileType) {
-  if (fileType === 'baseline') {
+  if (fileType === 'statusQuo') {
     statusQuoFile = null;
     statusQuoData = null;
-    statusQuoFileInput.value = '';
     statusQuoFileInfo.style.display = 'none';
+    statusQuoUpload.style.display = 'flex';
     step2NextBtn.disabled = true;
-    
-    // Disable target upload
-    disableTargetUpload();
   } else {
     targetFile = null;
     targetData = null;
-    targetFileInput.value = '';
     targetFileInfo.style.display = 'none';
+    targetUpload.style.display = 'flex';
   }
-}
-
-// Enable target upload
-function enableTargetUpload() {
-  targetUpload.classList.remove('disabled');
-  targetFileInput.disabled = false;
-}
-
-// Disable target upload
-function disableTargetUpload() {
-  targetUpload.classList.add('disabled');
-  targetFileInput.disabled = true;
-  removeFile('update');
 }
 
 // Format file size
 function formatFileSize(bytes) {
-  if (bytes === 0) return '0 Bytes';
-  
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
 }
 
-// Column mapping dialog
-function showColumnMappingDialog(headers) {
+// Show column mapping modal
+function showColumnMappingModal() {
+  // Populate column mapping dropdowns
+  const headers = currentFileHeaders;
   const dropdowns = [
-    'employeeNameMapping', 'managerMapping', 'jobTitleMapping',
-    'fteMapping', 'locationMapping', 'jobFamilyMapping', 'managementLevelMapping'
+    'employeeNameMapping',
+    'managerMapping',
+    'jobTitleMapping',
+    'fteMapping',
+    'locationMapping',
+    'jobFamilyMapping',
+    'managementLevelMapping'
   ];
   
-  dropdowns.forEach(dropdownId => {
-    const dropdown = document.getElementById(dropdownId);
-    dropdown.innerHTML = '<option value="">Select column...</option>';
-    headers.forEach(header => {
+  // Try to auto-detect columns
+  const columnGuesses = {
+    employeeName: ['name', 'employee', 'employee name', 'person', 'employee id', 'id'],
+    manager: ['manager', 'reports to', 'supervisor', 'boss', 'manager id', 'manager name'],
+    jobTitle: ['title', 'job title', 'position', 'role'],
+    fte: ['fte', 'full time equivalent', 'hours', 'time'],
+    location: ['location', 'office', 'site', 'country', 'city'],
+    jobFamily: ['job family', 'family', 'department', 'function', 'group'],
+    managementLevel: ['level', 'management level', 'grade', 'seniority']
+  };
+  
+  dropdowns.forEach(dropdown => {
+    const select = document.getElementById(dropdown);
+    if (!select) return;
+    
+    // Clear existing options
+    select.innerHTML = '<option value="">Select column</option>';
+    
+    // Add header options
+    headers.forEach((header, index) => {
       const option = document.createElement('option');
-      option.value = header;
+      option.value = index;
       option.textContent = header;
-      dropdown.appendChild(option);
+      select.appendChild(option);
+      
+      // Auto-select if header matches guess
+      const fieldName = dropdown.replace('Mapping', '');
+      const guesses = columnGuesses[fieldName];
+      if (guesses && guesses.includes(header.toString().toLowerCase())) {
+        select.value = index;
+      }
     });
   });
-  
-  // Auto-detect & preselect suggestions
-  autoDetectMappings(headers);
   
   // Show modal
   columnMappingModal.classList.add('show');
-}
-
-// Auto-detect mappings
-function autoDetectMappings(headers) {
-  const detectionRules = {
-    employeeName: ['worker', 'employee', 'name', 'person', 'staff', 'anon worker', 'employee name', 'worker id', 'employee id'],
-    manager: ['manager', 'supervisor', 'boss', 'lead', 'head', 'anon manager', 'manager name', 'manager id'],
-    jobTitle: ['business title', 'title', 'position', 'job', 'role', 'function', 'job title'],
-    fte: ['fte', 'full time equivalent', 'full-time equivalent', 'time', 'percentage', 'percent'],
-    location: ['location', 'office', 'site', 'city', 'country', 'region', 'geography'],
-    jobFamily: ['job family', 'family', 'department', 'function', 'division', 'group'],
-    managementLevel: ['management level', 'level', 'grade', 'band', 'tier', 'seniority']
-  };
-  
-  Object.keys(detectionRules).forEach(field => {
-    const rules = detectionRules[field];
-    const dropdown = document.getElementById(field + 'Mapping');
-    const info = document.getElementById(field + 'Info');
-    
-    let bestMatch = null;
-    let bestScore = 0;
-    
-    headers.forEach(header => {
-      const headerLower = header.toLowerCase();
-      let score = 0;
-      
-      rules.forEach((rule, index) => {
-        if (headerLower.includes(rule)) {
-          score = Math.max(score, 100 + (rules.length - index));
-          if (headerLower === rule) {
-            score = 1000 + (rules.length - index);
-          }
-        }
-      });
-      
-      if (score > bestScore) {
-        bestScore = score;
-        bestMatch = header;
-      }
-    });
-    
-    if (bestMatch) {
-      dropdown.value = bestMatch;
-      info.textContent = `Auto-detected: ${bestMatch}`;
-      info.style.color = '#059669';
-    } else {
-      info.textContent = 'No auto-detection available';
-      info.style.color = '#6b7280';
-    }
-  });
 }
 
 // Cancel column mapping
@@ -539,8 +425,8 @@ function cancelColumnMapping() {
   columnMappingModal.classList.remove('show');
   
   // If this was the initial status quo upload and mapping was cancelled, remove the file
-  if (currentFileType === 'baseline' && !columnMapping.employeeName) {
-    removeFile('baseline');
+  if (currentFileType === 'statusQuo' && !columnMapping.employeeName) {
+    removeFile('statusQuo');
   }
 }
 
@@ -556,188 +442,100 @@ function confirmColumnMapping() {
     managementLevel: document.getElementById('managementLevelMapping').value
   };
   
+  // Validate required fields
   if (!mapping.employeeName || !mapping.manager) {
-    alert('Worker and Manager columns are required. Please select them.');
+    showToast('Employee Name and Manager columns are required');
     return;
   }
   
-  // Validate the current file's rows against mapping
-  const errors = validateRelations(currentFileData.slice(1), mapping.employeeName, mapping.manager);
+  // Store mapping
+  columnMapping = mapping;
   
-  if (errors.length > 0) {
-    showValidationErrors(errors);
-    return;
-  }
-  
-  // If validation passes
+  // Hide modal
   columnMappingModal.classList.remove('show');
   
-  if (currentFileType === 'baseline') {
-    columnMapping = mapping;
-    markStepCompleted(2);
-    showToast('✓ Status Quo file validated successfully!');
-    
-    // Enable target upload and next button
-    enableTargetUpload();
-    step2NextBtn.disabled = false;
-  } else {
-    // For target file, store mapping in the same format
-    // but we'll use the same columnMapping object for both files
-    // since the structure should be the same
-    showToast('✓ Target file validated successfully!');
-  }
-
-// Helper function to check if a value is blank or empty
-function isBlankOrEmpty(value) {
-  return value === undefined || value === null || value === '';
+  // Validate data
+  validateData();
 }
 
-// Validation functions
-function validateRelations(rows, workerColumn, managerColumn) {
+// Validate data
+function validateData() {
+  if (!statusQuoData) return;
+  
   const errors = [];
-  const workerIdMap = new Map();
-  const rootNodes = [];
+  const data = statusQuoData.slice(1); // Skip header row
+  const employeeCol = parseInt(columnMapping.employeeName);
+  const managerCol = parseInt(columnMapping.manager);
   
-  // First pass: check for duplicates, blanks, and self-references
-  rows.forEach((row, index) => {
-    const workerId = row[workerColumn]?.toString().trim();
-    const managerId = row[managerColumn]?.toString().trim();
-    
-    // Skip empty rows
-    if (isBlankOrEmpty(workerId) && isBlankOrEmpty(managerId)) {
-      return;
-    }
-    
-    // Only check for duplicates if there is a worker ID
-    if (!isBlankOrEmpty(workerId)) {
-      if (workerIdMap.has(workerId)) {
-        errors.push({
-          type: 'Duplicate Employee ID',
-          message: `The employee ID "${workerId}" is used more than once. All IDs must be unique.`,
-          details: `Row ${index+2} is a duplicate of row ${workerIdMap.get(workerId).rowIndex+2}`
-        });
-      } else {
-        workerIdMap.set(workerId, { row, rowIndex: index });
-      }
-    }
-    
-    // Check for self-reference
-    if (workerId && managerId && workerId === managerId) {
-      errors.push({ 
-        type: 'Self-Reference Error', 
-        message: `Employee "${workerId}" cannot be their own manager.`, 
-        details: `Row ${index+2}` 
-      });
-    }
-    
-    // Identify potential root nodes
-    if (isBlankOrEmpty(managerId) && !isBlankOrEmpty(workerId)) {
-      rootNodes.push(workerId);
+  // Check for empty values
+  data.forEach((row, index) => {
+    if (!row[employeeCol]) {
+      errors.push(`Row ${index + 2}: Missing employee name`);
     }
   });
   
-  // Check for multiple root nodes or no root nodes
-  if (workerIdMap.size > 0) {
-    if (rootNodes.length > 1) {
-      errors.push({ 
-        type: 'Multiple CEOs Found', 
-        message: 'Your organization has more than one person without a manager. There should be only one CEO.', 
-        details: `Found ${rootNodes.length} top-level employees: ${rootNodes.join(', ')}` 
-      });
-    } else if (rootNodes.length === 0) {
-      errors.push({ 
-        type: 'No CEO Found', 
-        message: 'No employee was found without a manager. Your organization must have one top-level person (CEO).', 
-        details: 'Please ensure at least one employee has a blank manager field.' 
-      });
-    }
-  }
-  
-  // Second pass: check manager references
-  rows.forEach((row, index) => {
-    const workerId = row[workerColumn]?.toString().trim();
-    const managerId = row[managerColumn]?.toString().trim();
-    
-    if (!isBlankOrEmpty(managerId) && !isBlankOrEmpty(workerId)) {
-      if (!workerIdMap.has(managerId)) {
-        errors.push({
-          type: 'Manager Does Not Exist',
-          message: `A manager listed for an employee does not exist as an employee in the file.`,
-          details: `Row ${index+2}: Manager "${managerId}" for Employee "${workerId}" is not a valid employee.`
-        });
-      }
-    }
-  });
-  
-  // Third pass: check for cycles
-  const cycles = detectCycles(rows, workerColumn, managerColumn);
-  if (cycles.length > 0) {
-    cycles.forEach(cycle => {
-      errors.push({ 
-        type: 'Circular Reference Found', 
-        message: 'A circular reporting structure (a loop) was detected.', 
-        details: `Cycle path: ${cycle.join(' → ')} → ${cycle[0]}` 
-      });
-    });
-  }
-  
-  return errors;
-}
-
-function detectCycles(rows, workerColumn, managerColumn) {
+  // Check for cycles in reporting structure
   const adjList = new Map();
-  const allNodes = new Set();
+  const employees = new Set();
   
-  rows.forEach(row => {
-    const workerId = row[workerColumn]?.toString().trim();
-    if (workerId) allNodes.add(workerId);
-  });
-  
-  rows.forEach(row => {
-    const workerId = row[workerColumn]?.toString().trim();
-    const managerId = row[managerColumn]?.toString().trim();
-    if (workerId && managerId && allNodes.has(managerId)) {
-      if (!adjList.has(workerId)) adjList.set(workerId, []);
-      adjList.get(workerId).push(managerId);
+  // Build adjacency list and employee set
+  data.forEach(row => {
+    const employee = row[employeeCol]?.toString();
+    const manager = row[managerCol]?.toString();
+    
+    if (employee) {
+      employees.add(employee);
+      
+      if (manager && manager !== employee) {
+        if (!adjList.has(employee)) {
+          adjList.set(employee, []);
+        }
+        adjList.get(employee).push(manager);
+      }
     }
   });
   
+  // Find cycles
   const cycles = [];
   const visited = new Set();
+  const recursionStack = new Set();
   
-  for (const node of allNodes) {
-    if (!visited.has(node)) {
-      const recursionStack = new Set();
+  employees.forEach(employee => {
+    if (!visited.has(employee)) {
       const path = [];
-      findCycleUtil(node, visited, recursionStack, path, adjList, cycles);
-    }
-  }
-  
-  const uniqueCycles = [];
-  const seenCycles = new Set();
-  cycles.forEach(cycle => {
-    const sortedCycle = [...cycle].sort().join(',');
-    if (!seenCycles.has(sortedCycle)) {
-      uniqueCycles.push(cycle);
-      seenCycles.add(sortedCycle);
+      findCycle(employee, visited, recursionStack, path, adjList, cycles);
     }
   });
   
-  return uniqueCycles;
+  // Add cycle errors
+  cycles.forEach(cycle => {
+    errors.push(`Reporting cycle detected: ${cycle.join(' -> ')}`);
+  });
+  
+  // Show validation errors if any
+  if (errors.length > 0) {
+    showValidationErrors(errors);
+  }
 }
 
-function findCycleUtil(node, visited, recursionStack, path, adjList, cycles) {
+// Find cycle in graph
+function findCycle(node, visited, recursionStack, path, adjList, cycles) {
   visited.add(node);
   recursionStack.add(node);
   path.push(node);
   
   const neighbors = adjList.get(node) || [];
+  
   for (const neighbor of neighbors) {
-    if (recursionStack.has(neighbor)) {
-      const cycle = path.slice(path.indexOf(neighbor));
-      cycles.push(cycle);
-    } else if (!visited.has(neighbor)) {
-      findCycleUtil(neighbor, visited, recursionStack, path, adjList, cycles);
+    if (!visited.has(neighbor)) {
+      if (findCycle(neighbor, visited, recursionStack, path, adjList, cycles)) {
+        return true;
+      }
+    } else if (recursionStack.has(neighbor)) {
+      // Cycle found
+      const cycleStart = path.indexOf(neighbor);
+      cycles.push(path.slice(cycleStart).concat(neighbor));
+      return true;
     }
   }
   
@@ -746,65 +544,19 @@ function findCycleUtil(node, visited, recursionStack, path, adjList, cycles) {
   return false;
 }
 
-// Confirm column mapping
-function confirmColumnMapping() {
-  const mapping = {
-    employeeName: document.getElementById('employeeNameMapping').value,
-    manager: document.getElementById('managerMapping').value,
-    jobTitle: document.getElementById('jobTitleMapping').value,
-    fte: document.getElementById('fteMapping').value,
-    location: document.getElementById('locationMapping').value,
-    jobFamily: document.getElementById('jobFamilyMapping').value,
-    managementLevel: document.getElementById('managementLevelMapping').value
-  };
-  
-  if (!mapping.employeeName || !mapping.manager) {
-    alert('Worker and Manager columns are required. Please select them.');
-    return;
-  }
-  
-  // Validate the current file's rows against mapping
-  const errors = validateRelations(currentFileData.slice(1), mapping.employeeName, mapping.manager);
-  
-  if (errors.length > 0) {
-    showValidationErrors(errors);
-    return;
-  }
-  
-  // If validation passes
-  columnMappingModal.classList.remove('show');
-  
-  if (currentFileType === 'baseline') {
-    columnMapping = mapping;
-    markStepCompleted(2);
-    showToast('✓ Status Quo file validated successfully!');
-    
-    // Enable target upload and next button
-    enableTargetUpload();
-    step2NextBtn.disabled = false;
-  } else {
-    // For target file, store mapping in the same format
-    // but we'll use the same columnMapping object for both files
-    // since the structure should be the same
-    showToast('✓ Target file validated successfully!');
-  }
-}
-
 // Show validation errors
 function showValidationErrors(errors) {
+  // Clear existing errors
   validationErrorsList.innerHTML = '';
   
+  // Add errors
   errors.forEach(error => {
-    const errorElement = document.createElement('div');
-    errorElement.className = 'validation-error';
-    errorElement.innerHTML = `
-      <div class="validation-error-type">${error.type}</div>
-      <div class="validation-error-message">${error.message}</div>
-      <div class="validation-error-details">${error.details}</div>
-    `;
-    validationErrorsList.appendChild(errorElement);
+    const li = document.createElement('li');
+    li.textContent = error;
+    validationErrorsList.appendChild(li);
   });
   
+  // Show modal
   validationErrorsModal.classList.add('show');
 }
 
@@ -898,15 +650,11 @@ async function createProject() {
   }
 }
 
-// Navigation functions
-
 function markStepCompleted(step) {
   stepElements[step].classList.add('completed');
 }
-
 
 // Make functions available globally
 window.cancelColumnMapping = cancelColumnMapping;
 window.confirmColumnMapping = confirmColumnMapping;
 window.closeValidationErrors = closeValidationErrors;
-});
