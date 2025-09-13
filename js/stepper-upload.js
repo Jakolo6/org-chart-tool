@@ -48,6 +48,39 @@ const step2BackBtn = document.getElementById('step2BackBtn');
 const step2NextBtn = document.getElementById('step2NextBtn');
 const step3BackBtn = document.getElementById('step3BackBtn');
 const step3NextBtn = document.getElementById('step3NextBtn');
+
+// Navigation functions
+function goToStep(step) {
+  // Hide all steps
+  Object.values(stepContents).forEach(content => {
+    if (content) content.classList.remove('active');
+  });
+  
+  // Show current step
+  if (stepContents[step]) stepContents[step].classList.add('active');
+  
+  // Update stepper
+  Object.keys(stepElements).forEach(key => {
+    const stepNum = parseInt(key);
+    const element = stepElements[key];
+    
+    if (!element) return;
+    
+    if (stepNum < step) {
+      element.classList.remove('active');
+      element.classList.add('completed');
+    } else if (stepNum === step) {
+      element.classList.add('active');
+      element.classList.remove('completed');
+    } else {
+      element.classList.remove('active');
+      element.classList.remove('completed');
+    }
+  });
+  
+  // Update current step
+  currentStep = step;
+}
 const statusQuoUpload = document.getElementById('statusQuoUpload');
 const statusQuoFileInput = document.getElementById('statusQuoFileInput');
 const statusQuoFileInfo = document.getElementById('statusQuoFileInfo');
@@ -847,34 +880,6 @@ async function createProject() {
 }
 
 // Navigation functions
-function goToStep(step) {
-  // Hide all steps
-  Object.values(stepContents).forEach(content => {
-    content.classList.remove('active');
-  });
-  
-  // Show current step
-  stepContents[step].classList.add('active');
-  
-  // Update stepper
-  Object.keys(stepElements).forEach(key => {
-    const stepNum = parseInt(key);
-    const element = stepElements[key];
-    
-    if (stepNum < step) {
-      element.classList.remove('active');
-      element.classList.add('completed');
-    } else if (stepNum === step) {
-      element.classList.add('active');
-      element.classList.remove('completed');
-    } else {
-      element.classList.remove('active');
-      element.classList.remove('completed');
-    }
-  });
-  
-  currentStep = step;
-}
 
 function markStepCompleted(step) {
   stepElements[step].classList.add('completed');
