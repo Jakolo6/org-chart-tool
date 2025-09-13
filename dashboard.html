@@ -671,6 +671,7 @@
         const totalChartsEl = document.getElementById('totalCharts');
         const teamSizeEl = document.getElementById('teamSize');
         const totalEmployeesEl = document.getElementById('totalEmployees');
+        const lastUpdatedEl = document.getElementById('lastUpdated');
         const recentActivityList = document.getElementById('recentActivityList');
         const teamMembersList = document.getElementById('teamMembersList');
         const signOutBtn = document.getElementById('signOutBtn');
@@ -718,8 +719,8 @@
                     // Even if there's an error, we might still have partial user data
                     if (user?.email) {
                         const nameFromEmail = user.email.split('@')[0];
-                        document.getElementById('userName').textContent = nameFromEmail;
-                        document.getElementById('welcomeName').textContent = nameFromEmail;
+                        if (userName) userName.textContent = nameFromEmail;
+                        if (welcomeName) welcomeName.textContent = nameFromEmail;
                         // User organization removed
                     }
                     return;
@@ -727,12 +728,12 @@
                 
                 // Update UI with user data
                 if (profile?.display_name) {
-                    document.getElementById('userName').textContent = profile.display_name;
-                    document.getElementById('welcomeName').textContent = profile.display_name.split(' ')[0];
+                    if (userName) userName.textContent = profile.display_name;
+                    if (welcomeName) welcomeName.textContent = profile.display_name.split(' ')[0];
                 } else if (user?.email) {
                     const nameFromEmail = user.email.split('@')[0];
-                    document.getElementById('userName').textContent = nameFromEmail;
-                    document.getElementById('welcomeName').textContent = nameFromEmail;
+                    if (userName) userName.textContent = nameFromEmail;
+                    if (welcomeName) welcomeName.textContent = nameFromEmail;
                 }
                 
                 // Load dashboard stats in parallel
@@ -757,10 +758,10 @@
                 const { stats, error } = await window.getDashboardStats();
                 if (error) throw error;
                 
-                // Update UI with stats
-                totalChartsEl.textContent = stats.totalCharts || 0;
-                totalEmployeesEl.textContent = stats.totalEmployees || 0;
-                lastUpdatedEl.textContent = stats.lastUpdated ? formatDate(new Date(stats.lastUpdated)) : 'Never';
+                // Update UI with stats - add null checks
+                if (totalChartsEl) totalChartsEl.textContent = stats.totalCharts || 0;
+                if (totalEmployeesEl) totalEmployeesEl.textContent = stats.totalEmployees || 0;
+                if (lastUpdatedEl) lastUpdatedEl.textContent = stats.lastUpdated ? formatDate(new Date(stats.lastUpdated)) : 'Never';
                 
             } catch (error) {
                 console.error('Error loading dashboard stats:', error);
@@ -891,6 +892,8 @@
         
         // Load user's charts
         async function loadUserCharts() {
+            if (!projectsContainer) return;
+            
             try {
                 // Clear any existing content
                 while (projectsContainer.firstChild) {
@@ -903,7 +906,7 @@
                 // Update UI based on whether we have charts
                 if (charts && charts.length > 0) {
                     // Hide empty state
-                    emptyState.style.display = 'none';
+                    if (emptyState) emptyState.style.display = 'none';
                     
                     // Create projects grid
                     const projectsGrid = document.createElement('div');
@@ -920,24 +923,28 @@
                     // Update team size stat with the most recent chart
                     if (charts[0]) {
                         if (charts[0].employee_count) {
-                            teamSizeEl.textContent = charts[0].employee_count;
+                            if (teamSizeEl) teamSizeEl.textContent = charts[0].employee_count;
                         } else {
                             // Try to estimate from chart data
                             try {
                                 const chartData = charts[0].data || [];
                                 if (Array.isArray(chartData)) {
-                                    teamSizeEl.textContent = chartData.length;
+                                    if (teamSizeEl) teamSizeEl.textContent = chartData.length;
                                 }
                             } catch (e) {
                                 console.log('Could not determine team size from chart data');
-                                teamSizeEl.textContent = '0';
+                                if (teamSizeEl) teamSizeEl.textContent = '0';
                             }
                         }
                     }
                 } else {
+                    // Show empty state
+                    if (emptyState) emptyState.style.display = 'flex';
+                    if (totalChartsEl) totalChartsEl.textContent = '0';
+                    if (teamSizeEl) teamSizeEl.textContent = '0';
+                    
                     // Show empty state with appropriate message
-                    emptyState.style.display = 'block';
-                    emptyState.innerHTML = `
+                    if (emptyState) emptyState.innerHTML = `
                         <div class="empty-state-content">
                             <i class="fas fa-folder-open"></i>
                             <h3>No charts yet</h3>
@@ -945,7 +952,7 @@
                             <button id="createFirstChart" class="btn btn-primary">Create First Chart</button>
                         </div>
                     `;
-                    teamSizeEl.textContent = '0';
+                    if (teamSizeEl) teamSizeEl.textContent = '0';
                     
                     // Add event listener for create first chart button
                     document.getElementById('createFirstChart')?.addEventListener('click', () => {
