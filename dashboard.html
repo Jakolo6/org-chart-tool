@@ -660,9 +660,7 @@
     <script src="./js/services/dashboardService.js"></script>
     
     <script>
-        // Access global functions directly from window object
-        const getDashboardStats = window.getDashboardStats;
-        const getRecentActivity = window.getRecentActivity;
+        // Access global functions directly from window object without local declarations
         
         // DOM elements
         const userInitials = document.getElementById('userInitials');
@@ -753,16 +751,16 @@
             }
         }
         
-        // Load and display dashboard statistics
+        // Load dashboard statistics
         async function loadDashboardStats() {
             try {
-                const { stats, error } = await getDashboardStats();
+                const { stats, error } = await window.getDashboardStats();
                 if (error) throw error;
                 
-                // Update stats cards
-                if (totalChartsEl) totalChartsEl.textContent = stats.totalCharts || '0';
-                if (teamSizeEl) teamSizeEl.textContent = stats.teamSize || '1';
-                if (totalEmployeesEl) totalEmployeesEl.textContent = stats.totalEmployees || '0';
+                // Update UI with stats
+                totalChartsEl.textContent = stats.totalCharts || 0;
+                totalEmployeesEl.textContent = stats.totalEmployees || 0;
+                lastUpdatedEl.textContent = stats.lastUpdated ? formatDate(new Date(stats.lastUpdated)) : 'Never';
                 
             } catch (error) {
                 console.error('Error loading dashboard stats:', error);
@@ -775,7 +773,7 @@
             if (!recentActivityList) return;
             
             try {
-                const { activity, error } = await getRecentActivity();
+                const { activity, error } = await window.getRecentActivity();
                 if (error) throw error;
                 
                 // Clear existing items

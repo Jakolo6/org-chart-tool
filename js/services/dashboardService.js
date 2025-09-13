@@ -148,6 +148,31 @@ async function getUserProjects() {
   }
 }
 
+/**
+ * Delete a project by ID
+ * @param {string} projectId - The project ID to delete
+ * @returns {Promise<{success: boolean, error: Error}>}
+ */
+async function deleteProject(projectId) {
+  try {
+    const { user, error: userError } = await window.getCurrentUser();
+    if (userError || !user) throw new Error('User not authenticated');
+
+    // Soft delete the project
+    const { error } = await window.supabaseClient
+      .from('org_charts')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', projectId);
+
+    if (error) throw error;
+
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error deleting project:', error);
+    return { success: false, error };
+  }
+}
+
 // Make functions available globally
 window.getDashboardStats = getDashboardStats;
 window.getUserProjects = getUserProjects;
