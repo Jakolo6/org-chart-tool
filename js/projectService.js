@@ -1,6 +1,5 @@
-// Access global functions
-const supabase = window.supabase;
-const getCurrentUser = window.getCurrentUser;
+// Access global functions directly
+const supabase = window.supabaseClient;
 
 /**
  * Service for managing projects and their data in Supabase
@@ -22,7 +21,7 @@ async function createDraftProject(parsedData, projectInfo, existingProjectId = n
     });
     
     // Get current user
-    const { user, error: userError } = await getCurrentUser();
+    const { user, error: userError } = await window.getCurrentUser();
     console.log('Current user:', user ? { id: user.id, email: user.email } : 'No user');
     
     if (userError || !user) {
@@ -253,7 +252,7 @@ async function updateLastAccessedProject(userId, projectId) {
 async function getProjects(includeDeleted = false) {
   try {
     // Get current user
-    const { user, error: userError } = await getCurrentUser();
+    const { user, error: userError } = await window.getCurrentUser();
     
     if (userError || !user) {
       throw new Error('User not authenticated');

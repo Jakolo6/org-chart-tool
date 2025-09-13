@@ -1,7 +1,6 @@
 // Global functions
 // Access functions directly from window object to avoid redeclarations
 const createDraftProject = window.createDraftProject;
-const signOut = window.signOut;
 
 // Global variables
 let currentStep = 1;
@@ -136,7 +135,7 @@ async function checkAuth() {
       signOutLink.addEventListener('click', async (e) => {
         e.preventDefault();
         try {
-          await signOut();
+          await window.signOut();
           window.location.href = './landing.html';
         } catch (error) {
           console.error('Sign out error:', error);
