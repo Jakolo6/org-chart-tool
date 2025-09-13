@@ -1,6 +1,30 @@
 // Global functions
 // Access functions directly from window object to avoid redeclarations
 
+// UI helper functions
+function showLoading(message) {
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  const loadingText = document.getElementById('loadingText');
+  if (loadingText) loadingText.textContent = message || 'Processing...';
+  if (loadingOverlay) loadingOverlay.style.display = 'flex';
+}
+
+function hideLoading() {
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  if (loadingOverlay) loadingOverlay.style.display = 'none';
+}
+
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  const toastMessage = document.getElementById('toastMessage');
+  if (toastMessage) toastMessage.textContent = message;
+  if (toast) toast.classList.add('show');
+  
+  setTimeout(() => {
+    if (toast) toast.classList.remove('show');
+  }, 3000);
+}
+
 // Global variables
 let currentStep = 1;
 let projectData = {
@@ -96,11 +120,6 @@ const targetRemoveBtn = document.getElementById('targetRemoveBtn');
 const columnMappingModal = document.getElementById('columnMappingModal');
 const validationErrorsModal = document.getElementById('validationErrorsModal');
 const validationErrorsList = document.getElementById('validationErrorsList');
-const toast = document.getElementById('toast');
-const toastMessage = document.getElementById('toastMessage');
-const loadingOverlay = document.getElementById('loadingOverlay');
-const loadingText = document.getElementById('loadingText');
-const userInfo = document.getElementById('userInfo');
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
@@ -885,27 +904,9 @@ function markStepCompleted(step) {
   stepElements[step].classList.add('completed');
 }
 
-// UI helper functions
-function showLoading(message) {
-  loadingText.textContent = message || 'Processing...';
-  loadingOverlay.style.display = 'flex';
-}
-
-function hideLoading() {
-  loadingOverlay.style.display = 'none';
-}
-
-function showToast(message) {
-  toastMessage.textContent = message;
-  toast.classList.add('show');
-  
-  setTimeout(() => {
-    toast.classList.remove('show');
-  }, 3000);
-}
 
 // Make functions available globally
 window.cancelColumnMapping = cancelColumnMapping;
 window.confirmColumnMapping = confirmColumnMapping;
 window.closeValidationErrors = closeValidationErrors;
-}
+});
