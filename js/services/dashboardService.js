@@ -124,6 +124,31 @@ async function getRecentActivity() {
   }
 }
 
+/**
+ * Get all projects for the current user
+ * @returns {Promise<{projects: Array, error: Error}>}
+ */
+async function getUserProjects() {
+  try {
+    const { user, error: userError } = await window.getCurrentUser();
+    if (userError || !user) throw new Error('User not authenticated');
+
+    // Get projects from the database
+    const { data: projects, error } = await supabase
+      .from('org_charts')
+      .select('*')
+      .eq('owner_id', user.id)
+      .order('updated_at', { ascending: false });
+
+    if (error) throw error;
+
+    return { projects, error: null };
+  } catch (error) {
+    console.error('Error getting user projects:', error);
+    return { projects: [], error };
+  }
+}
+
 // Make functions available globally
 window.getDashboardStats = getDashboardStats;
 window.getUserProjects = getUserProjects;

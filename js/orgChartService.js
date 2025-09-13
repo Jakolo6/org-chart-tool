@@ -1,6 +1,5 @@
 // Access global functions
-const supabase = window.supabase;
-const getCurrentUser = window.getCurrentUser;
+const supabase = window.supabaseClient;
 
 /**
  * Service for managing org chart data in Supabase

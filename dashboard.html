@@ -660,8 +660,7 @@
     <script src="./js/services/dashboardService.js"></script>
     
     <script>
-        // Access global functions
-        const signOut = window.signOut;
+        // Access global functions directly to avoid redeclarations
         const getOrgCharts = window.getOrgCharts;
         const getDashboardStats = window.getDashboardStats;
         const getRecentActivity = window.getRecentActivity;
