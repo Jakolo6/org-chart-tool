@@ -1,6 +1,5 @@
-// Use window.getCurrentUser instead of importing
-import { saveOrgChart, getOrgCharts, getOrgChart, updateOrgChart } from './orgChartService.js';
-import { state } from './main.js';
+// Use window object instead of ES module imports
+// All functions are attached to the window object in their respective files
 
 /**
  * App module for handling authentication and data persistence
@@ -179,12 +178,12 @@ function showWelcomeMessage(firstName) {
 // Save current org chart
 export async function saveCurrentOrgChart(name, description = '', isBaseline = true) {
   try {
-    if (!state.currentData || state.currentData.length === 0) {
+    if (!window.state.currentData || window.state.currentData.length === 0) {
       throw new Error('No data to save');
     }
     
-    const { chart, version, error } = await saveOrgChart(
-      state.currentData,
+    const { chart, version, error } = await window.saveOrgChart(
+      window.state.currentData,
       name,
       description,
       isBaseline,
@@ -203,7 +202,7 @@ export async function saveCurrentOrgChart(name, description = '', isBaseline = t
 // Load saved org charts
 export async function loadSavedOrgCharts() {
   try {
-    const { charts, error } = await getOrgCharts();
+    const { charts, error } = await window.getOrgCharts();
     
     if (error) throw error;
     
@@ -217,23 +216,22 @@ export async function loadSavedOrgCharts() {
 // Load specific org chart
 export async function loadOrgChart(chartId) {
   try {
-    const { chart, version, employees, error } = await getOrgChart(chartId);
+    const { chart, version, employees, error } = await window.getOrgChartById(chartId);
     
     if (error) throw error;
     
-    // Update state with loaded data
-    const { setBaselineData, setUpdateData, setCurrentData } = await import('./main.js');
+    // Update state with loaded data - use window object functions
     
     // Store the data based on chart type
     if (chart.is_baseline) {
-      setBaselineData(employees);
-      setCurrentData(employees); // Initially show baseline data
+      window.setBaselineData(employees);
+      window.setCurrentData(employees); // Initially show baseline data
     } else if (chart.is_target) {
-      setUpdateData(employees);
+      window.setUpdateData(employees);
     }
     
     // Always set current data to ensure chart renders
-    setCurrentData(employees);
+    window.setCurrentData(employees);
     
     return { chart, version, employees };
   } catch (error) {
