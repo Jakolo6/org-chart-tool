@@ -4,7 +4,7 @@
 
 import { supabase } from '../supabase.js';
 import { getCurrentUser } from '../auth.js';
-import { saveOrgChart, getOrgCharts, getOrgChart, updateOrgChart, deleteOrgChart, exportToExcel } from '../orgChartService.js';
+import { saveOrgChart, getOrgCharts, getOrgChart, updateOrgChart, exportToExcel } from '../orgChartService.js';
 import { state, setBaselineData, setUpdateData, setCurrentData } from '../main.js';
 import { buildHierarchy, renderChart } from './chartRenderer.js';
 
@@ -364,7 +364,7 @@ export async function exportChart(chartId) {
  */
 export async function deleteChart(chartId) {
     try {
-        const { success, error } = await deleteOrgChart(chartId);
+        const { success, error } = await window.deleteOrgChart(chartId);
         
         if (error) {
             alert(`Error deleting chart: ${error.message}`);

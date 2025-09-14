@@ -1011,8 +1011,8 @@
             deleteBtn.addEventListener('click', async () => {
                 if (confirm('Are you sure you want to delete this chart?')) {
                     try {
-                        const { deleteOrgChart } = await import('./js/orgChartService.js');
-                        const { success, error } = await deleteOrgChart(chart.id);
+                        // Use the global function from window object
+                        const { success, error } = await window.deleteOrgChart(chart.id);
                         
                         if (error) {
                             alert('Error deleting chart: ' + error.message);

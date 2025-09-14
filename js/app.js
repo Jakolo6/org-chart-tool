@@ -368,8 +368,8 @@ function showChartsModal(charts) {
       const chartId = btn.closest('.chart-item').dataset.id;
       if (confirm('Are you sure you want to delete this chart?')) {
         try {
-          const { deleteOrgChart } = await import('./orgChartService.js');
-          const { success, error } = await deleteOrgChart(chartId);
+          // Use the global function from window object
+          const { success, error } = await window.deleteOrgChart(chartId);
           
           if (error) throw error;
           
