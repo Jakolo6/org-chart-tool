@@ -1,4 +1,4 @@
-import { getCurrentUser } from './auth.js';
+// Use window.getCurrentUser instead of importing
 import { saveOrgChart, getOrgCharts, getOrgChart, updateOrgChart } from './orgChartService.js';
 import { state } from './main.js';
 
@@ -15,7 +15,7 @@ export async function checkAuth() {
       return false; // Don't redirect from landing page
     }
     
-    const { user, profile, organization, error } = await getCurrentUser();
+    const { user, profile, organization, error } = await window.getCurrentUser();
     
     if (error || !user) {
       // Redirect to login if not authenticated
