@@ -93,68 +93,60 @@ console.log('[OrgChart] chartRenderer loaded');
  * Initializes the chart with the given selector.
  * @param {string} selector The CSS selector for the chart container.
  */
-function initChart(selector) {
-    const container = d3.select(selector);
-    if (container.empty()) {
-        console.error(`Container not found: ${selector}`);
-        return false;
-    }
-
-    // Clear any existing SVG
-    container.selectAll('svg').remove();
-
+function initChart(container = '#chart-area') {
+    console.log('Initializing chart with container:', container);
+    
     // Get container dimensions
-    const containerNode = container.node();
-    const width = containerNode.clientWidth;
-    const height = containerNode.clientHeight || 500;
-
+    const containerElement = document.querySelector(container);
+    if (!containerElement) {
+        console.error('Container not found:', container);
+        return;
+    }
+    
+    // Clear any existing SVG
+    d3.select(container).select('svg').remove();
+    
+    const width = containerElement.clientWidth;
+    const height = containerElement.clientHeight;
+    
+    console.log(`Container dimensions: ${width}x${height}`);
+    
+    // Initialize state if not already done
+    if (!window.state) {
+        window.state = {};
+    }
+    
+    // Store dimensions in state
+    window.state.width = width;
+    window.state.height = height;
+    
     // Create SVG element
-    const svg = container.append('svg')
+    const svg = d3.select('#chartSvg')
         .attr('width', width)
         .attr('height', height)
-        .attr('class', 'org-chart-svg');
-
+        .attr('class', 'org-chart');
+    
+    // Create a group for the chart content that will be transformed
+    const g = svg.append('g')
+        .attr('class', 'chart-content');
+    
     // Add zoom behavior
     const zoom = d3.zoom()
         .scaleExtent([0.1, 3])
         .on('zoom', (event) => {
             g.attr('transform', event.transform);
         });
-
+    
     svg.call(zoom);
-
-    // Create a group for the chart content
-    const g = svg.append('g')
-        .attr('class', 'chart-content');
-
-    // Update state
+    
+    // Store references in state
     window.state.svg = svg;
     window.state.g = g;
-    window.state.width = width;
-    window.state.height = height;
     window.state.zoom = zoom;
-
-    return true;
-}
-
-/**
- * Centers the chart in the viewport.
- */
-function centerChart() {
-    if (!window.state.g || !window.state.svg || !window.state.zoom) return;
     
-    const bounds = window.state.g.node().getBBox();
-    const width = window.state.width;
-    const height = window.state.height;
+    console.log('Chart initialized successfully');
     
-    const scale = 0.9;
-    const translateX = width / 2 - bounds.x * scale - bounds.width * scale / 2;
-    const translateY = height / 2 - bounds.y * scale - bounds.height * scale / 2;
-    
-    window.state.svg.transition().duration(500).call(
-        window.state.zoom.transform,
-        d3.zoomIdentity.translate(translateX, translateY).scale(scale)
-    );
+    return { svg, g, zoom };
 }
 
 /* ===========================================
@@ -279,55 +271,41 @@ function buildHierarchy(data) {
  * @param {number} y The y-coordinate for the current node.
  * @returns {number} The total width of the subtree rooted at this node.
  */
-function calculateLayout(node, x, y) {
-    // Initialize node width first to avoid circular reference
-    node.width = CONFIG.nodeWidth;
-    
-    // Set position
-    node.x = x;
-    node.y = y;
+function calculateLayout(node, x0 = 0, y0 = 0, level = 0) {
+    // Set node position
+    node.x = x0;
+    node.y = y0;
+    node.level = level;
     
     if (!node.children || node.children.length === 0 || !node.expanded) {
         // Leaf node or collapsed node
-        return node.width;
+        node.width = CONFIG.nodeWidth;
+        node.height = CONFIG.nodeHeight;
+        return node;
     }
     
-    // Calculate layout for visible children
-    let totalChildrenWidth = 0;
-    const visibleChildren = node.children;
+    // Process children
+    let totalChildrenWidth = getTotalChildrenWidth(node);
+    let currentX = x0 - (totalChildrenWidth / 2);
+    const childY = y0 + CONFIG.nodeHeight + CONFIG.verticalGap;
     
-    // First pass: calculate widths for all children
-    const childWidths = [];
-    for (let i = 0; i < visibleChildren.length; i++) {
-        const child = visibleChildren[i];
-        const childY = y + CONFIG.verticalGap;
-        // Temporarily position at x=0 to avoid using parent's width in calculation
-        const childWidth = calculateLayout(child, 0, childY);
-        childWidths.push(childWidth);
-        totalChildrenWidth += childWidth + CONFIG.horizontalGap;
-    }
-    
-    // Adjust for the last horizontal gap
-    if (visibleChildren.length > 0) {
-        totalChildrenWidth -= CONFIG.horizontalGap;
-    }
-    
-    // Center parent over children
-    if (totalChildrenWidth > CONFIG.nodeWidth) {
-        node.width = totalChildrenWidth;
-    }
-    
-    // Second pass: position children horizontally
-    let currentX = x - totalChildrenWidth / 2;
-    for (let i = 0; i < visibleChildren.length; i++) {
-        const child = visibleChildren[i];
-        const childWidth = childWidths[i];
-        // Position child at its center
-        child.x = currentX + childWidth / 2;
+    // Ensure minimum horizontal gap between nodes
+    node.children.forEach(child => {
+        // Calculate width for this child (including its descendants if expanded)
+        const childWidth = getNodeWidth(child);
+        // Position child in the center of its allocated space
+        const childX = currentX + (childWidth / 2);
+        // Recursively calculate layout for this child
+        calculateLayout(child, childX, childY, level + 1);
+        // Move to the next child position
         currentX += childWidth + CONFIG.horizontalGap;
-    }
+    });
     
-    return node.width;
+    // Update node dimensions
+    node.width = Math.max(CONFIG.nodeWidth, totalChildrenWidth);
+    node.height = CONFIG.nodeHeight;
+    
+    return node;
 }
 
 /**
@@ -385,11 +363,11 @@ function handleNodeClick(event, d) {
     event.stopPropagation();
     if (d.isStub) return;
     
-    // Select node
+    // Select the node
     selectNode(d);
     
-    // Update statistics
-    updateSelectedNodeStatistics(d);
+    // Show node statistics
+    showNodeStats(d);
 }
 
 /**
@@ -647,28 +625,27 @@ function renderChart(rootNode, selector) {
  * @param {Array<Object>} links The array of visible link objects to render.
  */
 function renderConnections(links) {
-    const connections = window.state.g.selectAll('.connection-line')
-        .data(links, d => `${d.source.id}-${d.target.id}`);
-        
-    connections.enter()
+    // Create connection lines
+    const connectionLines = window.state.g.selectAll('.connection-line')
+        .data(links, d => d.target.id);
+    
+    // Handle enter selection
+    connectionLines.enter()
         .append('path')
-        .attr('class', d => `connection-line ${d.changeType || ''}`)
-        .attr('d', generateLShapedPath)
-        .style('opacity', 0)
+        .attr('class', 'connection-line')
+        .attr('d', d => generateLShapedPath(d))
+        .style('fill', 'none')
+        .style('stroke', '#cbd5e1')
+        .style('stroke-width', '1.5px');
+    
+    // Handle update selection
+    connectionLines
         .transition()
         .duration(window.CONFIG.animationDuration)
-        .style('opacity', d => d.changeType === 'exit' ? 0.5 : (d.changeType ? 0.8 : 0.6));
-        
-    connections.transition()
-        .duration(window.CONFIG.animationDuration)
-        .attr('d', generateLShapedPath)
-        .attr('class', d => `connection-line ${d.changeType || ''}`);
-        
-    connections.exit()
-        .transition()
-        .duration(window.CONFIG.animationDuration)
-        .style('opacity', 0)
-        .remove();
+        .attr('d', d => generateLShapedPath(d));
+    
+    // Handle exit selection
+    connectionLines.exit().remove();
     
     // Update connection styles based on change type
     window.state.g.selectAll('.connection-line')
@@ -687,7 +664,7 @@ function renderConnections(links) {
 }
 
 /**
- * Generates an L-shaped path between two nodes.
+ * Generates a straight path between two nodes.
  * @param {Object} link The link object with source and target nodes.
  * @returns {string} The SVG path string.
  */
@@ -696,8 +673,11 @@ function generateLShapedPath(link) {
     const sourceY = link.source.y + window.CONFIG.nodeHeight / 2;
     const targetX = link.target.x;
     const targetY = link.target.y - window.CONFIG.nodeHeight / 2;
+    
+    // Calculate midpoint Y for the vertical segment
     const midY = sourceY + (targetY - sourceY) / 2;
     
+    // Create a path with straight lines and right angles
     return `M${sourceX},${sourceY} L${sourceX},${midY} L${targetX},${midY} L${targetX},${targetY}`;
 }
 
@@ -848,15 +828,115 @@ function getNodeBorderColor(node) {
 =========================================== */
 
 function selectNode(node) {
-    // Update selected node in global state
-    window.state.selectedNode = node;
+    // Deselect all nodes
+    window.state.g.selectAll('.node-card').classed('selected', false);
     
-    // Update visual selection
+    // Select the clicked node
     window.state.g.selectAll('.node-card')
-        .classed('selected', d => d.id === node.id);
+        .filter(d => d.id === node.id)
+        .classed('selected', true);
     
-    // Update node statistics
-    updateSelectedNodeStatistics(node);
+    // Store the selected node in state
+    window.state.selectedNode = node;
+}
+
+/**
+ * Shows the statistics for the selected node.
+ * @param {Object} node The node to show statistics for.
+ */
+function showNodeStats(node) {
+    const statsDisplay = document.getElementById('selectedStatsDisplay');
+    const statsContainer = document.getElementById('selectedStatsContainer');
+    
+    if (!statsDisplay || !statsContainer) return;
+    
+    // Show the stats panel
+    statsDisplay.style.display = 'block';
+    
+    // Generate HTML content for the stats
+    let statsHTML = `
+        <div class="node-stats">
+            <div class="node-stats-header">
+                <h3>${node.name || 'Unknown'}</h3>
+                <div class="node-stats-title">${node.title || 'No title'}</div>
+            </div>
+            <div class="node-stats-details">
+                <div class="node-stats-item">
+                    <span class="node-stats-label">ID:</span>
+                    <span class="node-stats-value">${node.id || 'N/A'}</span>
+                </div>
+                <div class="node-stats-item">
+                    <span class="node-stats-label">Manager:</span>
+                    <span class="node-stats-value">${node.manager || 'None'}</span>
+                </div>
+    `;
+    
+    // Add additional properties if they exist
+    if (node.department) {
+        statsHTML += `
+            <div class="node-stats-item">
+                <span class="node-stats-label">Department:</span>
+                <span class="node-stats-value">${node.department}</span>
+            </div>
+        `;
+    }
+    
+    if (node.location) {
+        statsHTML += `
+            <div class="node-stats-item">
+                <span class="node-stats-label">Location:</span>
+                <span class="node-stats-value">${node.location}</span>
+            </div>
+        `;
+    }
+    
+    // Add direct reports count if the node has children
+    if (node.children && node.children.length > 0) {
+        statsHTML += `
+            <div class="node-stats-item">
+                <span class="node-stats-label">Direct Reports:</span>
+                <span class="node-stats-value">${node.children.length}</span>
+            </div>
+        `;
+    }
+    
+    // Add change type information if in comparison mode
+    if (window.state.isComparisonMode && node.changeType) {
+        let changeTypeText = '';
+        let changeTypeClass = '';
+        
+        switch (node.changeType) {
+            case 'new':
+                changeTypeText = 'New Position';
+                changeTypeClass = 'new';
+                break;
+            case 'moved':
+                changeTypeText = `Moved from ${node.previousManagerName || 'Unknown'}`;
+                changeTypeClass = 'moved';
+                break;
+            case 'exit':
+                changeTypeText = 'Position Removed';
+                changeTypeClass = 'exit';
+                break;
+        }
+        
+        if (changeTypeText) {
+            statsHTML += `
+                <div class="node-stats-item change-type ${changeTypeClass}">
+                    <span class="node-stats-label">Change:</span>
+                    <span class="node-stats-value">${changeTypeText}</span>
+                </div>
+            `;
+        }
+    }
+    
+    statsHTML += `
+            </div>
+        </div>
+    `;
+    
+    // Update the container with the stats HTML
+    statsContainer.innerHTML = statsHTML;
 }
 
 /* ===========================================
@@ -891,7 +971,9 @@ function fitChartToView() {
  * Handles window resize events by updating the SVG dimensions and re-fitting the chart.
  */
 function handleResize() {
-    const container = document.querySelector('.chart-area');
+    const container = document.getElementById('chart-area');
+    if (!container) return; // Exit if container not found
+    
     const newWidth = container.clientWidth;
     const newHeight = container.clientHeight;
     
