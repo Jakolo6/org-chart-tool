@@ -302,43 +302,107 @@
       // Load chart data
       try {
         showLoading();
-        const { chart, employees, version, error } = await window.getOrgChartById(chartId);
+        console.log('Loading chart data for ID:', chartId);
+        const result = await window.getOrgChartById(chartId);
+        console.log('Raw result from getOrgChartById:', result);
+        
+        const { chart, employees, version, error } = result;
         
         if (error) {
+          console.error('Error from getOrgChartById:', error);
           throw error;
         }
+        
+        console.log('Chart data:', chart);
+        console.log('Employees data:', employees);
+        console.log('Version data:', version);
         
         // Update chart title
         document.getElementById('chartName').textContent = chart.name;
         document.getElementById('chartTitle').textContent = chart.name;
         
-        // Format employees data for chart rendering
-        const chartData = employees.map(emp => ({
-          id: emp.employee_id,
-          name: emp.name,
-          manager: emp.manager_id,
-          title: emp.title,
-          fte: emp.fte,
-          location: emp.location,
-          jobFamily: emp.job_family,
-          managementLevel: emp.management_level
-        }));
+        let chartData = [];
         
-        // Render chart
-        if (chartData.length > 0) {
-          console.log('Chart data:', chartData);
-          const hierarchyData = window.buildHierarchy(chartData);
-          window.renderChart(hierarchyData, '#chart-area');
-        } else {
-          document.getElementById('chart-area').innerHTML = '<div class="empty-state"><p>No data available for this chart</p></div>';
+        // First try to get data from employees table
+        if (employees && employees.length > 0) {
+          console.log('Using employees data for chart rendering');
+          chartData = employees.map(emp => ({
+            id: emp.employee_id,
+            name: emp.name,
+            manager: emp.manager_id,
+            title: emp.title,
+            fte: emp.fte,
+            location: emp.location,
+            jobFamily: emp.job_family,
+            managementLevel: emp.management_level
+          }));
+        }
+        // If no employees, try to get data from version
+        else if (version && version.data) {
+          console.log('No employees found, trying version data');
+          
+          // Check if data is in raw_data field or directly in data
+          if (version.data.raw_data && Array.isArray(version.data.raw_data)) {
+            console.log('Using raw_data from version');
+            chartData = version.data.raw_data;
+          } 
+          // Try direct data field
+          else if (Array.isArray(version.data)) {
+            console.log('Using direct data from version');
+            chartData = version.data;
+          }
+          // Try parsing if it's a string
+          else if (typeof version.data === 'string') {
+            try {
+              console.log('Trying to parse version data from string');
+              const parsedData = JSON.parse(version.data);
+              if (Array.isArray(parsedData)) {
+                console.log('Successfully parsed version data');
+                chartData = parsedData;
+              } else if (parsedData.raw_data && Array.isArray(parsedData.raw_data)) {
+                console.log('Successfully parsed version data with raw_data field');
+                chartData = parsedData.raw_data;
+              }
+            } catch (e) {
+              console.error('Error parsing version data:', e);
+            }
+          }
         }
         
-        hideLoading();
+        // Log the final chart data
+        console.log('Final chart data:', chartData);
+        
+        renderChartWithData(chartData);
+        
       } catch (error) {
         console.error('Error loading chart:', error);
         hideLoading();
         alert('Error loading chart: ' + error.message);
         window.location.href = './dashboard.html';
+      }
+      
+      // Helper function to render chart with data
+      function renderChartWithData(chartData) {
+        // Render chart
+        if (chartData && chartData.length > 0) {
+          console.log('Final chart data for rendering:', chartData);
+          try {
+            console.log('Building hierarchy...');
+            const hierarchyData = window.buildHierarchy(chartData);
+            console.log('Hierarchy data:', hierarchyData);
+            
+            console.log('Rendering chart...');
+            window.renderChart(hierarchyData, '#chart-area');
+            console.log('Chart rendering complete');
+          } catch (e) {
+            console.error('Error during chart rendering:', e);
+            document.getElementById('chart-area').innerHTML = `<div class="empty-state"><p>Error rendering chart: ${e.message}</p></div>`;
+          }
+        } else {
+          console.warn('No chart data available for rendering');
+          document.getElementById('chart-area').innerHTML = '<div class="empty-state"><p>No data available for this chart</p></div>';
+        }
+        
       }
       
       // Export button

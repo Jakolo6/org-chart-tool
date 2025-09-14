@@ -124,28 +124,40 @@ async function getOrgCharts() {
  */
 async function getOrgChartById(chartId) {
   try {
+    console.log('getOrgChartById called with ID:', chartId);
+    
     // Get current user
     const { user, error: userError } = await getCurrentUser();
+    console.log('Current user:', user?.id);
     
     if (userError || !user) {
+      console.error('Authentication error:', userError);
       throw new Error('User not authenticated');
     }
     
     // Get the chart
+    console.log('Fetching chart from Supabase...');
     const { data: chart, error: chartError } = await supabase
       .from('org_charts')
       .select('*')
       .eq('id', chartId)
       .single();
     
-    if (chartError) throw chartError;
+    if (chartError) {
+      console.error('Chart fetch error:', chartError);
+      throw chartError;
+    }
+    
+    console.log('Chart data received:', chart);
     
     // Verify ownership
     if (chart.owner_id !== user.id) {
+      console.error('Permission error: Chart owner ID', chart.owner_id, 'does not match user ID', user.id);
       throw new Error('You do not have permission to view this chart');
     }
     
     // Get the latest version
+    console.log('Fetching chart version...');
     const { data: versions, error: versionError } = await supabase
       .from('chart_versions')
       .select('*')
@@ -153,19 +165,36 @@ async function getOrgChartById(chartId) {
       .order('version_number', { ascending: false })
       .limit(1);
     
-    if (versionError) throw versionError;
+    if (versionError) {
+      console.error('Version fetch error:', versionError);
+      throw versionError;
+    }
+    
+    console.log('Version data received:', versions);
+    const version = versions && versions.length > 0 ? versions[0] : null;
     
     // Get employees
+    console.log('Fetching employees...');
     const { data: employees, error: employeesError } = await supabase
       .from('employees')
       .select('*')
       .eq('chart_id', chartId);
     
-    if (employeesError) throw employeesError;
+    if (employeesError) {
+      console.error('Employees fetch error:', employeesError);
+      throw employeesError;
+    }
+    
+    console.log('Employees data received:', employees ? employees.length : 0, 'records');
+    
+    // Check if we have version data but no employees
+    if ((!employees || employees.length === 0) && version && version.data) {
+      console.log('No employees found, but version data exists. Using version data for chart rendering.');
+    }
     
     return { 
       chart, 
-      version: versions && versions.length > 0 ? versions[0] : null,
+      version,
       employees: employees || [],
       error: null 
     };
