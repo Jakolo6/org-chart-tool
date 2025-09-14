@@ -30,56 +30,34 @@ if (!window.state) {
 }
 
 // Helper functions
-function wrapSVGText(textElement, text, width, maxLines, baseY) {
+function wrapSVGText(textElement, text, width, maxLines = 2, startY = 0) {
     if (!text) return;
-    
-    const words = text.split(/\s+/).reverse();
-    let word;
+    textElement.text(null);
+    const words = text.toString().split(/\s+/);
     let line = [];
     let lineNumber = 0;
-    const lineHeight = 1.1; // ems
-    const y = baseY || 0;
-    
-    let tspan = textElement.text(null).append("tspan")
-        .attr("x", 0)
-        .attr("y", y)
-        .attr("dy", 0);
-        
-    while (word = words.pop()) {
-        line.push(word);
+    const lineHeight = 1.2; // ems
+    let tspan = textElement.append("tspan").attr("x", 0).attr("y", startY).attr("text-anchor", "middle");
+
+    for (let i = 0; i < words.length; i++) {
+        line.push(words[i]);
         tspan.text(line.join(" "));
-        
-        if (tspan.node().getComputedTextLength() > width) {
+        if (tspan.node().getComputedTextLength() > width && line.length > 1) {
             line.pop();
             tspan.text(line.join(" "));
-            line = [word];
-            
             lineNumber++;
-            if (maxLines && lineNumber >= maxLines) {
-                // Add ellipsis if we've reached max lines
-                if (line.join(" ").length > 3) {
-                    tspan.text(tspan.text() + "...");
-                }
-                break;
+            if (lineNumber >= maxLines) {
+                tspan.text(tspan.text() + "...");
+                return;
             }
-            
+            line = [words[i]];
             tspan = textElement.append("tspan")
                 .attr("x", 0)
-                .attr("y", y)
-                .attr("dy", lineHeight + "em")
-                .text(word);
+                .attr("y", startY)
+                .attr("dy", `${lineNumber * lineHeight}em`)
+                .attr("text-anchor", "middle")
+                .text(words[i]);
         }
-    }
-    
-    // Center the text vertically based on number of lines
-    const tspans = textElement.selectAll("tspan");
-    const lineCount = tspans.size();
-    
-    if (lineCount > 1) {
-        const offset = (lineCount - 1) * lineHeight / 2;
-        tspans.attr("dy", function(d, i) {
-            return (i === 0 ? -offset : lineHeight) + "em";
-        });
     }
 }
 
@@ -787,6 +765,7 @@ function renderNodes(nodes) {
     enterGroups.append('text')
         .attr('class', d => `node-text ${d.changeType || ''}`)
         .attr('y', -15)
+        .attr('text-anchor', 'middle')
         .each(function(d) {
             wrapSVGText(d3.select(this), d.name, window.CONFIG.nodeWidth - 20, 2, -15);
         });
@@ -795,6 +774,7 @@ function renderNodes(nodes) {
     enterGroups.append('text')
         .attr('class', d => `node-title ${d.changeType || ''}`)
         .attr('y', 15)
+        .attr('text-anchor', 'middle')
         .each(function(d) {
             wrapSVGText(d3.select(this), d.title || '', window.CONFIG.nodeWidth - 20, 2, 15);
         });
