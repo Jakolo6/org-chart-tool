@@ -237,7 +237,7 @@ function buildHierarchy(data) {
     if (rootNode && rootNode.children && rootNode.children.length > 0) {
         // Expand only the first level children of the root
         rootNode.children.forEach(child => {
-            child.expanded = true;
+            child.expanded = false; // Keep first level children collapsed initially
         });
     }
     
@@ -270,12 +270,15 @@ function buildHierarchy(data) {
  * @returns {number} The total width of the subtree rooted at this node.
  */
 function calculateLayout(node, x, y) {
+    // Initialize node width first to avoid circular reference
+    node.width = CONFIG.nodeWidth;
+    
+    // Set position
     node.x = x;
     node.y = y;
     
     if (!node.children || node.children.length === 0 || !node.expanded) {
         // Leaf node or collapsed node
-        node.width = CONFIG.nodeWidth;
         return node.width;
     }
     
@@ -283,14 +286,16 @@ function calculateLayout(node, x, y) {
     let totalChildrenWidth = 0;
     const visibleChildren = node.children;
     
-    visibleChildren.forEach(child => {
-        const childWidth = calculateLayout(
-            child, 
-            x - node.width / 2 + totalChildrenWidth + child.width / 2, 
-            y + CONFIG.verticalGap
-        );
+    // First pass: calculate widths for all children
+    const childWidths = [];
+    for (let i = 0; i < visibleChildren.length; i++) {
+        const child = visibleChildren[i];
+        const childY = y + CONFIG.verticalGap;
+        // Temporarily position at x=0 to avoid using parent's width in calculation
+        const childWidth = calculateLayout(child, 0, childY);
+        childWidths.push(childWidth);
         totalChildrenWidth += childWidth + CONFIG.horizontalGap;
-    });
+    }
     
     // Adjust for the last horizontal gap
     if (visibleChildren.length > 0) {
@@ -300,15 +305,16 @@ function calculateLayout(node, x, y) {
     // Center parent over children
     if (totalChildrenWidth > CONFIG.nodeWidth) {
         node.width = totalChildrenWidth;
-        
-        // Recenter children
-        let currentX = x - totalChildrenWidth / 2 + visibleChildren[0].width / 2;
-        visibleChildren.forEach(child => {
-            child.x = currentX;
-            currentX += child.width + CONFIG.horizontalGap;
-        });
-    } else {
-        node.width = CONFIG.nodeWidth;
+    }
+    
+    // Second pass: position children horizontally
+    let currentX = x - totalChildrenWidth / 2;
+    for (let i = 0; i < visibleChildren.length; i++) {
+        const child = visibleChildren[i];
+        const childWidth = childWidths[i];
+        // Position child at its center
+        child.x = currentX + childWidth / 2;
+        currentX += childWidth + CONFIG.horizontalGap;
     }
     
     return node.width;
@@ -459,31 +465,12 @@ function countTotalDescendants(node) {
  * @param {Object} d The data object for the hovered node.
  */
 function handleNodeHover(event, d) {
+    event.stopPropagation();
     if (d.isStub) return;
     
     // Find ancestors for highlighting
     const ancestors = findAncestors(d);
     window.state.g.selectAll('.node-card').classed('ancestor-highlight', node => ancestors.includes(node.id));
-    
-    // Show tooltip
-    const tooltip = d3.select('#tooltip');
-    tooltip.style('display', 'block')
-        .style('left', (event.pageX + 10) + 'px')
-        .style('top', (event.pageY + 10) + 'px');
-    
-    // Populate tooltip content
-    let tooltipContent = `
-        <h4>${d.name}</h4>
-        ${d.title ? `<p><span class="tooltip-label">Title:</span> ${d.title}</p>` : ''}
-    `;
-    
-    // Add additional properties if available
-    if (d.fte) tooltipContent += `<p><span class="tooltip-label">FTE:</span> ${d.fte}</p>`;
-    if (d.location) tooltipContent += `<p><span class="tooltip-label">Location:</span> ${d.location}</p>`;
-    if (d.jobFamily) tooltipContent += `<p><span class="tooltip-label">Job Family:</span> ${d.jobFamily}</p>`;
-    if (d.managementLevel) tooltipContent += `<p><span class="tooltip-label">Level:</span> ${d.managementLevel}</p>`;
-    
-    tooltip.html(tooltipContent);
 }
 
 /**
@@ -492,11 +479,10 @@ function handleNodeHover(event, d) {
  * @param {Object} d The node data object.
  */
 function handleNodeUnhover(event, d) {
+    event.stopPropagation();
+    
     // Remove ancestor highlighting
     window.state.g.selectAll('.node-card').classed('ancestor-highlight', false);
-    
-    // Hide tooltip
-    d3.select('#tooltip').style('display', 'none');
 }
 
 /**
@@ -535,16 +521,10 @@ function findAncestors(node) {
 
 /**
  * Sets up the tooltip for node hover information.
+ * (Disabled as per user request)
  */
 function setupTooltip() {
-    // Make sure tooltip container exists
-    let tooltip = d3.select('#tooltip');
-    if (tooltip.empty()) {
-        tooltip = d3.select('body').append('div')
-            .attr('id', 'tooltip')
-            .attr('class', 'tooltip')
-            .style('display', 'none');
-    }
+    // Tooltip functionality disabled
 }
 
 /**
