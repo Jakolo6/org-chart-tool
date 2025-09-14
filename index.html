@@ -4,36 +4,394 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Organigram Analyzer</title>
-  <meta http-equiv="refresh" content="0;url=./landing.html">
-  <script>
-    // Immediate redirect to landing page
-    window.location.href = './landing.html';
-  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="./css/app-ui.css">
+  <link rel="stylesheet" href="./css/chart.css">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.18.5/package/dist/xlsx.full.min.js"></script>
   <style>
-    body {
-      font-family: 'Inter', 'Segoe UI', sans-serif;
+    .chart-container {
+      width: 100%;
+      height: calc(100vh - 120px);
+      overflow: auto;
+      position: relative;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background-color: #f8fafc;
+    }
+    
+    .chart-toolbar {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px;
+      background-color: #f1f5f9;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .chart-toolbar .btn {
+      margin-left: 8px;
+    }
+    
+    .chart-controls {
+      display: flex;
+      align-items: center;
+    }
+    
+    .chart-info {
+      display: flex;
+      align-items: center;
+    }
+    
+    .chart-info h2 {
       margin: 0;
+      font-size: 18px;
+      margin-right: 12px;
+    }
+    
+    .legend {
+      display: flex;
+      align-items: center;
+      margin-left: 16px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-right: 16px;
+      font-size: 14px;
+    }
+    
+    .legend-color {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
+    
+    #chart-area {
+      min-height: 500px;
       padding: 20px;
-      text-align: center;
-      color: #334155;
     }
-    .redirect-message {
-      margin-top: 50px;
+    
+    .node {
+      cursor: pointer;
     }
-    .redirect-link {
-      color: #3b82f6;
-      text-decoration: none;
-      font-weight: 500;
+    
+    .node circle {
+      fill: #fff;
+      stroke: #3b82f6;
+      stroke-width: 2px;
     }
-    .redirect-link:hover {
-      text-decoration: underline;
+    
+    .node text {
+      font: 12px sans-serif;
+    }
+    
+    .link {
+      fill: none;
+      stroke: #ccc;
+      stroke-width: 1.5px;
+    }
+    
+    .tooltip {
+      position: absolute;
+      padding: 10px;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      pointer-events: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      z-index: 1000;
+      max-width: 300px;
+    }
+    
+    .tooltip h4 {
+      margin: 0 0 5px 0;
+    }
+    
+    .tooltip p {
+      margin: 5px 0;
+    }
+    
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(255, 255, 255, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .loading-spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3b82f6;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
-  <div class="redirect-message">
-    <p>Redirecting to Organigram Analyzer...</p>
-    <p>If you are not redirected automatically, <a href="./landing.html" class="redirect-link">click here</a>.</p>
+  <header class="app-header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">
+          <a href="./dashboard.html">
+            <img src="./assets/images/logo.svg" alt="Organigram Analyzer Logo">
+            <span>Organigram Analyzer</span>
+          </a>
+        </div>
+        <nav class="main-nav">
+          <ul>
+            <li><a href="./dashboard.html">Dashboard</a></li>
+            <li><a href="./upload.html">Upload</a></li>
+          </ul>
+        </nav>
+        <div class="user-menu">
+          <div class="user-avatar" id="userAvatar">
+            <span id="userInitials">JD</span>
+          </div>
+          <div class="dropdown-menu" id="userDropdown">
+            <a href="./auth/profile.html" class="dropdown-item">
+              <i class="fas fa-user"></i> Profile
+            </a>
+            <a href="#" id="signOutLink" class="dropdown-item">
+              <i class="fas fa-sign-out-alt"></i> Sign Out
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="page-header">
+      <h1 id="chartTitle">Organization Chart</h1>
+      <div class="page-actions">
+        <button id="backToDashboard" class="btn btn-secondary">
+          <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </button>
+        <button id="exportBtn" class="btn btn-primary">
+          <i class="fas fa-file-export"></i> Export
+        </button>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <div class="chart-toolbar">
+        <div class="chart-info">
+          <h2 id="chartName">Loading chart...</h2>
+          <div class="legend">
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: #3b82f6;"></div>
+              <span>Current</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: #ef4444;"></div>
+              <span>Removed</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color" style="background-color: #22c55e;"></div>
+              <span>Added</span>
+            </div>
+          </div>
+        </div>
+        <div class="chart-controls">
+          <button id="zoomInBtn" class="btn btn-icon">
+            <i class="fas fa-search-plus"></i>
+          </button>
+          <button id="zoomOutBtn" class="btn btn-icon">
+            <i class="fas fa-search-minus"></i>
+          </button>
+          <button id="resetZoomBtn" class="btn btn-icon">
+            <i class="fas fa-expand"></i>
+          </button>
+        </div>
+      </div>
+      <div id="chart-area"></div>
+    </div>
+  </main>
+
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
   </div>
+
+  <!-- Tooltip container -->
+  <div id="tooltip" class="tooltip" style="display: none;"></div>
+
+  <!-- Scripts -->
+  <script src="./js/supabase.js"></script>
+  <script src="./js/auth.js"></script>
+  <script src="./js/orgChartService.js"></script>
+  <script src="./js/components/chartRenderer.js"></script>
+  <script src="./js/components/chartManager.js"></script>
+  <script>
+    // Initialize authentication
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Check authentication
+      const { user, profile, error } = await getCurrentUser();
+      if (error || !user) {
+        window.location.href = './auth/login.html?redirect=index.html' + window.location.search;
+        return;
+      }
+      
+      // Set user initials
+      if (profile?.display_name) {
+        document.getElementById('userInitials').textContent = getInitials(profile.display_name);
+      } else if (user?.email) {
+        document.getElementById('userInitials').textContent = getInitials(user.email);
+      }
+      
+      // Add sign out event listener
+      document.getElementById('signOutLink').addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          await window.signOut();
+          window.location.href = './landing.html';
+        } catch (error) {
+          console.error('Sign out error:', error);
+        }
+      });
+      
+      // Toggle user dropdown
+      document.getElementById('userAvatar').addEventListener('click', () => {
+        document.getElementById('userDropdown').classList.toggle('show');
+      });
+      
+      // Close dropdown when clicking outside
+      window.addEventListener('click', (e) => {
+        if (!e.target.matches('#userAvatar') && !e.target.matches('#userInitials')) {
+          const dropdown = document.getElementById('userDropdown');
+          if (dropdown.classList.contains('show')) {
+            dropdown.classList.remove('show');
+          }
+        }
+      });
+      
+      // Back to dashboard button
+      document.getElementById('backToDashboard').addEventListener('click', () => {
+        window.location.href = './dashboard.html';
+      });
+      
+      // Get chart ID from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const chartId = urlParams.get('chart');
+      
+      if (!chartId) {
+        window.location.href = './dashboard.html';
+        return;
+      }
+      
+      // Load chart data
+      try {
+        showLoading();
+        const { chart, error } = await window.getOrgChartById(chartId);
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Update chart title
+        document.getElementById('chartName').textContent = chart.name;
+        document.getElementById('chartTitle').textContent = chart.name;
+        
+        // Get chart data
+        const chartData = chart.chart_versions?.[0]?.data?.raw_data || [];
+        
+        // Render chart
+        if (chartData.length > 0) {
+          const hierarchyData = buildHierarchy(chartData);
+          renderChart(hierarchyData, '#chart-area');
+        } else {
+          document.getElementById('chart-area').innerHTML = '<div class="empty-state"><p>No data available for this chart</p></div>';
+        }
+        
+        hideLoading();
+      } catch (error) {
+        console.error('Error loading chart:', error);
+        hideLoading();
+        alert('Error loading chart: ' + error.message);
+        window.location.href = './dashboard.html';
+      }
+      
+      // Export button
+      document.getElementById('exportBtn').addEventListener('click', async () => {
+        const chartId = urlParams.get('chart');
+        if (!chartId) return;
+        
+        try {
+          showLoading();
+          await window.exportToExcel(chartId);
+          hideLoading();
+        } catch (error) {
+          console.error('Error exporting chart:', error);
+          hideLoading();
+          alert('Error exporting chart: ' + error.message);
+        }
+      });
+      
+      // Zoom controls
+      const zoomInBtn = document.getElementById('zoomInBtn');
+      const zoomOutBtn = document.getElementById('zoomOutBtn');
+      const resetZoomBtn = document.getElementById('resetZoomBtn');
+      
+      let currentZoom = 1;
+      const zoomStep = 0.1;
+      const chartArea = document.getElementById('chart-area');
+      
+      zoomInBtn.addEventListener('click', () => {
+        currentZoom += zoomStep;
+        applyZoom();
+      });
+      
+      zoomOutBtn.addEventListener('click', () => {
+        currentZoom = Math.max(0.1, currentZoom - zoomStep);
+        applyZoom();
+      });
+      
+      resetZoomBtn.addEventListener('click', () => {
+        currentZoom = 1;
+        applyZoom();
+      });
+      
+      function applyZoom() {
+        const svg = d3.select('#chart-area svg');
+        if (!svg.empty()) {
+          svg.attr('transform', `scale(${currentZoom})`);
+        }
+      }
+    });
+    
+    // Helper functions
+    function getInitials(name) {
+      if (!name) return '';
+      
+      return name
+        .split(' ')
+        .filter(part => part.length > 0)
+        .map(part => part[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2);
+    }
+    
+    function showLoading() {
+      document.getElementById('loadingOverlay').style.display = 'flex';
+    }
+    
+    function hideLoading() {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }
+  </script>
 </body>
 </html>

@@ -17,6 +17,54 @@ console.log('[OrgChart] chartRenderer loaded');
 =========================================== */
 
 /**
+ * Initializes the chart with the given selector.
+ * @param {string} selector The CSS selector for the chart container.
+ */
+export function initChart(selector) {
+    const container = d3.select(selector);
+    if (container.empty()) {
+        console.error(`Container not found: ${selector}`);
+        return false;
+    }
+
+    // Clear any existing SVG
+    container.selectAll('svg').remove();
+
+    // Get container dimensions
+    const containerNode = container.node();
+    const width = containerNode.clientWidth;
+    const height = containerNode.clientHeight || 500;
+
+    // Create SVG element
+    const svg = container.append('svg')
+        .attr('width', width)
+        .attr('height', height)
+        .attr('class', 'org-chart-svg');
+
+    // Add zoom behavior
+    const zoom = d3.zoom()
+        .scaleExtent([0.1, 3])
+        .on('zoom', (event) => {
+            g.attr('transform', event.transform);
+        });
+
+    svg.call(zoom);
+
+    // Create a group for the chart content
+    const g = svg.append('g')
+        .attr('class', 'chart-content');
+
+    // Update state
+    state.svg = svg;
+    state.g = g;
+    state.width = width;
+    state.height = height;
+    state.zoom = zoom;
+
+    return true;
+}
+
+/**
  * Initializes the main SVG container and D3 zoom behavior.
  * This should be called once when the application loads.
  */
@@ -295,11 +343,87 @@ function handleNodeClick(event, d) {
     // Update global selected node state
     setSelectedNode(d);
     
-    // Call imported updateSelectedNodeStats function
-    updateSelectedNodeStats();
-    
     // Update visual selection styling
     state.g.selectAll('.node-card').classed('selected', node => node.id === d.id);
+    
+    // Update node statistics
+    updateSelectedNodeStatistics(d);
+}
+
+/**
+ * Updates the statistics panel with details about the selected node.
+ * @param {Object} node The selected node.
+ */
+function updateSelectedNodeStatistics(node) {
+    if (!node) return;
+    
+    const statsContainer = document.getElementById('selectedStatsContainer');
+    if (!statsContainer) return;
+    
+    // Create stats HTML
+    let statsHtml = `
+        <div class="stats-panel">
+            <h3>${node.name}</h3>
+            <div class="stats-grid">
+                ${node.title ? `
+                    <div class="stat-item">
+                        <div class="stat-label">Title</div>
+                        <div class="stat-value">${node.title}</div>
+                    </div>
+                ` : ''}
+                ${node.fte ? `
+                    <div class="stat-item">
+                        <div class="stat-label">FTE</div>
+                        <div class="stat-value">${node.fte}</div>
+                    </div>
+                ` : ''}
+                ${node.location ? `
+                    <div class="stat-item">
+                        <div class="stat-label">Location</div>
+                        <div class="stat-value">${node.location}</div>
+                    </div>
+                ` : ''}
+                ${node.jobFamily ? `
+                    <div class="stat-item">
+                        <div class="stat-label">Job Family</div>
+                        <div class="stat-value">${node.jobFamily}</div>
+                    </div>
+                ` : ''}
+                ${node.managementLevel ? `
+                    <div class="stat-item">
+                        <div class="stat-label">Management Level</div>
+                        <div class="stat-value">${node.managementLevel}</div>
+                    </div>
+                ` : ''}
+                <div class="stat-item">
+                    <div class="stat-label">Direct Reports</div>
+                    <div class="stat-value">${node.children ? node.children.length : 0}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Total Team Size</div>
+                    <div class="stat-value">${countTotalDescendants(node)}</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    statsContainer.innerHTML = statsHtml;
+}
+
+/**
+ * Counts the total number of descendants for a node.
+ * @param {Object} node The node to count descendants for.
+ * @returns {number} The total number of descendants.
+ */
+function countTotalDescendants(node) {
+    if (!node.children || !node.children.length) return 0;
+    
+    let count = node.children.length;
+    for (const child of node.children) {
+        count += countTotalDescendants(child);
+    }
+    
+    return count;
 }
 
 /**
@@ -310,37 +434,146 @@ function handleNodeClick(event, d) {
  */
 function handleNodeHover(event, d) {
     if (d.isStub) return;
+    
+    // Find ancestors for highlighting
     const ancestors = findAncestors(d);
     state.g.selectAll('.node-card').classed('ancestor-highlight', node => ancestors.includes(node.id));
+    
+    // Show tooltip
+    const tooltip = d3.select('#tooltip');
+    tooltip.style('display', 'block')
+        .style('left', (event.pageX + 10) + 'px')
+        .style('top', (event.pageY + 10) + 'px');
+    
+    // Populate tooltip content
+    let tooltipContent = `
+        <h4>${d.name}</h4>
+        ${d.title ? `<p><span class="tooltip-label">Title:</span> ${d.title}</p>` : ''}
+    `;
+    
+    // Add additional properties if available
+    if (d.fte) tooltipContent += `<p><span class="tooltip-label">FTE:</span> ${d.fte}</p>`;
+    if (d.location) tooltipContent += `<p><span class="tooltip-label">Location:</span> ${d.location}</p>`;
+    if (d.jobFamily) tooltipContent += `<p><span class="tooltip-label">Job Family:</span> ${d.jobFamily}</p>`;
+    if (d.managementLevel) tooltipContent += `<p><span class="tooltip-label">Level:</span> ${d.managementLevel}</p>`;
+    
+    tooltip.html(tooltipContent);
 }
 
 /**
- * Handles mouse unhover events to clear any ancestor highlighting.
+ * Handle node unhover event.
+ * @param {Event} event The mouse event.
+ * @param {Object} d The node data object.
  */
-function handleNodeUnhover() {
+function handleNodeUnhover(event, d) {
+    // Remove ancestor highlighting
     state.g.selectAll('.node-card').classed('ancestor-highlight', false);
+    
+    // Hide tooltip
+    d3.select('#tooltip').style('display', 'none');
 }
 
 /**
- * Finds all ancestor IDs for a given node by traversing up the parent chain.
+ * Find all ancestor node IDs for a given node.
  * @param {Object} node The node to find ancestors for.
- * @returns {Array<string>} An array of ancestor IDs.
+ * @returns {Array<string>} Array of ancestor node IDs.
  */
 function findAncestors(node) {
     const ancestors = [];
     const parentMap = new Map();
-    state.currentData.forEach(p => {
-        if (p.children) {
-            p.children.forEach(c => parentMap.set(c.id, p.id));
+    
+    // Build parent map
+    function buildParentMap(node) {
+        if (node.children) {
+            node.children.forEach(child => {
+                parentMap.set(child.id, node.id);
+                buildParentMap(child);
+            });
         }
-    });
+    }
+    
+    if (state.rootNode) {
+        buildParentMap(state.rootNode);
+    }
+    
+    // Find ancestors
     let currentId = node.id;
     while (parentMap.has(currentId)) {
         const parentId = parentMap.get(currentId);
         ancestors.push(parentId);
         currentId = parentId;
     }
+    
     return ancestors;
+}
+
+/**
+ * Sets up the tooltip for node hover information.
+ */
+function setupTooltip() {
+    // Make sure tooltip container exists
+    let tooltip = d3.select('#tooltip');
+    if (tooltip.empty()) {
+        tooltip = d3.select('body').append('div')
+            .attr('id', 'tooltip')
+            .attr('class', 'tooltip')
+            .style('display', 'none');
+    }
+}
+
+/**
+ * Expands all nodes in the chart.
+ */
+export function expandAll() {
+    if (!state.rootNode) return;
+    expandAllNodes(state.rootNode);
+    renderChart();
+}
+
+/**
+ * Recursively expands all nodes.
+ * @param {Object} node The node to expand.
+ */
+function expandAllNodes(node) {
+    if (node.children && node.children.length > 0) {
+        node.expanded = true;
+        node.children.forEach(expandAllNodes);
+    }
+}
+
+/**
+ * Collapses all nodes except the root.
+ */
+export function collapseAll() {
+    if (!state.rootNode) return;
+    collapseAllNodes(state.rootNode);
+    state.rootNode.expanded = true; // Keep root expanded
+    renderChart();
+}
+
+/**
+ * Recursively collapses all nodes.
+ * @param {Object} node The node to collapse.
+ */
+function collapseAllNodes(node) {
+    if (node.children && node.children.length > 0) {
+        node.expanded = false;
+        node.children.forEach(collapseAllNodes);
+    }
+}
+
+/**
+ * Resets the view to center on the root node.
+ */
+export function resetView() {
+    if (!state.rootNode || !state.svg || !state.zoom) return;
+    
+    collapseAllNodes(state.rootNode);
+    state.rootNode.expanded = true;
+    state.selectedNode = state.rootNode;
+    renderChart();
+    updateSelectedNodeStatistics(state.rootNode);
+    centerChart();
 }
 
 /* ===========================================
@@ -352,21 +585,34 @@ function findAncestors(node) {
  * It clears the SVG, gets the visible nodes and links, and calls the respective
  * rendering functions for them.
  */
-export function renderChart() {
-    if (!state.g || !state.rootNode) {
-        console.log('Chart not initialized or no data to render');
+export function renderChart(rootNode, selector) {
+    if (!rootNode) {
+        console.log('No data to render');
         return;
     }
-
-    // Clear existing content
-    state.g.selectAll('*').remove();
-
+    
+    // Initialize chart if selector is provided
+    if (selector) {
+        initChart(selector);
+    }
+    
+    if (!state.g) {
+        console.log('Chart not initialized');
+        return;
+    }
+    
+    // Set root node in state
+    state.rootNode = rootNode;
+    
+    // Calculate layout
+    calculateLayout(state.rootNode, state.width / 2, 100);
+    
     // Get only visible nodes and links based on expanded state
     const nodes = getVisibleNodes(state.rootNode);
     const links = getVisibleLinks(state.rootNode);
 
-    // Render links first (so they appear behind nodes)
-    renderLinks(links);
+    // Render connections first (so they appear behind nodes)
+    renderConnections(links);
     
     // Render nodes
     renderNodes(nodes);
@@ -375,31 +621,53 @@ export function renderChart() {
     setTimeout(() => {
         fitChartToView();
     }, 100);
+    
+    // Setup tooltip
+    setupTooltip();
 }
 
 /**
  * Renders the L-shaped SVG paths for the links between nodes.
  * @param {Array<Object>} links The array of visible link objects to render.
  */
-function renderLinks(links) {
-    const linkSelection = state.g.selectAll('.link')
-        .data(links)
-        .enter()
+function renderConnections(links) {
+    const connections = state.g.selectAll('.connection-line')
+        .data(links, d => `${d.source.id}-${d.target.id}`);
+        
+    connections.enter()
         .append('path')
-        .attr('class', 'link')
-        .attr('d', d => {
-            // Use same coordinate logic as original generateLShapedPath function
-            const sourceX = d.source.x;
-            const sourceY = d.source.y + CONFIG.nodeHeight / 2;
-            const targetX = d.target.x;
-            const targetY = d.target.y - CONFIG.nodeHeight / 2;
-            const midY = sourceY + (targetY - sourceY) / 2;
-            
-            return `M${sourceX},${sourceY} L${sourceX},${midY} L${targetX},${midY} L${targetX},${targetY}`;
-        })
-        .style('fill', 'none')
-        .style('stroke', '#ccc')
-        .style('stroke-width', 2);
+        .attr('class', d => `connection-line ${d.changeType || ''}`)
+        .attr('d', generateLShapedPath)
+        .style('opacity', 0)
+        .transition()
+        .duration(CONFIG.animationDuration)
+        .style('opacity', d => d.changeType === 'exit' ? 0.5 : (d.changeType ? 0.8 : 0.6));
+        
+    connections.transition()
+        .duration(CONFIG.animationDuration)
+        .attr('d', generateLShapedPath)
+        .attr('class', d => `connection-line ${d.changeType || ''}`);
+        
+    connections.exit()
+        .transition()
+        .duration(CONFIG.animationDuration)
+        .style('opacity', 0)
+        .remove();
+}
+
+/**
+ * Generates an L-shaped path between two nodes.
+ * @param {Object} link The link object with source and target nodes.
+ * @returns {string} The SVG path string.
+ */
+function generateLShapedPath(link) {
+    const sourceX = link.source.x;
+    const sourceY = link.source.y + CONFIG.nodeHeight / 2;
+    const targetX = link.target.x;
+    const targetY = link.target.y - CONFIG.nodeHeight / 2;
+    const midY = sourceY + (targetY - sourceY) / 2;
+    
+    return `M${sourceX},${sourceY} L${sourceX},${midY} L${targetX},${midY} L${targetX},${targetY}`;
 }
 
 /**
@@ -408,16 +676,21 @@ function renderLinks(links) {
  * @param {Array<Object>} nodes The array of visible node objects to render.
  */
 function renderNodes(nodes) {
-    // Clear existing nodes
-    state.g.selectAll('.node-group').remove();
-    
     const nodeGroups = state.g.selectAll('.node-group')
         .data(nodes, d => d.id);
     
+    // Handle exit selection
+    nodeGroups.exit()
+        .transition()
+        .duration(CONFIG.animationDuration)
+        .style('opacity', 0)
+        .remove();
+    
+    // Handle enter selection
     const enterGroups = nodeGroups.enter()
         .append('g')
         .attr('class', 'node-group')
-        .attr('transform', d => `translate(${d.x || 0}, ${d.y || 0})`)
+        .attr('transform', d => `translate(${d.x}, ${d.y})`)
         .style('opacity', 0);
     
     // Add moved halo for moved nodes
@@ -450,7 +723,7 @@ function renderNodes(nodes) {
         .attr('class', d => `node-title ${d.changeType || ''}`)
         .attr('y', 15)
         .each(function(d) {
-            wrapSVGText(d3.select(this), d.title, CONFIG.nodeWidth - 20, 2, 15);
+            wrapSVGText(d3.select(this), d.title || '', CONFIG.nodeWidth - 20, 2, 15);
         });
     
     // Add hover and click handlers
@@ -459,6 +732,7 @@ function renderNodes(nodes) {
         .on('mouseleave', handleNodeUnhover)
         .on('click', (event, d) => handleNodeClick(event, d));
     
+    // Merge enter and update selections
     const allGroups = nodeGroups.merge(enterGroups);
     
     // Remove existing expand buttons
@@ -477,7 +751,6 @@ function renderNodes(nodes) {
                 .on('click', (event, d) => {
                     event.stopPropagation();
                     d.expanded = !d.expanded;
-                    calculateLayout(state.rootNode, 0, 0);
                     renderChart();
                 });
             
@@ -489,26 +762,10 @@ function renderNodes(nodes) {
         });
     
     // Animate nodes into position
-    const t = allGroups.transition()
+    allGroups.transition()
         .duration(CONFIG.animationDuration)
-        .attr('transform', d => `translate(${d.x || 0}, ${d.y || 0})`)
+        .attr('transform', d => `translate(${d.x}, ${d.y})`)
         .style('opacity', 1);
-
-    // Notify when all node transitions have finished (for reliable follow-up actions)
-    try {
-        let ended = 0;
-        const total = allGroups.size();
-        t.on('end', () => {
-            ended++;
-            if (ended >= total) {
-                if (window.__onChartRenderComplete) {
-                    try { window.__onChartRenderComplete(); } catch(_) {}
-                    // one-time by default; consumer can reassign if needed
-                    window.__onChartRenderComplete = null;
-                }
-            }
-        });
-    } catch(_) {}
     
     // Update selected state
     allGroups.select('.node-card')

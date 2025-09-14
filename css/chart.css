@@ -1,0 +1,277 @@
+/* Chart Styling */
+.chart-container {
+    width: 100%;
+    height: calc(100vh - 120px);
+    overflow: auto;
+    position: relative;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #f8fafc;
+}
+
+.chart-toolbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px;
+    background-color: #f1f5f9;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.chart-toolbar .btn {
+    margin-left: 8px;
+}
+
+.chart-controls {
+    display: flex;
+    align-items: center;
+}
+
+.chart-info {
+    display: flex;
+    align-items: center;
+}
+
+.chart-info h2 {
+    margin: 0;
+    font-size: 18px;
+    margin-right: 12px;
+}
+
+.legend {
+    display: flex;
+    align-items: center;
+    margin-left: 16px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-right: 16px;
+    font-size: 14px;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    margin-right: 6px;
+}
+
+#chart-area {
+    min-height: 500px;
+    padding: 20px;
+}
+
+/* Node styling */
+.node-group {
+    cursor: pointer;
+}
+
+.node-card {
+    fill: #f8fafc;
+    stroke: #e2e8f0;
+    stroke-width: 2px;
+    rx: 4;
+    ry: 4;
+}
+
+.node-card.selected {
+    stroke: #3b82f6;
+    stroke-width: 3px;
+}
+
+.node-card.ancestor-highlight {
+    stroke: #f59e0b;
+    stroke-width: 2.5px;
+}
+
+.node-card.new {
+    fill: rgba(5, 150, 105, 0.1);
+    stroke: #059669;
+}
+
+.node-card.moved {
+    fill: rgba(253, 226, 91, 0.3);
+    stroke: #FDE25B;
+}
+
+.node-card.exit {
+    fill: rgba(220, 38, 38, 0.1);
+    stroke: #dc2626;
+    stroke-dasharray: 4;
+}
+
+.moved-halo {
+    fill: rgba(253, 226, 91, 0.2);
+    stroke: none;
+    rx: 6;
+    ry: 6;
+}
+
+.node-text {
+    text-anchor: middle;
+    font-weight: 500;
+    font-size: 14px;
+    fill: #1e293b;
+}
+
+.node-title {
+    text-anchor: middle;
+    font-size: 12px;
+    fill: #64748b;
+}
+
+.node-text.exit, .node-title.exit {
+    fill: #dc2626;
+}
+
+.node-text.new, .node-title.new {
+    fill: #059669;
+}
+
+/* Connection lines */
+.connection-line {
+    fill: none;
+    stroke: #cbd5e1;
+    stroke-width: 1.5px;
+}
+
+.connection-line.new {
+    stroke: #059669;
+    stroke-width: 2px;
+}
+
+.connection-line.exit {
+    stroke: #dc2626;
+    stroke-width: 1.5px;
+    stroke-dasharray: 4;
+}
+
+.connection-line.moved {
+    stroke: #FDE25B;
+    stroke-width: 2px;
+}
+
+/* Expand/collapse buttons */
+.expand-button {
+    fill: #f1f5f9;
+    stroke: #94a3b8;
+    stroke-width: 1px;
+    cursor: pointer;
+}
+
+.expand-icon {
+    text-anchor: middle;
+    dominant-baseline: middle;
+    font-size: 12px;
+    fill: #64748b;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Tooltip */
+.tooltip {
+    position: absolute;
+    padding: 10px;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    pointer-events: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 1000;
+    max-width: 300px;
+}
+
+.tooltip h4 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.tooltip p {
+    margin: 5px 0;
+    font-size: 13px;
+}
+
+.tooltip .tooltip-label {
+    font-weight: 500;
+    color: #64748b;
+}
+
+/* Stats panel */
+.stats-panel {
+    background-color: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.stats-panel h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.stat-item {
+    padding: 10px;
+    background-color: #f8fafc;
+    border-radius: 6px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1e293b;
+}
+
+.loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100px;
+    color: #64748b;
+    font-style: italic;
+}
+
+/* Loading overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3b82f6;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
