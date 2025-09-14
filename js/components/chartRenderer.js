@@ -189,7 +189,7 @@ function buildHierarchy(data) {
             ...emp,
             id: id, // Ensure ID is consistent
             children: [],
-            expanded: true
+            expanded: false // Start with all nodes collapsed except root
         });
     });
 
@@ -215,6 +215,7 @@ function buildHierarchy(data) {
             // This is a root node (no manager or self-managed)
             console.log(`Found root node: ${emp.name} (${id})`);
             rootNode = node;
+            rootNode.expanded = true; // Root node should be expanded by default
             rootCount++;
         } else if (employeeMap.has(managerId)) {
             // Add as child to manager
@@ -226,10 +227,19 @@ function buildHierarchy(data) {
             console.warn(`Manager ${managerId} not found for employee ${id} (${emp.name}). Treating as root.`);
             if (!rootNode) {
                 rootNode = node;
+                rootNode.expanded = true; // Root node should be expanded by default
                 rootCount++;
             }
         }
     });
+    
+    // Set expansion state for first level children of root
+    if (rootNode && rootNode.children && rootNode.children.length > 0) {
+        // Expand only the first level children of the root
+        rootNode.children.forEach(child => {
+            child.expanded = true;
+        });
+    }
     
     console.log(`Found ${rootCount} root nodes. Using ${rootNode ? rootNode.name : 'none'} as the main root.`);
 
@@ -359,13 +369,10 @@ function handleNodeClick(event, d) {
     event.stopPropagation();
     if (d.isStub) return;
     
-    // Update selected node in state
-    state.selectedNode = d;
+    // Select node
+    selectNode(d);
     
-    // Update visual selection
-    state.g.selectAll('.node-card').classed('selected', node => node.id === d.id);
-    
-    // Update node statistics
+    // Update statistics
     updateSelectedNodeStatistics(d);
 }
 
@@ -770,7 +777,7 @@ function renderNodes(nodes) {
                 .on('click', (event, d) => {
                     event.stopPropagation();
                     d.expanded = !d.expanded;
-                    renderChart();
+                    renderChart(window.state.rootNode);
                 });
             
             group.append('text')
