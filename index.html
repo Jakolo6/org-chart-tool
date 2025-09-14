@@ -381,15 +381,73 @@
         window.location.href = './dashboard.html';
       }
       
+      // Helper function to convert array data to object format
+      function convertArrayDataToObjects(arrayData) {
+        console.log('Converting array data to objects...');
+        
+        if (!Array.isArray(arrayData) || arrayData.length === 0) {
+          return [];
+        }
+        
+        // Check if this is an array of arrays (Excel format)
+        if (Array.isArray(arrayData[0])) {
+          console.log('Detected array of arrays format (Excel data)');
+          
+          // Get header row or use default column mapping
+          const headerRow = arrayData[0];
+          const idIndex = headerRow.indexOf('ID') !== -1 ? headerRow.indexOf('ID') : 0;
+          const nameIndex = headerRow.indexOf('Name') !== -1 ? headerRow.indexOf('Name') : 1;
+          const managerIndex = headerRow.indexOf('Manager ID') !== -1 ? headerRow.indexOf('Manager ID') : 3;
+          const titleIndex = headerRow.indexOf('Title') !== -1 ? headerRow.indexOf('Title') : 2;
+          const fteIndex = headerRow.indexOf('FTE') !== -1 ? headerRow.indexOf('FTE') : 4;
+          const locationIndex = headerRow.indexOf('Location') !== -1 ? headerRow.indexOf('Location') : 5;
+          const jobFamilyIndex = headerRow.indexOf('Job Family') !== -1 ? headerRow.indexOf('Job Family') : 6;
+          
+          // Convert data rows to objects
+          const result = [];
+          for (let i = 1; i < arrayData.length; i++) {
+            const row = arrayData[i];
+            if (row && row.length > 0) {
+              const obj = {
+                id: row[idIndex]?.toString() || `emp_${i}`,
+                name: row[nameIndex] || 'Unknown',
+                manager: row[managerIndex]?.toString() || '',
+                title: row[titleIndex] || '',
+                fte: row[fteIndex] || 1,
+                location: row[locationIndex] || '',
+                jobFamily: row[jobFamilyIndex] || '',
+                managementLevel: ''
+              };
+              result.push(obj);
+            }
+          }
+          
+          console.log('Converted data:', result);
+          return result;
+        }
+        
+        // Already in object format
+        return arrayData;
+      }
+      
       // Helper function to render chart with data
       function renderChartWithData(chartData) {
         // Render chart
         if (chartData && chartData.length > 0) {
           console.log('Final chart data for rendering:', chartData);
           try {
+            // Convert data if needed
+            const formattedData = convertArrayDataToObjects(chartData);
+            
             console.log('Building hierarchy...');
-            const hierarchyData = window.buildHierarchy(chartData);
+            const hierarchyData = window.buildHierarchy(formattedData);
             console.log('Hierarchy data:', hierarchyData);
+            
+            if (!hierarchyData) {
+              console.error('Failed to build hierarchy from data');
+              document.getElementById('chart-area').innerHTML = '<div class="empty-state"><p>Could not build organization chart from the data</p></div>';
+              return;
+            }
             
             console.log('Rendering chart...');
             window.renderChart(hierarchyData, '#chart-area');
@@ -403,6 +461,7 @@
           document.getElementById('chart-area').innerHTML = '<div class="empty-state"><p>No data available for this chart</p></div>';
         }
         
+        hideLoading();
       }
       
       // Export button
