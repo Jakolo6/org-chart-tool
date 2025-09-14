@@ -392,32 +392,85 @@
         // Check if this is an array of arrays (Excel format)
         if (Array.isArray(arrayData[0])) {
           console.log('Detected array of arrays format (Excel data)');
+          console.log('First row:', arrayData[0]);
+          console.log('Second row:', arrayData[1]);
           
-          // Get header row or use default column mapping
-          const headerRow = arrayData[0];
-          const idIndex = headerRow.indexOf('ID') !== -1 ? headerRow.indexOf('ID') : 0;
-          const nameIndex = headerRow.indexOf('Name') !== -1 ? headerRow.indexOf('Name') : 1;
-          const managerIndex = headerRow.indexOf('Manager ID') !== -1 ? headerRow.indexOf('Manager ID') : 3;
-          const titleIndex = headerRow.indexOf('Title') !== -1 ? headerRow.indexOf('Title') : 2;
-          const fteIndex = headerRow.indexOf('FTE') !== -1 ? headerRow.indexOf('FTE') : 4;
-          const locationIndex = headerRow.indexOf('Location') !== -1 ? headerRow.indexOf('Location') : 5;
-          const jobFamilyIndex = headerRow.indexOf('Job Family') !== -1 ? headerRow.indexOf('Job Family') : 6;
+          // For Excel data, we need to determine the column structure
+          // Let's log the first few rows to understand the structure
+          for (let i = 0; i < Math.min(3, arrayData.length); i++) {
+            console.log(`Row ${i}:`, arrayData[i]);
+          }
+          
+          // Special handling for the specific Excel format we're seeing in the logs
+          // The format appears to be arrays with 3 or 7 elements
+          // For the 3-element header: [ID, Name, Title]
+          // For the 7-element data rows: [ID, Name, Title, Manager ID, FTE, Location, Job Family]
+          
+          // Check if this is the specific format we're dealing with
+          const isSpecialFormat = arrayData[0].length === 3 && 
+                                (arrayData[1].length === 7 || arrayData[1].length === 3);
+          
+          if (isSpecialFormat) {
+            console.log('Detected special Excel format with 3-element header and 7-element data rows');
+            
+            // For this specific format, we know the exact structure
+            const idIndex = 0;
+            const nameIndex = 1;
+            const titleIndex = 2;
+            const managerIndex = 3; // Only in 7-element rows
+            const fteIndex = 4;     // Only in 7-element rows
+            const locationIndex = 5; // Only in 7-element rows
+            const jobFamilyIndex = 6; // Only in 7-element rows
+          } else {
+            // For other formats, use default column mapping
+            console.log('Using default column mapping for unknown format');
+            const idIndex = 0;
+            const nameIndex = 1;
+            const titleIndex = 2;
+            const managerIndex = 3;
+            const fteIndex = 4;
+            const locationIndex = 5;
+            const jobFamilyIndex = 6;
+          }
           
           // Convert data rows to objects
           const result = [];
           for (let i = 1; i < arrayData.length; i++) {
             const row = arrayData[i];
             if (row && row.length > 0) {
-              const obj = {
-                id: row[idIndex]?.toString() || `emp_${i}`,
-                name: row[nameIndex] || 'Unknown',
-                manager: row[managerIndex]?.toString() || '',
-                title: row[titleIndex] || '',
-                fte: row[fteIndex] || 1,
-                location: row[locationIndex] || '',
-                jobFamily: row[jobFamilyIndex] || '',
-                managementLevel: ''
-              };
+              // Skip header row or empty rows
+              if (row[0] === 'ID' || !row[0]) continue;
+              
+              // Handle the special case where row length is 3 (only ID, Name, Title)
+              // In this case, we need to set manager to empty string
+              let obj;
+              
+              if (row.length === 3) {
+                obj = {
+                  id: String(row[0] || `emp_${i}`),
+                  name: row[1] || 'Unknown',
+                  manager: '', // No manager in 3-element rows
+                  title: row[2] || '',
+                  fte: 1,
+                  location: '',
+                  jobFamily: '',
+                  managementLevel: ''
+                };
+              } else {
+                // Normal case with all fields
+                obj = {
+                  id: String(row[0] || `emp_${i}`),
+                  name: row[1] || 'Unknown',
+                  manager: row[3] ? String(row[3]) : '',
+                  title: row[2] || '',
+                  fte: row[4] || 1,
+                  location: row[5] || '',
+                  jobFamily: row[6] || '',
+                  managementLevel: ''
+                };
+              }
+              
+              console.log(`Converting row ${i}:`, row, 'to:', obj);
               result.push(obj);
             }
           }

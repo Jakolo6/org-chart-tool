@@ -167,6 +167,8 @@ function centerChart() {
  * @returns {Object|null} The root node of the hierarchy.
  */
 function buildHierarchy(data) {
+    console.log('Building hierarchy with data:', data);
+    
     if (!data || data.length === 0) {
         console.log('No data available for hierarchy building');
         return null;
@@ -175,31 +177,61 @@ function buildHierarchy(data) {
     // Create lookup map
     const employeeMap = new Map();
     data.forEach(emp => {
-        employeeMap.set(emp.id, {
+        // Ensure ID is a string
+        const id = String(emp.id || '');
+        if (!id) {
+            console.warn('Employee with no ID found:', emp);
+            return;
+        }
+        
+        console.log(`Adding employee to map: ID=${id}, Name=${emp.name}, Manager=${emp.manager}`);
+        employeeMap.set(id, {
             ...emp,
+            id: id, // Ensure ID is consistent
             children: [],
             expanded: true
         });
     });
 
+    console.log('Employee map created with', employeeMap.size, 'entries');
+    
     // Find root and build hierarchy
     let rootNode = null;
+    let rootCount = 0;
+    
     data.forEach(emp => {
-        const node = employeeMap.get(emp.id);
+        const id = String(emp.id || '');
+        if (!id || !employeeMap.has(id)) {
+            console.warn('Invalid employee ID:', id);
+            return;
+        }
         
-        if (!emp.manager || emp.manager === '' || emp.manager === emp.id) {
+        const node = employeeMap.get(id);
+        const managerId = String(emp.manager || '');
+        
+        console.log(`Processing employee: ID=${id}, Name=${emp.name}, Manager=${managerId}`);
+        
+        if (!managerId || managerId === '' || managerId === id) {
             // This is a root node (no manager or self-managed)
+            console.log(`Found root node: ${emp.name} (${id})`);
             rootNode = node;
-        } else if (employeeMap.has(emp.manager)) {
+            rootCount++;
+        } else if (employeeMap.has(managerId)) {
             // Add as child to manager
-            const managerNode = employeeMap.get(emp.manager);
+            const managerNode = employeeMap.get(managerId);
+            console.log(`Adding ${emp.name} (${id}) as child to ${managerNode.name} (${managerId})`);
             managerNode.children.push(node);
         } else {
             // Manager not found, treat as root
-            console.warn(`Manager ${emp.manager} not found for employee ${emp.id}`);
-            if (!rootNode) rootNode = node;
+            console.warn(`Manager ${managerId} not found for employee ${id} (${emp.name}). Treating as root.`);
+            if (!rootNode) {
+                rootNode = node;
+                rootCount++;
+            }
         }
     });
+    
+    console.log(`Found ${rootCount} root nodes. Using ${rootNode ? rootNode.name : 'none'} as the main root.`);
 
     // Sort children by name
     const sortChildren = (node) => {
