@@ -687,7 +687,7 @@ function renderConnections(links) {
             if (!window.state.isComparisonMode) return '#cbd5e1';
             
             switch (d.changeType) {
-                case 'new': return '#059669';
+                case 'added': return '#059669';
                 case 'moved': return '#f59e0b';
                 case 'exit': return '#dc2626';
                 default: return '#cbd5e1';
@@ -841,7 +841,7 @@ function getNodeColor(node) {
     if (!window.state.isComparisonMode) return '#f8fafc';
     
     switch (node.changeType) {
-        case 'new': return 'rgba(5, 150, 105, 0.1)';
+        case 'added': return 'rgba(5, 150, 105, 0.1)';
         case 'moved': return 'rgba(245, 158, 11, 0.1)';
         case 'exit': return 'rgba(220, 38, 38, 0.1)';
         default: return '#f8fafc';
@@ -852,7 +852,7 @@ function getNodeBorderColor(node) {
     if (!window.state.isComparisonMode) return '#e2e8f0';
     
     switch (node.changeType) {
-        case 'new': return '#059669';
+        case 'added': return '#059669';
         case 'moved': return '#f59e0b';
         case 'exit': return '#dc2626';
         default: return '#e2e8f0';
@@ -942,9 +942,9 @@ function showNodeStats(node) {
         let changeTypeClass = '';
         
         switch (node.changeType) {
-            case 'new':
+            case 'added':
                 changeTypeText = 'New Position';
-                changeTypeClass = 'new';
+                changeTypeClass = 'added';
                 break;
             case 'moved':
                 changeTypeText = `Moved from ${node.previousManagerName || 'Unknown'}`;

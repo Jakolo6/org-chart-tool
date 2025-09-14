@@ -108,7 +108,7 @@ function analyzeChanges() {
     
     const added = Array.from(updateMap.values())
         .filter(emp => !baselineMap.has(normalizeId(emp.id)))
-        .map(emp => ({...emp, changeType: 'new'}));
+        .map(emp => ({...emp, changeType: 'added'}));
         
     const removed = Array.from(baselineMap.values())
         .filter(emp => !updateMap.has(normalizeId(emp.id)))
@@ -201,7 +201,7 @@ function applyChangeTypesToNodes(node) {
         const nodeId = normalizeId(node.id);
         
         if (addedMap.has(nodeId)) {
-            node.changeType = 'new';
+            node.changeType = 'added';
         } else if (movedMap.has(nodeId)) {
             node.changeType = 'moved';
             
