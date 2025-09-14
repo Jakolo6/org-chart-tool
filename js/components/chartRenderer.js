@@ -176,6 +176,19 @@ function buildHierarchy(data) {
 
     // Create lookup map
     const employeeMap = new Map();
+    
+    // Add company node first if it doesn't exist in the data
+    const companyNode = {
+        id: 'company',
+        name: 'The Nunatak Group GmbH',
+        manager: '',
+        title: 'Digital Growth Advisors',
+        children: [],
+        expanded: true
+    };
+    employeeMap.set('company', companyNode);
+    
+    // Add all employees to the map
     data.forEach(emp => {
         // Ensure ID is a string
         const id = String(emp.id || '');
@@ -196,8 +209,8 @@ function buildHierarchy(data) {
     console.log('Employee map created with', employeeMap.size, 'entries');
     
     // Find root and build hierarchy
-    let rootNode = null;
-    let rootCount = 0;
+    let rootNode = employeeMap.get('company'); // Start with company as root
+    let rootCount = 1;
     
     data.forEach(emp => {
         const id = String(emp.id || '');
@@ -214,22 +227,21 @@ function buildHierarchy(data) {
         if (!managerId || managerId === '' || managerId === id) {
             // This is a root node (no manager or self-managed)
             console.log(`Found root node: ${emp.name} (${id})`);
-            rootNode = node;
-            rootNode.expanded = true; // Root node should be expanded by default
-            rootCount++;
+            // Add to company node
+            employeeMap.get('company').children.push(node);
+        } else if (managerId === 'company' || managerId.toLowerCase() === 'the nunatak group gmbh') {
+            // Add to company node
+            console.log(`Adding ${emp.name} (${id}) as child to company`);
+            employeeMap.get('company').children.push(node);
         } else if (employeeMap.has(managerId)) {
             // Add as child to manager
             const managerNode = employeeMap.get(managerId);
             console.log(`Adding ${emp.name} (${id}) as child to ${managerNode.name} (${managerId})`);
             managerNode.children.push(node);
         } else {
-            // Manager not found, treat as root
-            console.warn(`Manager ${managerId} not found for employee ${id} (${emp.name}). Treating as root.`);
-            if (!rootNode) {
-                rootNode = node;
-                rootNode.expanded = true; // Root node should be expanded by default
-                rootCount++;
-            }
+            // Manager not found, add to company
+            console.warn(`Manager ${managerId} not found for employee ${id} (${emp.name}). Adding to company.`);
+            employeeMap.get('company').children.push(node);
         }
     });
     
@@ -241,7 +253,7 @@ function buildHierarchy(data) {
         });
     }
     
-    console.log(`Found ${rootCount} root nodes. Using ${rootNode ? rootNode.name : 'none'} as the main root.`);
+    console.log(`Using company node as root with ${employeeMap.get('company').children.length} direct reports.`);
 
     // Sort children by name
     const sortChildren = (node) => {
@@ -251,9 +263,7 @@ function buildHierarchy(data) {
         }
     };
     
-    if (rootNode) {
-        sortChildren(rootNode);
-    }
+    sortChildren(rootNode);
 
     return rootNode;
 }
