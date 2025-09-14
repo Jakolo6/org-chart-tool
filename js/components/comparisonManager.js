@@ -92,7 +92,7 @@ function toggleComparisonMode() {
     
     // Re-render the chart with the new data
     if (window.renderChart) {
-        window.renderChart(state.rootNode, '#chart-container');
+        window.renderChart(state.rootNode, '#chart-area');
     }
 }
 

@@ -346,6 +346,109 @@
     .btn-secondary:hover {
       background-color: #e2e8f0 !important;
     }
+    
+    /* Main layout with collapsible panel */
+    .main-layout {
+      display: flex;
+      width: 100%;
+      height: calc(100vh - 180px);
+      min-height: 600px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    /* Chart container */
+    .chart-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: width 0.3s ease;
+    }
+    
+    /* Chart area */
+    #chart-area {
+      flex: 1;
+      overflow: hidden;
+      background-color: #f8fafc;
+      border-radius: 8px;
+      position: relative;
+    }
+    
+    /* Stats panel */
+    .stats-panel {
+      width: 350px;
+      height: 100%;
+      background-color: #ffffff;
+      border-left: 1px solid #e2e8f0;
+      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease;
+      position: relative;
+    }
+    
+    .stats-panel.collapsed {
+      transform: translateX(350px);
+    }
+    
+    .stats-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .stats-panel-header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    
+    .stats-panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    
+    /* Stats container */
+    .stats-container {
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    /* Change summary */
+    .change-summary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    
+    .change-summary-item {
+      flex: 1;
+      min-width: 100px;
+      background-color: #f1f5f9;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    
+    .change-summary-count {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    
+    .change-summary-label {
+      font-size: 0.8rem;
+      color: #64748b;
+    }
   </style>
 </head>
 <body>
@@ -398,55 +501,57 @@
       <div id="modeIndicator" class="mode-indicator baseline">📊 Baseline View</div>
     </div>
 
-    <div class="chart-container">
-      <div id="legendContainer" class="legend-container" style="display: none;">
-        <div class="legend-item">
-          <div class="legend-color new"></div>
-          <div class="legend-label">New</div>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color moved"></div>
-          <div class="legend-label">Moved</div>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color exit"></div>
-          <div class="legend-label">Removed</div>
-        </div>
-      </div>
-      <div id="changeSummary" class="change-summary" style="display: none;"></div>
-      <div class="chart-toolbar">
-        <div class="chart-info">
-          <h2 id="chartName">Loading chart...</h2>
-          <div class="legend">
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: #0066cc;"></div>
-              <span>Current</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: #ef4444;"></div>
-              <span>Removed</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color" style="background-color: #22c55e;"></div>
-              <span>Added</span>
+    <div class="main-layout">
+      <!-- Chart Area with Toolbar -->
+      <div class="chart-container">
+        <div class="chart-toolbar">
+          <div class="chart-info">
+            <h2 id="chartName">Loading chart...</h2>
+            <div id="legendContainer" class="legend-container" style="display: none;">
+              <div class="legend-item">
+                <div class="legend-color new"></div>
+                <div class="legend-label">New</div>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color moved"></div>
+                <div class="legend-label">Moved</div>
+              </div>
+              <div class="legend-item">
+                <div class="legend-color exit"></div>
+                <div class="legend-label">Removed</div>
+              </div>
             </div>
           </div>
+          <div class="chart-controls">
+            <button id="zoomInBtn" class="btn btn-icon" title="Zoom In">
+              <i class="fas fa-search-plus"></i>
+            </button>
+            <button id="zoomOutBtn" class="btn btn-icon" title="Zoom Out">
+              <i class="fas fa-search-minus"></i>
+            </button>
+            <button id="resetZoomBtn" class="btn btn-icon" title="Reset Zoom">
+              <i class="fas fa-expand"></i>
+            </button>
+            <button id="toggleStatsBtn" class="btn btn-icon" title="Toggle Stats Panel">
+              <i class="fas fa-chart-bar"></i>
+            </button>
+          </div>
         </div>
-        <div class="chart-controls">
-          <button id="zoomInBtn" class="btn btn-icon" title="Zoom In">
-            <i class="fas fa-search-plus"></i>
-          </button>
-          <button id="zoomOutBtn" class="btn btn-icon" title="Zoom Out">
-            <i class="fas fa-search-minus"></i>
-          </button>
-          <button id="resetZoomBtn" class="btn btn-icon" title="Reset Zoom">
-            <i class="fas fa-expand"></i>
-          </button>
-        </div>
-      </div>
-      <div class="chart-content-wrapper">
         <div id="chart-area"></div>
-        <div id="selectedStatsContainer" class="stats-container"></div>
+      </div>
+      
+      <!-- Right Stats Panel (Collapsible) -->
+      <div id="statsPanel" class="stats-panel">
+        <div class="stats-panel-header">
+          <h3>Statistics & Details</h3>
+          <button id="closePanelBtn" class="btn btn-icon">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="stats-panel-content">
+          <div id="changeSummary" class="change-summary" style="display: none;"></div>
+          <div id="selectedStatsContainer" class="stats-container"></div>
+        </div>
       </div>
     </div>
   </main>
@@ -499,6 +604,20 @@
         } catch (error) {
           console.error('Sign out error:', error);
         }
+      });
+      
+      // Initialize stats panel (collapsed by default)
+      const statsPanel = document.getElementById('statsPanel');
+      statsPanel.classList.add('collapsed');
+      
+      // Toggle stats panel
+      document.getElementById('toggleStatsBtn').addEventListener('click', () => {
+        statsPanel.classList.toggle('collapsed');
+      });
+      
+      // Close stats panel
+      document.getElementById('closePanelBtn').addEventListener('click', () => {
+        statsPanel.classList.add('collapsed');
       });
       
       // Toggle user dropdown
