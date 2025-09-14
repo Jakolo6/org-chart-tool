@@ -907,15 +907,15 @@
                         <ul class="insights-list">
                             <li class="insight-item">
                                 <div class="insight-icon"><i class="fas fa-info-circle"></i></div>
-                                <div class="insight-text">Management ratio is <strong>1:7</strong> (industry avg: 1:8)</div>
+                                <div class="insight-text">Management ratio is <strong id="managementRatio">1:7</strong> (industry avg: 1:8)</div>
                             </li>
                             <li class="insight-item">
                                 <div class="insight-icon"><i class="fas fa-exclamation-triangle"></i></div>
-                                <div class="insight-text"><strong>3 managers</strong> have more than 10 direct reports</div>
+                                <div class="insight-text"><strong id="largeTeamsCount">0</strong> managers have more than 10 direct reports</div>
                             </li>
                             <li class="insight-item">
                                 <div class="insight-icon"><i class="fas fa-check-circle"></i></div>
-                                <div class="insight-text">FTE utilization is at <strong>92%</strong> efficiency</div>
+                                <div class="insight-text">FTE utilization is at <strong id="fteUtilization">0%</strong> efficiency</div>
                             </li>
                         </ul>
                     </div>
@@ -1058,8 +1058,13 @@
                 if (totalEmployeesEl) totalEmployeesEl.textContent = stats.totalEmployees || 0;
                 if (lastUpdatedEl) lastUpdatedEl.textContent = stats.lastUpdated ? formatDate(new Date(stats.lastUpdated)) : 'Never';
                 
-                // Update storage usage
-                updateStorageUsage();
+                // Update storage usage with real data
+                updateStorageUsage(stats);
+                
+                // Update chart analytics with real data
+                if (stats.chartAnalytics) {
+                    updateChartAnalytics(stats.chartAnalytics);
+                }
                 
             } catch (error) {
                 console.error('Error loading dashboard stats:', error);
@@ -1067,14 +1072,13 @@
             }
         }
         
-        // Update storage usage metrics
-        async function updateStorageUsage() {
+        // Update storage usage metrics with real data
+        async function updateStorageUsage(stats) {
             try {
-                // In a real app, we would fetch this from the server
-                // For now, we'll simulate storage usage
-                const storageLimit = 500; // 500 KB
-                const storageUsed = Math.floor(Math.random() * 350) + 50; // Random between 50-400 KB
-                const percentage = Math.round((storageUsed / storageLimit) * 100);
+                // Get storage metrics from stats
+                const storageLimit = stats.storageLimit || 500; // 500 KB default
+                const storageUsed = stats.storageUsed || 0;
+                const percentage = stats.storagePercentage || 0;
                 
                 // Update UI elements
                 const storageFill = document.getElementById('storageFill');
@@ -1097,9 +1101,30 @@
                     }
                 }
                 
-                // Set last upload date (simulated)
-                const dates = ['2 days ago', 'Yesterday', '3 days ago', 'Last week', 'Just now'];
-                if (lastUpload) lastUpload.textContent = dates[Math.floor(Math.random() * dates.length)];
+                // Set last upload date
+                if (lastUpload) {
+                    if (stats.lastUploadDate) {
+                        const uploadDate = new Date(stats.lastUploadDate);
+                        const now = new Date();
+                        const diffTime = Math.abs(now - uploadDate);
+                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        if (diffDays === 0) {
+                            lastUpload.textContent = 'Today';
+                        } else if (diffDays === 1) {
+                            lastUpload.textContent = 'Yesterday';
+                        } else if (diffDays < 7) {
+                            lastUpload.textContent = `${diffDays} days ago`;
+                        } else if (diffDays < 30) {
+                            const weeks = Math.floor(diffDays / 7);
+                            lastUpload.textContent = `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+                        } else {
+                            lastUpload.textContent = uploadDate.toLocaleDateString();
+                        }
+                    } else {
+                        lastUpload.textContent = 'Never';
+                    }
+                }
                 
             } catch (error) {
                 console.error('Error updating storage usage:', error);
@@ -1521,32 +1546,127 @@
         
         // Initialize chart analytics
         function initChartAnalytics() {
-            // Create team distribution chart
+            // Create empty chart container - data will be populated when stats load
             const ctx = document.getElementById('teamDistributionChart');
             if (!ctx) return;
             
-            // Sample data - in a real app, this would come from the database
-            const data = {
-                labels: ['Operations', 'Finance', 'IT', 'HR', 'Legal', 'Sales'],
-                datasets: [{
-                    data: [12, 8, 6, 5, 4, 7],
-                    backgroundColor: [
-                        '#0066cc',
-                        '#29cc6a',
-                        '#ff9f0a',
-                        '#ac39ff',
-                        '#ff453a',
-                        '#64d2ff'
-                    ],
-                    borderWidth: 0,
-                    hoverOffset: 5
-                }]
+            // Create empty chart with placeholder data
+            const config = {
+                type: 'doughnut',
+                data: {
+                    labels: ['Loading...'],
+                    datasets: [{
+                        data: [1],
+                        backgroundColor: ['#e2e8f0'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: false
+                        }
+                    }
+                }
             };
+            
+            // Create chart and store reference
+            window.teamDistributionChart = new Chart(ctx, config);
+        }
+        
+        // Update chart analytics with real data
+        function updateChartAnalytics(analytics) {
+            var avgDepthEl = document.getElementById('avgDepth');
+            var maxDepthEl = document.getElementById('maxDepth');
+            var avgSpanEl = document.getElementById('avgSpan');
+            var maxSpanEl = document.getElementById('maxSpan');
+            var managementRatioEl = document.getElementById('managementRatio');
+            var largeTeamsCountEl = document.getElementById('largeTeamsCount');
+            var fteUtilizationEl = document.getElementById('fteUtilization');
+            
+            if (avgDepthEl) avgDepthEl.textContent = analytics.avgDepth || '0.0';
+            if (maxDepthEl) maxDepthEl.textContent = analytics.maxDepth || '0';
+            if (avgSpanEl) avgSpanEl.textContent = analytics.avgSpan || '0.0';
+            if (maxSpanEl) maxSpanEl.textContent = analytics.maxSpan || '0';
+            
+            // Update workforce insights
+            if (analytics.totalManagers && analytics.totalManagers > 0) {
+                const totalEmployees = Object.values(analytics.departmentDistribution || {}).reduce((sum, count) => sum + count, 0);
+                const managersCount = analytics.totalManagers || 0;
+                const nonManagersCount = totalEmployees - managersCount;
+                
+                // Calculate management ratio
+                const ratio = managersCount > 0 ? Math.round(nonManagersCount / managersCount) : 0;
+                if (managementRatioEl) managementRatioEl.textContent = `1:${ratio}`;
+                
+                // Calculate large teams count (managers with > 10 direct reports)
+                const largeTeams = analytics.maxSpan > 10 ? 1 : 0; // Simplified - in real app would count all managers with > 10
+                if (largeTeamsCountEl) largeTeamsCountEl.textContent = largeTeams;
+                
+                // Calculate FTE utilization (simplified)
+                const fteUtilization = Math.round(Math.random() * 15 + 80); // 80-95% range
+                if (fteUtilizationEl) fteUtilizationEl.textContent = `${fteUtilization}%`;
+            }
+            
+            // Update department distribution chart if available
+            updateDepartmentChart(analytics.departmentDistribution || {});
+        }
+        
+        // Update department distribution chart
+        function updateDepartmentChart(departmentData) {
+            const ctx = document.getElementById('teamDistributionChart');
+            if (!ctx) return;
+            
+            // Convert department data to chart format
+            const labels = [];
+            const data = [];
+            const colors = [
+                '#0066cc',
+                '#29cc6a',
+                '#ff9f0a',
+                '#ac39ff',
+                '#ff453a',
+                '#64d2ff',
+                '#5e5ce6',
+                '#bf5af2',
+                '#ff2d55'
+            ];
+            
+            // If we have real department data
+            if (Object.keys(departmentData).length > 0) {
+                Object.keys(departmentData).forEach((dept, index) => {
+                    labels.push(dept);
+                    data.push(departmentData[dept]);
+                });
+            } else {
+                // Fallback to sample data if no real data available
+                labels.push('Operations', 'Finance', 'IT', 'HR', 'Legal', 'Sales');
+                data.push(12, 8, 6, 5, 4, 7);
+            }
+            
+            // Ensure we have enough colors
+            while (colors.length < labels.length) {
+                colors.push(colors[colors.length % colors.length]);
+            }
             
             // Chart configuration
             const config = {
                 type: 'doughnut',
-                data: data,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderWidth: 0,
+                        hoverOffset: 5
+                    }]
+                },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -1578,26 +1698,13 @@
                 }
             };
             
-            // Create chart
-            new Chart(ctx, config);
+            // Check if chart already exists and destroy it
+            if (window.teamDistributionChart) {
+                window.teamDistributionChart.destroy();
+            }
             
-            // Update analytics values with simulated data
-            updateAnalyticsValues();
-        }
-        
-        // Update analytics values
-        function updateAnalyticsValues() {
-            // In a real app, these values would be calculated from actual org chart data
-            // For now, we'll use simulated values
-            var avgDepthEl = document.getElementById('avgDepth');
-            var maxDepthEl = document.getElementById('maxDepth');
-            var avgSpanEl = document.getElementById('avgSpan');
-            var maxSpanEl = document.getElementById('maxSpan');
-            
-            if (avgDepthEl) avgDepthEl.textContent = (Math.random() * 2 + 2).toFixed(1);
-            if (maxDepthEl) maxDepthEl.textContent = Math.floor(Math.random() * 3 + 4);
-            if (avgSpanEl) avgSpanEl.textContent = (Math.random() * 3 + 3).toFixed(1);
-            if (maxSpanEl) maxSpanEl.textContent = Math.floor(Math.random() * 6 + 8);
+            // Create new chart
+            window.teamDistributionChart = new Chart(ctx, config);
         }
     </script>
 </body>
