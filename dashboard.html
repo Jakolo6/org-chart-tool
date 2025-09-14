@@ -1490,20 +1490,30 @@
             }
             
             // Add click events for analytics links
-            document.querySelector('a[href="#structure-details"]')?.addEventListener('click', (e) => {
-                e.preventDefault();
-                alert('Organizational structure optimization recommendations will be provided here.');
-            });
+            var structureDetailsLink = document.querySelector('a[href="#structure-details"]');
+            var distributionDetailsLink = document.querySelector('a[href="#distribution-details"]');
+            var insightsDetailsLink = document.querySelector('a[href="#insights-details"]');
             
-            document.querySelector('a[href="#distribution-details"]')?.addEventListener('click', (e) => {
-                e.preventDefault();
-                alert('Detailed team distribution analysis will be provided here.');
-            });
+            if (structureDetailsLink) {
+                structureDetailsLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    alert('Organizational structure optimization recommendations will be provided here.');
+                });
+            }
             
-            document.querySelector('a[href="#insights-details"]')?.addEventListener('click', (e) => {
-                e.preventDefault();
-                alert('Complete workforce insights and recommendations will be provided here.');
-            });
+            if (distributionDetailsLink) {
+                distributionDetailsLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    alert('Detailed team distribution analysis will be provided here.');
+                });
+            }
+            
+            if (insightsDetailsLink) {
+                insightsDetailsLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    alert('Complete workforce insights and recommendations will be provided here.');
+                });
+            }
             
             // Initialize chart analytics
             initChartAnalytics();
@@ -1579,10 +1589,15 @@
         function updateAnalyticsValues() {
             // In a real app, these values would be calculated from actual org chart data
             // For now, we'll use simulated values
-            document.getElementById('avgDepth')?.textContent = (Math.random() * 2 + 2).toFixed(1);
-            document.getElementById('maxDepth')?.textContent = Math.floor(Math.random() * 3 + 4);
-            document.getElementById('avgSpan')?.textContent = (Math.random() * 3 + 3).toFixed(1);
-            document.getElementById('maxSpan')?.textContent = Math.floor(Math.random() * 6 + 8);
+            var avgDepthEl = document.getElementById('avgDepth');
+            var maxDepthEl = document.getElementById('maxDepth');
+            var avgSpanEl = document.getElementById('avgSpan');
+            var maxSpanEl = document.getElementById('maxSpan');
+            
+            if (avgDepthEl) avgDepthEl.textContent = (Math.random() * 2 + 2).toFixed(1);
+            if (maxDepthEl) maxDepthEl.textContent = Math.floor(Math.random() * 3 + 4);
+            if (avgSpanEl) avgSpanEl.textContent = (Math.random() * 3 + 3).toFixed(1);
+            if (maxSpanEl) maxSpanEl.textContent = Math.floor(Math.random() * 6 + 8);
         }
     </script>
 </body>
