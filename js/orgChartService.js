@@ -346,7 +346,7 @@ async function deleteOrgChart(chartId) {
 async function exportToExcel(chartId) {
   try {
     // Get the chart data
-    const { chart, employees, error } = await getOrgChart(chartId);
+    const { chart, employees, error } = await getOrgChartById(chartId);
     
     if (error) throw error;
     
