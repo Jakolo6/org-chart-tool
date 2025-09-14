@@ -533,6 +533,13 @@
       try {
         showLoading();
         console.log('Loading chart data for ID:', chartId);
+        
+        // Check if getOrgChartById exists
+        if (typeof window.getOrgChartById !== 'function') {
+          console.error('Error: window.getOrgChartById is not a function');
+          throw new Error('Chart loading function not available');
+        }
+        
         const result = await window.getOrgChartById(chartId);
         console.log('Raw result from getOrgChartById:', result);
         
@@ -606,9 +613,11 @@
         
       } catch (error) {
         console.error('Error loading chart:', error);
+        console.error('Error details:', error.stack || 'No stack trace available');
         hideLoading();
-        alert('Error loading chart: ' + error.message);
-        window.location.href = './dashboard.html';
+        alert('Error loading chart: ' + (error.message || 'Unknown error'));
+        // Don't redirect immediately so user can see the error
+        // window.location.href = './dashboard.html';
       }
       
       // Helper function to convert array data to object format
