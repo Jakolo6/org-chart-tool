@@ -2,379 +2,144 @@
  * @file Chart Manager component for saving, loading, and managing org charts
  */
 
-import { supabase } from '../supabase.js';
-import { getCurrentUser } from '../auth.js';
-import { saveOrgChart, getOrgCharts, getOrgChart, updateOrgChart, exportToExcel } from '../orgChartService.js';
-import { state, setBaselineData, setUpdateData, setCurrentData } from '../main.js';
-import { buildHierarchy, renderChart } from './chartRenderer.js';
+console.log('[OrgChart] chartManager loaded');
 
 /**
  * Initialize the chart manager
  */
-export function initChartManager() {
+function initChartManager() {
     // Add save chart button event listener
     const saveChartBtn = document.getElementById('saveChartBtn');
     if (saveChartBtn) {
         saveChartBtn.addEventListener('click', showSaveChartModal);
     }
     
-    // Add load charts button event listener
-    const loadChartsBtn = document.getElementById('loadChartsBtn');
-    if (loadChartsBtn) {
-        loadChartsBtn.addEventListener('click', showLoadChartsModal);
+    // Add export chart button event listener
+    const exportChartBtn = document.getElementById('exportChartBtn');
+    if (exportChartBtn) {
+        exportChartBtn.addEventListener('click', exportOrgChart);
+    }
+    
+    console.log('[OrgChart] Chart manager initialized');
+}
+
+/**
+ * Show the save chart modal
+ */
+function showSaveChartModal() {
+    const modal = document.getElementById('saveChartModal');
+    if (!modal) return;
+    
+    // Clear previous inputs
+    const nameInput = document.getElementById('chartName');
+    if (nameInput) nameInput.value = '';
+    
+    // Show modal
+    modal.style.display = 'flex';
+    
+    // Add save button event listener
+    const saveBtn = document.getElementById('confirmSaveChart');
+    if (saveBtn) {
+        // Remove previous event listeners
+        const newSaveBtn = saveBtn.cloneNode(true);
+        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+        
+        // Add new event listener
+        newSaveBtn.addEventListener('click', handleSaveChart);
+    }
+    
+    // Add cancel button event listener
+    const cancelBtn = document.getElementById('cancelSaveChart');
+    if (cancelBtn) {
+        // Remove previous event listeners
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        
+        // Add new event listener
+        newCancelBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
     }
 }
 
 /**
- * Show modal for saving a chart
+ * Handle saving the chart
  */
-export function showSaveChartModal() {
-    // Check if there's data to save
-    if (!state.currentData || state.currentData.length === 0) {
-        alert('No data to save. Please upload an Excel file first.');
+async function handleSaveChart() {
+    const nameInput = document.getElementById('chartName');
+    if (!nameInput || !nameInput.value.trim()) {
+        alert('Please enter a name for your chart');
         return;
     }
     
-    // Create modal element
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.id = 'saveChartModal';
+    const chartName = nameInput.value.trim();
+    const state = window.state || {};
     
-    // Create modal content
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Save Organization Chart</h2>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="saveChartForm" class="chart-form">
-                    <div class="form-group">
-                        <label for="chartName">Chart Name</label>
-                        <input type="text" id="chartName" name="chartName" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="chartDescription">Description (Optional)</label>
-                        <textarea id="chartDescription" name="chartDescription" rows="3"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Chart Type</label>
-                        <div class="radio-group">
-                            <label>
-                                <input type="radio" name="chartType" value="baseline" checked>
-                                Baseline Chart
-                            </label>
-                            <label>
-                                <input type="radio" name="chartType" value="target">
-                                Target Chart
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="form-error" id="saveChartError"></div>
-                    
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Save Chart</button>
-                        <button type="button" class="btn btn-secondary modal-cancel">Cancel</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    `;
-    
-    // Add modal to body
-    document.body.appendChild(modal);
-    
-    // Add event listeners
-    const closeBtn = modal.querySelector('.modal-close');
-    const cancelBtn = modal.querySelector('.modal-cancel');
-    const saveForm = modal.querySelector('#saveChartForm');
-    
-    closeBtn.addEventListener('click', () => {
-        document.body.removeChild(modal);
-    });
-    
-    cancelBtn.addEventListener('click', () => {
-        document.body.removeChild(modal);
-    });
-    
-    saveForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const chartName = document.getElementById('chartName').value;
-        const chartDescription = document.getElementById('chartDescription').value;
-        const chartType = document.querySelector('input[name="chartType"]:checked').value;
-        const isBaseline = chartType === 'baseline';
-        const isTarget = chartType === 'target';
-        
-        const saveChartError = document.getElementById('saveChartError');
-        saveChartError.textContent = '';
-        
-        try {
-            const { chart, version, error } = await saveOrgChart(
-                state.currentData,
-                chartName,
-                chartDescription,
-                isBaseline,
-                isTarget
-            );
-            
-            if (error) {
-                saveChartError.textContent = error.message || 'Failed to save chart';
-                return;
-            }
-            
-            // Close modal
-            document.body.removeChild(modal);
-            
-            // Show success message
-            alert('Chart saved successfully!');
-        } catch (error) {
-            console.error('Error saving chart:', error);
-            saveChartError.textContent = 'An unexpected error occurred';
-        }
-    });
-}
-
-/**
- * Show modal for loading saved charts
- */
-export async function showLoadChartsModal() {
     try {
-        // Get saved charts
-        const { charts, error } = await getOrgCharts();
-        
-        if (error) {
-            alert(`Error loading charts: ${error.message}`);
-            return;
+        // Show loading state
+        const saveBtn = document.getElementById('confirmSaveChart');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
         }
         
-        if (charts.length === 0) {
-            alert('No saved charts found.');
-            return;
+        // Get current user
+        const { user, error: userError } = await window.getCurrentUser();
+        if (userError || !user) {
+            throw new Error('You must be logged in to save a chart');
         }
         
-        // Create modal element
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.id = 'loadChartsModal';
+        // Prepare chart data
+        const chartData = {
+            name: chartName,
+            data: state.currentData || [],
+            created_by: user.id
+        };
         
-        // Create modal content
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Your Saved Charts</h2>
-                    <button class="modal-close">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="charts-list">
-                        ${charts.map(chart => `
-                            <div class="chart-item" data-id="${chart.id}">
-                                <div class="chart-info">
-                                    <h3>${chart.name}</h3>
-                                    <p>${chart.description || 'No description'}</p>
-                                    <div class="chart-meta">
-                                        <span class="chart-type ${chart.is_baseline ? 'baseline' : 'target'}">${chart.is_baseline ? 'Baseline' : 'Target'}</span>
-                                        <span class="chart-date">Created: ${new Date(chart.created_at).toLocaleDateString()}</span>
-                                    </div>
-                                </div>
-                                <div class="chart-actions">
-                                    <button class="btn btn-primary load-chart-btn">Load</button>
-                                    <button class="btn btn-secondary export-chart-btn">Export</button>
-                                    <button class="btn btn-danger delete-chart-btn">Delete</button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            </div>
-        `;
+        // Save chart
+        const { data, error } = await window.saveOrgChart(chartData);
+        if (error) throw error;
         
-        // Add modal to body
-        document.body.appendChild(modal);
+        // Hide modal
+        const modal = document.getElementById('saveChartModal');
+        if (modal) modal.style.display = 'none';
         
-        // Add event listeners
-        const closeBtn = modal.querySelector('.modal-close');
-        closeBtn.addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
+        // Show success message
+        alert('Chart saved successfully!');
         
-        // Add load chart event listeners
-        const loadBtns = modal.querySelectorAll('.load-chart-btn');
-        loadBtns.forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const chartId = btn.closest('.chart-item').dataset.id;
-                await loadChart(chartId);
-                document.body.removeChild(modal);
-            });
-        });
-        
-        // Add export chart event listeners
-        const exportBtns = modal.querySelectorAll('.export-chart-btn');
-        exportBtns.forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const chartId = btn.closest('.chart-item').dataset.id;
-                await exportChart(chartId);
-            });
-        });
-        
-        // Add delete chart event listeners
-        const deleteBtns = modal.querySelectorAll('.delete-chart-btn');
-        deleteBtns.forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const chartId = btn.closest('.chart-item').dataset.id;
-                const chartName = btn.closest('.chart-item').querySelector('h3').textContent;
-                
-                if (confirm(`Are you sure you want to delete the chart "${chartName}"?`)) {
-                    await deleteChart(chartId);
-                    btn.closest('.chart-item').remove();
-                    
-                    if (modal.querySelectorAll('.chart-item').length === 0) {
-                        document.body.removeChild(modal);
-                        alert('No more charts to display.');
-                    }
-                }
-            });
-        });
     } catch (error) {
-        console.error('Error showing load charts modal:', error);
-        alert('Failed to load charts. Please try again.');
+        console.error('Error saving chart:', error);
+        alert('Error saving chart: ' + error.message);
+    } finally {
+        // Reset button state
+        const saveBtn = document.getElementById('confirmSaveChart');
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save';
+        }
     }
 }
 
 /**
- * Load a chart by ID
- * @param {string} chartId - The chart ID
+ * Export the current org chart to Excel
  */
-export async function loadChart(chartId) {
-    try {
-        const { chart, version, employees, error } = await getOrgChart(chartId);
-        
-        if (error) {
-            alert(`Error loading chart: ${error.message}`);
-            return;
-        }
-        
-        // Convert employees to the format expected by the chart renderer
-        const chartData = employees.map(emp => ({
-            id: emp.employee_id,
-            name: emp.name,
-            managerId: emp.manager_id,
-            title: emp.title,
-            fte: emp.fte,
-            location: emp.location,
-            jobFamily: emp.job_family,
-            managementLevel: emp.management_level
-        }));
-        
-        // Update state based on chart type
-        if (chart.is_baseline) {
-            setBaselineData(chartData);
-            setCurrentData(chartData);
-            
-            // Update UI to show we're in baseline mode
-            const modeIndicator = document.querySelector('.mode-indicator');
-            if (modeIndicator) {
-                modeIndicator.textContent = 'Baseline View';
-                modeIndicator.className = 'mode-indicator baseline';
-            }
-        } else if (chart.is_target) {
-            setUpdateData(chartData);
-            setCurrentData(chartData);
-            
-            // Update UI to show we're in target mode
-            const modeIndicator = document.querySelector('.mode-indicator');
-            if (modeIndicator) {
-                modeIndicator.textContent = 'Target View';
-                modeIndicator.className = 'mode-indicator update';
-            }
-        }
-        
-        // Build hierarchy and render chart
-        const hierarchy = buildHierarchy(chartData);
-        renderChart(hierarchy);
-        
-        // Update file status indicators
-        if (chart.is_baseline) {
-            const baselineStatus = document.getElementById('baselineStatus');
-            if (baselineStatus) {
-                baselineStatus.textContent = `Loaded: ${chart.name}`;
-                baselineStatus.className = 'file-status success';
-            }
-        } else if (chart.is_target) {
-            const updateStatus = document.getElementById('updateStatus');
-            if (updateStatus) {
-                updateStatus.textContent = `Loaded: ${chart.name}`;
-                updateStatus.className = 'file-status success';
-            }
-        }
-        
-        // Enable compare button if both baseline and update data are loaded
-        const compareBtn = document.getElementById('compareBtn');
-        if (compareBtn && state.baselineData.length > 0 && state.updateData.length > 0) {
-            compareBtn.disabled = false;
-        }
-        
-        alert(`Chart "${chart.name}" loaded successfully!`);
-    } catch (error) {
-        console.error('Error loading chart:', error);
-        alert('Failed to load chart. Please try again.');
+function exportOrgChart() {
+    const state = window.state || {};
+    if (!state.currentData || state.currentData.length === 0) {
+        alert('No data to export');
+        return;
     }
-}
-
-/**
- * Export a chart to Excel
- * @param {string} chartId - The chart ID
- */
-export async function exportChart(chartId) {
+    
     try {
-        const { data, fileName, error } = await exportToExcel(chartId);
-        
-        if (error) {
-            alert(`Error exporting chart: ${error.message}`);
-            return;
-        }
-        
-        // Create a download link and trigger the download
-        const url = URL.createObjectURL(data);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        
-        // Clean up
-        setTimeout(() => {
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-        }, 100);
-        
-        alert(`Chart exported successfully as ${fileName}`);
+        window.exportToExcel(state.currentData);
     } catch (error) {
         console.error('Error exporting chart:', error);
-        alert('Failed to export chart. Please try again.');
+        alert('Error exporting chart: ' + error.message);
     }
 }
 
-/**
- * Delete a chart
- * @param {string} chartId - The chart ID
- */
-export async function deleteChart(chartId) {
-    try {
-        const { success, error } = await window.deleteOrgChart(chartId);
-        
-        if (error) {
-            alert(`Error deleting chart: ${error.message}`);
-            return false;
-        }
-        
-        return true;
-    } catch (error) {
-        console.error('Error deleting chart:', error);
-        alert('Failed to delete chart. Please try again.');
-        return false;
-    }
-}
+// Export functions to global window object
+window.initChartManager = initChartManager;
+window.showSaveChartModal = showSaveChartModal;
+window.handleSaveChart = handleSaveChart;
+window.exportOrgChart = exportOrgChart;
