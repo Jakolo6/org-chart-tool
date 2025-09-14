@@ -57,9 +57,24 @@
     margin-right: 6px;
 }
 
+.chart-content-wrapper {
+    display: flex;
+    height: calc(100vh - 180px);
+}
+
 #chart-area {
+    flex: 1;
     min-height: 500px;
     padding: 20px;
+    overflow: auto;
+}
+
+.stats-container {
+    width: 300px;
+    padding: 20px;
+    border-left: 1px solid #e2e8f0;
+    overflow-y: auto;
+    background-color: #f8fafc;
 }
 
 /* Node styling */

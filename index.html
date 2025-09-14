@@ -219,7 +219,10 @@
           </button>
         </div>
       </div>
-      <div id="chart-area"></div>
+      <div class="chart-content-wrapper">
+        <div id="chart-area"></div>
+        <div id="selectedStatsContainer" class="stats-container"></div>
+      </div>
     </div>
   </main>
 
@@ -299,7 +302,7 @@
       // Load chart data
       try {
         showLoading();
-        const { chart, error } = await window.getOrgChartById(chartId);
+        const { chart, employees, version, error } = await window.getOrgChartById(chartId);
         
         if (error) {
           throw error;
@@ -309,11 +312,21 @@
         document.getElementById('chartName').textContent = chart.name;
         document.getElementById('chartTitle').textContent = chart.name;
         
-        // Get chart data
-        const chartData = chart.chart_versions?.[0]?.data?.raw_data || [];
+        // Format employees data for chart rendering
+        const chartData = employees.map(emp => ({
+          id: emp.employee_id,
+          name: emp.name,
+          manager: emp.manager_id,
+          title: emp.title,
+          fte: emp.fte,
+          location: emp.location,
+          jobFamily: emp.job_family,
+          managementLevel: emp.management_level
+        }));
         
         // Render chart
         if (chartData.length > 0) {
+          console.log('Chart data:', chartData);
           const hierarchyData = window.buildHierarchy(chartData);
           window.renderChart(hierarchyData, '#chart-area');
         } else {
