@@ -897,11 +897,11 @@ function showNodeStats(node) {
                 <div class="node-stats-title">${node.title || 'No title'}</div>
             </div>
             <div class="node-stats-details">
-                <div class="node-stats-item">
+                <div class="node-stats-item" data-tooltip="Employee ID">
                     <span class="node-stats-label">ID:</span>
                     <span class="node-stats-value">${node.id || 'N/A'}</span>
                 </div>
-                <div class="node-stats-item">
+                <div class="node-stats-item" data-tooltip="Reporting Manager">
                     <span class="node-stats-label">Manager:</span>
                     <span class="node-stats-value">${node.manager || 'None'}</span>
                 </div>
@@ -910,7 +910,7 @@ function showNodeStats(node) {
     // Add additional properties if they exist
     if (node.department) {
         statsHTML += `
-            <div class="node-stats-item">
+            <div class="node-stats-item" data-tooltip="Department or Business Unit">
                 <span class="node-stats-label">Department:</span>
                 <span class="node-stats-value">${node.department}</span>
             </div>
@@ -919,7 +919,7 @@ function showNodeStats(node) {
     
     if (node.location) {
         statsHTML += `
-            <div class="node-stats-item">
+            <div class="node-stats-item" data-tooltip="Office Location">
                 <span class="node-stats-label">Location:</span>
                 <span class="node-stats-value">${node.location}</span>
             </div>
@@ -928,8 +928,12 @@ function showNodeStats(node) {
     
     // Add direct reports count if the node has children
     if (node.children && node.children.length > 0) {
+        // Create a tooltip with the names of direct reports
+        const directReportNames = node.children.map(child => child.name).join(', ');
+        const directReportsTooltip = `Direct Reports: ${directReportNames}`;
+        
         statsHTML += `
-            <div class="node-stats-item">
+            <div class="node-stats-item" data-tooltip="${directReportsTooltip}">
                 <span class="node-stats-label">Direct Reports:</span>
                 <span class="node-stats-value">${node.children.length}</span>
             </div>
@@ -940,25 +944,29 @@ function showNodeStats(node) {
     if (window.state.isComparisonMode && node.changeType) {
         let changeTypeText = '';
         let changeTypeClass = '';
+        let tooltipText = '';
         
         switch (node.changeType) {
             case 'added':
                 changeTypeText = 'New Position';
                 changeTypeClass = 'added';
+                tooltipText = 'This position was added in the target organization';
                 break;
             case 'moved':
                 changeTypeText = `Moved from ${node.previousManagerName || 'Unknown'}`;
                 changeTypeClass = 'moved';
+                tooltipText = `This position was moved from reporting to ${node.previousManagerName || 'Unknown'}`;
                 break;
             case 'exit':
                 changeTypeText = 'Position Removed';
                 changeTypeClass = 'exit';
+                tooltipText = 'This position was removed in the target organization';
                 break;
         }
         
         if (changeTypeText) {
             statsHTML += `
-                <div class="node-stats-item change-type ${changeTypeClass}">
+                <div class="node-stats-item change-type ${changeTypeClass}" data-tooltip="${tooltipText}">
                     <span class="node-stats-label">Change:</span>
                     <span class="node-stats-value">${changeTypeText}</span>
                 </div>
@@ -973,6 +981,11 @@ function showNodeStats(node) {
     
     // Update the container with the stats HTML
     statsContainer.innerHTML = statsHTML;
+    
+    // Initialize tooltips for the new content
+    if (window.initializeTooltips) {
+        window.initializeTooltips();
+    }
 }
 
 /* ===========================================
