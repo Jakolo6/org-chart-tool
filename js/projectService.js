@@ -77,35 +77,25 @@ async function createDraftProject(parsedData, projectInfo, existingProjectId = n
     
     console.log('Project created successfully:', project);
     
-    // Create initial version with raw data
+    // Create initial version with data as JSONB
     const versionData = {
       chart_id: project.id,
-      version_number: 1
+      version_number: 1,
+      // Store all data in the JSONB data column
+      data: {
+        raw_data: dataRows || [],
+        raw_headers: headers || [],
+        file_name: projectInfo.fileName || '',
+        file_size: projectInfo.fileSize || 0,
+        column_mapping: projectInfo.columnMapping || {}
+      }
       // Removed created_by as it might be causing issues
     };
-    
-    // Only add data fields if they exist
-    if (dataRows && dataRows.length > 0) {
-      versionData.raw_data = dataRows;
-    }
-    
-    if (headers && headers.length > 0) {
-      versionData.raw_headers = headers;
-    }
-    
-    if (projectInfo.fileName) {
-      versionData.file_name = projectInfo.fileName;
-    }
-    
-    if (projectInfo.fileSize) {
-      versionData.file_size = projectInfo.fileSize;
-    }
     
     console.log('Version data to insert:', { 
       chart_id: versionData.chart_id,
       version_number: versionData.version_number,
-      has_raw_data: !!versionData.raw_data,
-      has_raw_headers: !!versionData.raw_headers
+      has_data: !!versionData.data
     });
     
     const { data: version, error: versionError } = await supabase
@@ -199,11 +189,13 @@ async function updateExistingProject(projectId, headers, dataRows, projectInfo, 
       .insert({
         chart_id: projectId,
         version_number: nextVersionNumber,
-        raw_data: dataRows,
-        raw_headers: headers,
-        file_name: projectInfo.fileName,
-        file_size: projectInfo.fileSize,
-        created_by: userId
+        data: {
+          raw_data: dataRows || [],
+          raw_headers: headers || [],
+          file_name: projectInfo.fileName || '',
+          file_size: projectInfo.fileSize || 0,
+          column_mapping: projectInfo.columnMapping || {}
+        }
       })
       .select()
       .single();
@@ -407,11 +399,28 @@ async function saveColumnMapping(projectId, mapping) {
     const versionId = versions[0].id;
     
     // Update the version with mapping
+    // First get current data
+    const { data: currentVersion, error: getError } = await supabase
+      .from('chart_versions')
+      .select('data')
+      .eq('id', versionId)
+      .single();
+      
+    if (getError) {
+      console.error('Error getting version data:', getError);
+      throw getError;
+    }
+    
+    // Update data JSONB field
+    const updatedData = {
+      ...currentVersion.data,
+      column_mapping: mapping
+    };
+    
     const { error } = await supabase
       .from('chart_versions')
       .update({
-        column_mapping: mapping,
-        updated_at: new Date().toISOString()
+        data: updatedData
       })
       .eq('id', versionId);
     
