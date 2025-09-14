@@ -222,14 +222,17 @@ export async function loadOrgChart(chartId) {
     if (error) throw error;
     
     // Update state with loaded data
-    const { setBaselineData, setCurrentData } = await import('./main.js');
+    const { setBaselineData, setUpdateData, setCurrentData } = await import('./main.js');
     
+    // Store the data based on chart type
     if (chart.is_baseline) {
       setBaselineData(employees);
+      setCurrentData(employees); // Initially show baseline data
     } else if (chart.is_target) {
       setUpdateData(employees);
     }
     
+    // Always set current data to ensure chart renders
     setCurrentData(employees);
     
     return { chart, version, employees };

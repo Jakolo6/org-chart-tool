@@ -659,6 +659,21 @@ function renderConnections(links) {
         .duration(window.CONFIG.animationDuration)
         .style('opacity', 0)
         .remove();
+    
+    // Update connection styles based on change type
+    window.state.g.selectAll('.connection-line')
+        .style('stroke', d => {
+            if (!window.state.isComparisonMode) return '#cbd5e1';
+            
+            switch (d.changeType) {
+                case 'new': return '#059669';
+                case 'moved': return '#f59e0b';
+                case 'exit': return '#dc2626';
+                default: return '#cbd5e1';
+            }
+        })
+        .style('stroke-width', d => d.changeType ? '2px' : '1.5px')
+        .style('stroke-dasharray', d => d.changeType === 'exit' ? '4' : 'none');
 }
 
 /**
@@ -706,7 +721,9 @@ function renderNodes(nodes) {
         .attr('x', -window.CONFIG.nodeWidth / 2 - 4)
         .attr('y', -window.CONFIG.nodeHeight / 2 - 4)
         .attr('width', window.CONFIG.nodeWidth + 8)
-        .attr('height', window.CONFIG.nodeHeight + 8);
+        .attr('height', window.CONFIG.nodeHeight + 8)
+        .attr('rx', 6)
+        .attr('ry', 6);
     
     // Add main node card
     enterGroups.append('rect')
@@ -714,7 +731,11 @@ function renderNodes(nodes) {
         .attr('x', -window.CONFIG.nodeWidth / 2)
         .attr('y', -window.CONFIG.nodeHeight / 2)
         .attr('width', window.CONFIG.nodeWidth)
-        .attr('height', window.CONFIG.nodeHeight);
+        .attr('height', window.CONFIG.nodeHeight)
+        .attr('rx', 4)
+        .attr('ry', 4)
+        .style('fill', d => getNodeColor(d))
+        .style('stroke', d => getNodeBorderColor(d));
     
     // Add name text with wrapping
     enterGroups.append('text')
@@ -731,6 +752,16 @@ function renderNodes(nodes) {
         .each(function(d) {
             wrapSVGText(d3.select(this), d.title || '', window.CONFIG.nodeWidth - 20, 2, 15);
         });
+    
+    // Add change indicator for moved nodes
+    enterGroups.filter(d => d.changeType === 'moved' && d.previousManagerName)
+        .append('text')
+        .attr('class', 'change-indicator')
+        .attr('y', window.CONFIG.nodeHeight / 2 - 5)
+        .attr('text-anchor', 'middle')
+        .style('font-size', '10px')
+        .style('fill', '#f59e0b')
+        .text(d => `Moved from: ${d.previousManagerName}`);
     
     // Add hover and click handlers
     enterGroups
@@ -773,9 +804,11 @@ function renderNodes(nodes) {
         .attr('transform', d => `translate(${d.x}, ${d.y})`)
         .style('opacity', 1);
     
-    // Update selected state
+    // Update selected state and change type
     allGroups.select('.node-card')
-        .attr('class', d => `node-card ${d.changeType || ''} ${window.state.selectedNode && window.state.selectedNode.id === d.id ? 'selected' : ''}`);
+        .attr('class', d => `node-card ${d.changeType || ''} ${window.state.selectedNode && window.state.selectedNode.id === d.id ? 'selected' : ''}`)
+        .style('fill', d => getNodeColor(d))
+        .style('stroke', d => getNodeBorderColor(d));
 }
 
 function getNodeColor(node) {
@@ -783,7 +816,7 @@ function getNodeColor(node) {
     
     switch (node.changeType) {
         case 'new': return 'rgba(5, 150, 105, 0.1)';
-        case 'moved': return 'rgba(253, 226, 91, 0.3)';
+        case 'moved': return 'rgba(245, 158, 11, 0.1)';
         case 'exit': return 'rgba(220, 38, 38, 0.1)';
         default: return '#f8fafc';
     }
@@ -794,7 +827,7 @@ function getNodeBorderColor(node) {
     
     switch (node.changeType) {
         case 'new': return '#059669';
-        case 'moved': return '#FDE25B';
+        case 'moved': return '#f59e0b';
         case 'exit': return '#dc2626';
         default: return '#e2e8f0';
     }

@@ -7,7 +7,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="./css/app-ui.css">
-  <link rel="stylesheet" href="./css/chart.css">
+  <link rel="stylesheet" href="./css/components/chart.css">
+  <link rel="stylesheet" href="./css/components/comparison.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -387,13 +388,32 @@
         <button id="backToDashboard" class="btn btn-secondary">
           <i class="fas fa-arrow-left"></i> Back to Dashboard
         </button>
+        <button id="toggleViewBtn" class="btn btn-secondary">
+          <i class="fas fa-exchange-alt"></i> Switch to Target
+        </button>
         <button id="exportBtn" class="btn btn-primary">
           <i class="fas fa-file-export"></i> Export
         </button>
       </div>
+      <div id="modeIndicator" class="mode-indicator baseline">📊 Baseline View</div>
     </div>
 
     <div class="chart-container">
+      <div id="legendContainer" class="legend-container" style="display: none;">
+        <div class="legend-item">
+          <div class="legend-color new"></div>
+          <div class="legend-label">New</div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color moved"></div>
+          <div class="legend-label">Moved</div>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color exit"></div>
+          <div class="legend-label">Removed</div>
+        </div>
+      </div>
+      <div id="changeSummary" class="change-summary" style="display: none;"></div>
       <div class="chart-toolbar">
         <div class="chart-info">
           <h2 id="chartName">Loading chart...</h2>
@@ -438,18 +458,23 @@
   <!-- Tooltip container -->
   <div id="tooltip" class="tooltip" style="display: none;"></div>
 
-  <!-- Scripts -->
+  <!-- Load scripts in correct order -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
   <script src="./js/supabase.js"></script>
   <script src="./js/auth.js"></script>
-  <script src="./js/orgChartService.js"></script>
   <script src="./js/main.js"></script>
-  <script src="./js/utils/helpers.js"></script>
-  <script src="./js/components/statsManager.js"></script>
   <script src="./js/components/chartRenderer.js"></script>
   <script src="./js/components/chartManager.js"></script>
+  <script src="./js/components/comparisonManager.js"></script>
+  <script src="./js/app.js" type="module"></script>
   <script>
-    // Initialize authentication
+    // Initialize authentication and comparison manager
     document.addEventListener('DOMContentLoaded', async () => {
+      // Initialize comparison manager if available
+      if (window.initComparisonManager) {
+        window.initComparisonManager();
+      }
       // Check authentication
       const { user, profile, error } = await getCurrentUser();
       if (error || !user) {
@@ -737,6 +762,10 @@
             // Convert data if needed
             const formattedData = convertArrayDataToObjects(chartData);
             
+            // Store the data in state for baseline/target toggling
+            window.setBaselineData(formattedData);
+            window.setCurrentData(formattedData);
+            
             console.log('Building hierarchy...');
             const hierarchyData = window.buildHierarchy(formattedData);
             console.log('Hierarchy data:', hierarchyData);
@@ -747,9 +776,26 @@
               return;
             }
             
+            // Store the root node in state
+            window.setRootNode(hierarchyData);
+            
             console.log('Rendering chart...');
             window.renderChart(hierarchyData, '#chart-area');
             console.log('Chart rendering complete');
+            
+            // Check if we have a target chart ID in the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const chartId = urlParams.get('chart');
+            const targetId = urlParams.get('target');
+            
+            if (targetId && targetId !== chartId) {
+              // Load target data
+              loadTargetData(targetId);
+            } else {
+              // Hide toggle button if no target chart
+              const toggleViewBtn = document.getElementById('toggleViewBtn');
+              if (toggleViewBtn) toggleViewBtn.style.display = 'none';
+            }
           } catch (e) {
             console.error('Error during chart rendering:', e);
             document.getElementById('chart-area').innerHTML = `<div class="empty-state"><p>Error rendering chart: ${e.message}</p></div>`;
@@ -760,6 +806,83 @@
         }
         
         hideLoading();
+      }
+      
+      // Function to load target data
+      async function loadTargetData(targetId) {
+        try {
+          console.log('Loading target chart data for ID:', targetId);
+          const result = await window.getOrgChartById(targetId);
+          
+          const { chart, employees, version, error } = result;
+          
+          if (error) {
+            console.error('Error loading target chart:', error);
+            return;
+          }
+          
+          let targetData = [];
+          
+          // First try to get data from employees table
+          if (employees && employees.length > 0) {
+            targetData = employees.map(emp => ({
+              id: emp.employee_id,
+              name: emp.name,
+              manager: emp.manager_id,
+              title: emp.title,
+              fte: emp.fte,
+              location: emp.location,
+              jobFamily: emp.job_family,
+              managementLevel: emp.management_level
+            }));
+          }
+          // If no employees, try to get data from version
+          else if (version && version.data) {
+            // Handle different data formats as in renderChartWithData
+            if (version.data.raw_data && Array.isArray(version.data.raw_data)) {
+              targetData = version.data.raw_data;
+            } 
+            else if (Array.isArray(version.data)) {
+              targetData = version.data;
+            }
+            else if (typeof version.data === 'string') {
+              try {
+                const parsedData = JSON.parse(version.data);
+                if (Array.isArray(parsedData)) {
+                  targetData = parsedData;
+                } else if (parsedData.raw_data && Array.isArray(parsedData.raw_data)) {
+                  targetData = parsedData.raw_data;
+                }
+              } catch (e) {
+                console.error('Error parsing target version data:', e);
+              }
+            }
+          }
+          
+          if (targetData && targetData.length > 0) {
+            // Convert data if needed
+            const formattedTargetData = convertArrayDataToObjects(targetData);
+            
+            // Store the target data in state
+            window.setUpdateData(formattedTargetData);
+            
+            // Show toggle button
+            const toggleViewBtn = document.getElementById('toggleViewBtn');
+            if (toggleViewBtn) {
+              toggleViewBtn.style.display = 'inline-flex';
+              toggleViewBtn.disabled = false;
+              
+              // Add event listener for toggle button
+              toggleViewBtn.addEventListener('click', () => {
+                if (window.toggleComparisonMode) {
+                  window.toggleComparisonMode();
+                }
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error loading target data:', error);
+        }
       }
       
       // Export button
