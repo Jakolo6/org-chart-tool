@@ -539,20 +539,33 @@
         }
         
         .project-type.baseline {
-            background-color: rgba(0, 102, 204, 0.1);
-            color: #0066cc;
+            background-color: #29cc6a;
+            color: white;
         }
         
         .project-type.target {
-            background-color: rgba(41, 204, 106, 0.1);
-            color: #29cc6a;
+            background-color: #ff9f0a;
+            color: white;
         }
         
-        .project-details {
-            padding: 15px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
+        .project-type.comparison {
+            background-color: #5e5ce6;
+            color: white;
+        }
+        
+        .project-badge {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 10px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background-color: rgba(94, 92, 230, 0.1);
+            color: #5e5ce6;
+            font-size: 0.75rem;
+        }
+        
+        .project-badge i {
+            margin-right: 4px;
         }
         
         .project-title {
@@ -1280,9 +1293,37 @@
                     const projectsGrid = document.createElement('div');
                     projectsGrid.className = 'projects-grid';
                     
-                    // Add chart cards
+                    // Group charts by name (removing baseline/target indicators)
+                    const chartGroups = {};
+                    
                     charts.forEach(chart => {
-                        const chartCard = createChartCard(chart);
+                        // Extract base name (remove baseline/target indicators)
+                        let baseName = chart.name;
+                        baseName = baseName.replace(/ \(Baseline\)$/i, '').replace(/ \(Target\)$/i, '');
+                        
+                        // Create group if it doesn't exist
+                        if (!chartGroups[baseName]) {
+                            chartGroups[baseName] = {
+                                baseline: null,
+                                target: null
+                            };
+                        }
+                        
+                        // Add chart to appropriate slot
+                        if (chart.is_baseline) {
+                            chartGroups[baseName].baseline = chart;
+                        } else if (chart.is_target) {
+                            chartGroups[baseName].target = chart;
+                        } else {
+                            // If neither baseline nor target, treat as baseline
+                            chartGroups[baseName].baseline = chart;
+                        }
+                    });
+                    
+                    // Create cards for each group
+                    Object.keys(chartGroups).forEach(baseName => {
+                        const group = chartGroups[baseName];
+                        const chartCard = createChartCard(group.baseline || group.target, group.target);
                         projectsGrid.appendChild(chartCard);
                     });
                     
@@ -1340,30 +1381,46 @@
         }
         
         // Create chart card element
-        function createChartCard(chart) {
+        function createChartCard(chart, targetChart = null) {
             const card = document.createElement('div');
             card.className = 'project-card';
             
             const formattedDate = new Date(chart.created_at).toLocaleDateString();
+            const hasTarget = targetChart !== null;
             const chartType = chart.is_baseline ? 'baseline' : 'target';
             
+            // Clean up the chart name (remove baseline/target indicators)
+            let displayName = chart.name;
+            displayName = displayName.replace(/ \(Baseline\)$/i, '').replace(/ \(Target\)$/i, '');
+            
+            // Create the card HTML
             card.innerHTML = `
                 <div class="project-image">
                     <img src="./assets/images/org-chart-preview.svg" alt="Chart Preview">
-                    <div class="project-type ${chartType}">${chartType === 'baseline' ? 'Baseline' : 'Target'}</div>
+                    ${hasTarget ? 
+                        `<div class="project-type comparison">Baseline & Target</div>` : 
+                        `<div class="project-type ${chartType}">${chartType === 'baseline' ? 'Baseline' : 'Target'}</div>`
+                    }
                 </div>
                 <div class="project-details">
-                    <h3 class="project-title">${chart.name}</h3>
+                    <h3 class="project-title">${displayName}</h3>
                     <p class="project-description">${chart.description || 'No description provided.'}</p>
                     <div class="project-meta">
                         <div class="project-date">
                             <i class="far fa-calendar-alt"></i>
                             <span>${formattedDate}</span>
                         </div>
+                        ${hasTarget ? 
+                            `<div class="project-badge"><i class="fas fa-exchange-alt"></i> Comparison Available</div>` : 
+                            ''
+                        }
                     </div>
                 </div>
                 <div class="project-actions">
-                    <button class="project-btn primary view-chart-btn" data-id="${chart.id}">View Chart</button>
+                    ${hasTarget ? 
+                        `<button class="project-btn primary view-chart-btn" data-id="${chart.id}" data-target="${targetChart.id}">View Comparison</button>` : 
+                        `<button class="project-btn primary view-chart-btn" data-id="${chart.id}">View Chart</button>`
+                    }
                     <button class="project-btn secondary delete-chart-btn" data-id="${chart.id}">Delete</button>
                 </div>
             `;
@@ -1373,7 +1430,13 @@
             const deleteBtn = card.querySelector('.delete-chart-btn');
             
             viewBtn.addEventListener('click', () => {
-                window.location.href = `index.html?chart=${chart.id}`;
+                if (targetChart) {
+                    // If we have both baseline and target, include both in URL
+                    window.location.href = `index.html?chart=${chart.id}&target=${targetChart.id}`;
+                } else {
+                    // Otherwise just show the single chart
+                    window.location.href = `index.html?chart=${chart.id}`;
+                }
             });
             
             deleteBtn.addEventListener('click', async () => {

@@ -370,14 +370,29 @@ async function updateProfile(userId, updates) {
     }
     
     // Update existing profile - don't use select() or single() as they can cause errors
-    const { error } = await window.supabaseClient
-      .from('profiles')
-      .update(updates)
-      .eq('id', userId);
+    // Make sure we're not sending any null values or empty objects that could cause 400 errors
+    const cleanUpdates = {};
     
-    if (error) {
-      console.error('Error updating profile:', error);
-      return { profile: null, error };
+    // Only include non-null, defined properties
+    for (const key in updates) {
+      if (updates[key] !== null && updates[key] !== undefined) {
+        cleanUpdates[key] = updates[key];
+      }
+    }
+    
+    // Only update if there are valid properties to update
+    if (Object.keys(cleanUpdates).length > 0) {
+      const { error } = await window.supabaseClient
+        .from('profiles')
+        .update(cleanUpdates)
+        .eq('id', userId);
+        
+      if (error) {
+        console.error('Error updating profile:', error);
+        return { profile: null, error };
+      }
+    } else {
+      console.log('No valid profile updates to apply');
     }
     
     // Return updated profile
