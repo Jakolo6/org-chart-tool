@@ -982,27 +982,61 @@ function showNodeStats(node) {
 =========================================== */
 
 /**
- * Calculates the optimal scale and translation to fit the entire chart within the viewport.
+ * Centers the chart in the viewport without changing the zoom level.
  */
+function centerChart() {
+    if (!window.state.g || !window.state.svg) return;
+    
+    try {
+        const gNode = window.state.g.node();
+        if (!gNode) return;
+        
+        const bounds = gNode.getBBox();
+        if (bounds.width === 0 || bounds.height === 0) return;
+        
+        const fullWidth = window.state.width;
+        const fullHeight = window.state.height;
+        const currentTransform = d3.zoomTransform(window.state.svg.node());
+        const scale = currentTransform.k;
+        
+        const translateX = fullWidth / 2 - (bounds.x + bounds.width / 2) * scale;
+        const translateY = fullHeight / 2 - (bounds.y + bounds.height / 2) * scale;
+        
+        window.state.svg.transition().duration(500).call(
+            window.state.zoom.transform,
+            d3.zoomIdentity.translate(translateX, translateY).scale(scale)
+        );
+    } catch (error) {
+        console.error('Error centering chart:', error);
+    }
+}
+
 function fitChartToView() {
     if (!window.state.g || !window.state.svg) return;
     
-    const bounds = window.state.g.node().getBBox();
-    if (bounds.width === 0 || bounds.height === 0) return;
-    
-    const fullWidth = window.state.width;
-    const fullHeight = window.state.height;
-    const widthScale = fullWidth / bounds.width;
-    const heightScale = fullHeight / bounds.height;
-    const scale = Math.min(widthScale, heightScale) * 0.9; // 90% to add some padding
-    
-    const translateX = fullWidth / 2 - (bounds.x + bounds.width / 2) * scale;
-    const translateY = fullHeight / 2 - (bounds.y + bounds.height / 2) * scale;
-    
-    window.state.svg.transition().duration(500).call(
-        window.state.zoom.transform,
-        d3.zoomIdentity.translate(translateX, translateY).scale(scale)
-    );
+    try {
+        const gNode = window.state.g.node();
+        if (!gNode) return;
+        
+        const bounds = gNode.getBBox();
+        if (bounds.width === 0 || bounds.height === 0) return;
+        
+        const fullWidth = window.state.width;
+        const fullHeight = window.state.height;
+        const widthScale = fullWidth / bounds.width;
+        const heightScale = fullHeight / bounds.height;
+        const scale = Math.min(widthScale, heightScale) * 0.9; // 90% to add some padding
+        
+        const translateX = fullWidth / 2 - (bounds.x + bounds.width / 2) * scale;
+        const translateY = fullHeight / 2 - (bounds.y + bounds.height / 2) * scale;
+        
+        window.state.svg.transition().duration(500).call(
+            window.state.zoom.transform,
+            d3.zoomIdentity.translate(translateX, translateY).scale(scale)
+        );
+    } catch (error) {
+        console.error('Error fitting chart to view:', error);
+    }
 }
 
 /**
