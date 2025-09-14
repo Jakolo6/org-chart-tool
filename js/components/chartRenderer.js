@@ -3,25 +3,31 @@
  * and layout calculations for the organization chart.
  */
 
-// Use global variables instead of imports
-const CONFIG = window.CONFIG || {
-    nodeWidth: 160,
-    nodeHeight: 80,
-    horizontalGap: 25,
-    verticalGap: 100,
-    animationDuration: 300
-};
+// Use global variables directly
+// Access CONFIG from window object
+if (!window.CONFIG) {
+    window.CONFIG = {
+        nodeWidth: 160,
+        nodeHeight: 80,
+        horizontalGap: 25,
+        verticalGap: 100,
+        animationDuration: 300
+    };
+}
 
-const state = window.state || {
-    rootNode: null,
-    selectedNode: null,
-    svg: null,
-    g: null,
-    zoom: null,
-    width: 1200,
-    height: 800,
-    isComparisonMode: false
-};
+// Access state from window object
+if (!window.state) {
+    window.state = {
+        rootNode: null,
+        selectedNode: null,
+        svg: null,
+        g: null,
+        zoom: null,
+        width: 1200,
+        height: 800,
+        isComparisonMode: false
+    };
+}
 
 // Helper functions
 function wrapSVGText(textElement, text, width, maxLines, baseY) {
@@ -122,11 +128,11 @@ function initChart(selector) {
         .attr('class', 'chart-content');
 
     // Update state
-    state.svg = svg;
-    state.g = g;
-    state.width = width;
-    state.height = height;
-    state.zoom = zoom;
+    window.state.svg = svg;
+    window.state.g = g;
+    window.state.width = width;
+    window.state.height = height;
+    window.state.zoom = zoom;
 
     return true;
 }
@@ -135,18 +141,18 @@ function initChart(selector) {
  * Centers the chart in the viewport.
  */
 function centerChart() {
-    if (!state.g || !state.svg || !state.zoom) return;
+    if (!window.state.g || !window.state.svg || !window.state.zoom) return;
     
-    const bounds = state.g.node().getBBox();
-    const width = state.width;
-    const height = state.height;
+    const bounds = window.state.g.node().getBBox();
+    const width = window.state.width;
+    const height = window.state.height;
     
     const scale = 0.9;
     const translateX = width / 2 - bounds.x * scale - bounds.width * scale / 2;
     const translateY = height / 2 - bounds.y * scale - bounds.height * scale / 2;
     
-    state.svg.transition().duration(500).call(
-        state.zoom.transform,
+    window.state.svg.transition().duration(500).call(
+        window.state.zoom.transform,
         d3.zoomIdentity.translate(translateX, translateY).scale(scale)
     );
 }
@@ -418,7 +424,7 @@ function handleNodeHover(event, d) {
     
     // Find ancestors for highlighting
     const ancestors = findAncestors(d);
-    state.g.selectAll('.node-card').classed('ancestor-highlight', node => ancestors.includes(node.id));
+    window.state.g.selectAll('.node-card').classed('ancestor-highlight', node => ancestors.includes(node.id));
     
     // Show tooltip
     const tooltip = d3.select('#tooltip');
@@ -448,7 +454,7 @@ function handleNodeHover(event, d) {
  */
 function handleNodeUnhover(event, d) {
     // Remove ancestor highlighting
-    state.g.selectAll('.node-card').classed('ancestor-highlight', false);
+    window.state.g.selectAll('.node-card').classed('ancestor-highlight', false);
     
     // Hide tooltip
     d3.select('#tooltip').style('display', 'none');
@@ -473,8 +479,8 @@ function findAncestors(node) {
         }
     }
     
-    if (state.rootNode) {
-        buildParentMap(state.rootNode);
+    if (window.state.rootNode) {
+        buildParentMap(window.state.rootNode);
     }
     
     // Find ancestors
@@ -506,8 +512,8 @@ function setupTooltip() {
  * Expands all nodes in the chart.
  */
 function expandAll() {
-    if (!state.rootNode) return;
-    expandAllNodes(state.rootNode);
+    if (!window.state.rootNode) return;
+    expandAllNodes(window.state.rootNode);
     renderChart();
 }
 
@@ -526,9 +532,9 @@ function expandAllNodes(node) {
  * Collapses all nodes except the root.
  */
 function collapseAll() {
-    if (!state.rootNode) return;
-    collapseAllNodes(state.rootNode);
-    state.rootNode.expanded = true; // Keep root expanded
+    if (!window.state.rootNode) return;
+    collapseAllNodes(window.state.rootNode);
+    window.state.rootNode.expanded = true; // Keep root expanded
     renderChart();
 }
 
@@ -547,13 +553,13 @@ function collapseAllNodes(node) {
  * Resets the view to center on the root node.
  */
 function resetView() {
-    if (!state.rootNode || !state.svg || !state.zoom) return;
+    if (!window.state.rootNode || !window.state.svg || !window.state.zoom) return;
     
-    collapseAllNodes(state.rootNode);
-    state.rootNode.expanded = true;
-    state.selectedNode = state.rootNode;
+    collapseAllNodes(window.state.rootNode);
+    window.state.rootNode.expanded = true;
+    window.state.selectedNode = window.state.rootNode;
     renderChart();
-    updateSelectedNodeStatistics(state.rootNode);
+    updateSelectedNodeStatistics(window.state.rootNode);
     centerChart();
 }
 
@@ -577,20 +583,20 @@ function renderChart(rootNode, selector) {
         initChart(selector);
     }
     
-    if (!state.g) {
+    if (!window.state.g) {
         console.log('Chart not initialized');
         return;
     }
     
     // Set root node in state
-    state.rootNode = rootNode;
+    window.state.rootNode = rootNode;
     
     // Calculate layout
-    calculateLayout(state.rootNode, state.width / 2, 100);
+    calculateLayout(window.state.rootNode, window.state.width / 2, 100);
     
     // Get only visible nodes and links based on expanded state
-    const nodes = getVisibleNodes(state.rootNode);
-    const links = getVisibleLinks(state.rootNode);
+    const nodes = getVisibleNodes(window.state.rootNode);
+    const links = getVisibleLinks(window.state.rootNode);
 
     // Render connections first (so they appear behind nodes)
     renderConnections(links);
@@ -612,7 +618,7 @@ function renderChart(rootNode, selector) {
  * @param {Array<Object>} links The array of visible link objects to render.
  */
 function renderConnections(links) {
-    const connections = state.g.selectAll('.connection-line')
+    const connections = window.state.g.selectAll('.connection-line')
         .data(links, d => `${d.source.id}-${d.target.id}`);
         
     connections.enter()
@@ -621,17 +627,17 @@ function renderConnections(links) {
         .attr('d', generateLShapedPath)
         .style('opacity', 0)
         .transition()
-        .duration(CONFIG.animationDuration)
+        .duration(window.CONFIG.animationDuration)
         .style('opacity', d => d.changeType === 'exit' ? 0.5 : (d.changeType ? 0.8 : 0.6));
         
     connections.transition()
-        .duration(CONFIG.animationDuration)
+        .duration(window.CONFIG.animationDuration)
         .attr('d', generateLShapedPath)
         .attr('class', d => `connection-line ${d.changeType || ''}`);
         
     connections.exit()
         .transition()
-        .duration(CONFIG.animationDuration)
+        .duration(window.CONFIG.animationDuration)
         .style('opacity', 0)
         .remove();
 }
@@ -643,9 +649,9 @@ function renderConnections(links) {
  */
 function generateLShapedPath(link) {
     const sourceX = link.source.x;
-    const sourceY = link.source.y + CONFIG.nodeHeight / 2;
+    const sourceY = link.source.y + window.CONFIG.nodeHeight / 2;
     const targetX = link.target.x;
-    const targetY = link.target.y - CONFIG.nodeHeight / 2;
+    const targetY = link.target.y - window.CONFIG.nodeHeight / 2;
     const midY = sourceY + (targetY - sourceY) / 2;
     
     return `M${sourceX},${sourceY} L${sourceX},${midY} L${targetX},${midY} L${targetX},${targetY}`;
@@ -657,13 +663,13 @@ function generateLShapedPath(link) {
  * @param {Array<Object>} nodes The array of visible node objects to render.
  */
 function renderNodes(nodes) {
-    const nodeGroups = state.g.selectAll('.node-group')
+    const nodeGroups = window.state.g.selectAll('.node-group')
         .data(nodes, d => d.id);
     
     // Handle exit selection
     nodeGroups.exit()
         .transition()
-        .duration(CONFIG.animationDuration)
+        .duration(window.CONFIG.animationDuration)
         .style('opacity', 0)
         .remove();
     
@@ -678,25 +684,25 @@ function renderNodes(nodes) {
     enterGroups.filter(d => d.changeType === 'moved')
         .append('rect')
         .attr('class', 'moved-halo')
-        .attr('x', -CONFIG.nodeWidth / 2 - 4)
-        .attr('y', -CONFIG.nodeHeight / 2 - 4)
-        .attr('width', CONFIG.nodeWidth + 8)
-        .attr('height', CONFIG.nodeHeight + 8);
+        .attr('x', -window.CONFIG.nodeWidth / 2 - 4)
+        .attr('y', -window.CONFIG.nodeHeight / 2 - 4)
+        .attr('width', window.CONFIG.nodeWidth + 8)
+        .attr('height', window.CONFIG.nodeHeight + 8);
     
     // Add main node card
     enterGroups.append('rect')
         .attr('class', d => `node-card ${d.changeType || ''}`)
-        .attr('x', -CONFIG.nodeWidth / 2)
-        .attr('y', -CONFIG.nodeHeight / 2)
-        .attr('width', CONFIG.nodeWidth)
-        .attr('height', CONFIG.nodeHeight);
+        .attr('x', -window.CONFIG.nodeWidth / 2)
+        .attr('y', -window.CONFIG.nodeHeight / 2)
+        .attr('width', window.CONFIG.nodeWidth)
+        .attr('height', window.CONFIG.nodeHeight);
     
     // Add name text with wrapping
     enterGroups.append('text')
         .attr('class', d => `node-text ${d.changeType || ''}`)
         .attr('y', -15)
         .each(function(d) {
-            wrapSVGText(d3.select(this), d.name, CONFIG.nodeWidth - 20, 2, -15);
+            wrapSVGText(d3.select(this), d.name, window.CONFIG.nodeWidth - 20, 2, -15);
         });
     
     // Add title text with wrapping
@@ -704,7 +710,7 @@ function renderNodes(nodes) {
         .attr('class', d => `node-title ${d.changeType || ''}`)
         .attr('y', 15)
         .each(function(d) {
-            wrapSVGText(d3.select(this), d.title || '', CONFIG.nodeWidth - 20, 2, 15);
+            wrapSVGText(d3.select(this), d.title || '', window.CONFIG.nodeWidth - 20, 2, 15);
         });
     
     // Add hover and click handlers
@@ -726,8 +732,8 @@ function renderNodes(nodes) {
             
             group.append('circle')
                 .attr('class', 'expand-button')
-                .attr('cx', CONFIG.nodeWidth / 2 - 10)
-                .attr('cy', -CONFIG.nodeHeight / 2 + 10)
+                .attr('cx', window.CONFIG.nodeWidth / 2 - 10)
+                .attr('cy', -window.CONFIG.nodeHeight / 2 + 10)
                 .attr('r', 8)
                 .on('click', (event, d) => {
                     event.stopPropagation();
@@ -737,24 +743,24 @@ function renderNodes(nodes) {
             
             group.append('text')
                 .attr('class', 'expand-icon')
-                .attr('x', CONFIG.nodeWidth / 2 - 10)
-                .attr('y', -CONFIG.nodeHeight / 2 + 10)
+                .attr('x', window.CONFIG.nodeWidth / 2 - 10)
+                .attr('y', -window.CONFIG.nodeHeight / 2 + 10)
                 .text(d => d.expanded ? '−' : '+');
         });
     
     // Animate nodes into position
     allGroups.transition()
-        .duration(CONFIG.animationDuration)
+        .duration(window.CONFIG.animationDuration)
         .attr('transform', d => `translate(${d.x}, ${d.y})`)
         .style('opacity', 1);
     
     // Update selected state
     allGroups.select('.node-card')
-        .attr('class', d => `node-card ${d.changeType || ''} ${state.selectedNode && state.selectedNode.id === d.id ? 'selected' : ''}`);
+        .attr('class', d => `node-card ${d.changeType || ''} ${window.state.selectedNode && window.state.selectedNode.id === d.id ? 'selected' : ''}`);
 }
 
 function getNodeColor(node) {
-    if (!state.isComparisonMode) return '#f8fafc';
+    if (!window.state.isComparisonMode) return '#f8fafc';
     
     switch (node.changeType) {
         case 'new': return 'rgba(5, 150, 105, 0.1)';
@@ -765,7 +771,7 @@ function getNodeColor(node) {
 }
 
 function getNodeBorderColor(node) {
-    if (!state.isComparisonMode) return '#e2e8f0';
+    if (!window.state.isComparisonMode) return '#e2e8f0';
     
     switch (node.changeType) {
         case 'new': return '#059669';
@@ -781,10 +787,10 @@ function getNodeBorderColor(node) {
 
 function selectNode(node) {
     // Update selected node in global state
-    state.selectedNode = node;
+    window.state.selectedNode = node;
     
     // Update visual selection
-    state.g.selectAll('.node-card')
+    window.state.g.selectAll('.node-card')
         .classed('selected', d => d.id === node.id);
     
     // Update node statistics
@@ -799,13 +805,13 @@ function selectNode(node) {
  * Calculates the optimal scale and translation to fit the entire chart within the viewport.
  */
 function fitChartToView() {
-    if (!state.g || !state.svg) return;
+    if (!window.state.g || !window.state.svg) return;
     
-    const bounds = state.g.node().getBBox();
+    const bounds = window.state.g.node().getBBox();
     if (bounds.width === 0 || bounds.height === 0) return;
     
-    const fullWidth = state.width;
-    const fullHeight = state.height;
+    const fullWidth = window.state.width;
+    const fullHeight = window.state.height;
     const widthScale = fullWidth / bounds.width;
     const heightScale = fullHeight / bounds.height;
     const scale = Math.min(widthScale, heightScale) * 0.9; // 90% to add some padding
@@ -813,8 +819,8 @@ function fitChartToView() {
     const translateX = fullWidth / 2 - (bounds.x + bounds.width / 2) * scale;
     const translateY = fullHeight / 2 - (bounds.y + bounds.height / 2) * scale;
     
-    state.svg.transition().duration(500).call(
-        state.zoom.transform,
+    window.state.svg.transition().duration(500).call(
+        window.state.zoom.transform,
         d3.zoomIdentity.translate(translateX, translateY).scale(scale)
     );
 }
@@ -827,10 +833,10 @@ function handleResize() {
     const newWidth = container.clientWidth;
     const newHeight = container.clientHeight;
     
-    if (state.svg) {
-        state.svg.attr('width', newWidth).attr('height', newHeight);
-        state.width = newWidth;
-        state.height = newHeight;
+    if (window.state.svg) {
+        window.state.svg.attr('width', newWidth).attr('height', newHeight);
+        window.state.width = newWidth;
+        window.state.height = newHeight;
         fitChartToView();
     }
 }
