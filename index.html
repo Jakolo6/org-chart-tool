@@ -960,20 +960,25 @@
       
       // Helper function to render chart with data
       function renderChartWithData(chartData) {
+        console.log('renderChartWithData called with data:', chartData);
+        
         // Render chart
         if (chartData && chartData.length > 0) {
           console.log('Final chart data for rendering:', chartData);
           try {
             // Convert data if needed
+            console.log('Converting data to objects...');
             const formattedData = convertArrayDataToObjects(chartData);
+            console.log('Formatted data:', formattedData);
             
             // Store the data in state for baseline/target toggling
+            console.log('Setting baseline and current data...');
             window.setBaselineData(formattedData);
             window.setCurrentData(formattedData);
             
             console.log('Building hierarchy...');
             const hierarchyData = window.buildHierarchy(formattedData);
-            console.log('Hierarchy data:', hierarchyData);
+            console.log('Hierarchy data built:', hierarchyData);
             
             if (!hierarchyData) {
               console.error('Failed to build hierarchy from data');
@@ -982,9 +987,13 @@
             }
             
             // Store the root node in state
+            console.log('Setting root node in state...');
             window.setRootNode(hierarchyData);
             
-            console.log('Rendering chart...');
+            // Check if window.renderChart exists
+            console.log('window.renderChart exists:', typeof window.renderChart === 'function');
+            
+            console.log('Rendering chart with container #chart-area...');
             window.renderChart(hierarchyData, '#chart-area');
             console.log('Chart rendering complete');
             

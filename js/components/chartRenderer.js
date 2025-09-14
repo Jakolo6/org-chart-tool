@@ -103,8 +103,14 @@ function initChart(container = '#chart-area') {
         return;
     }
     
-    // Clear any existing SVG
-    d3.select(container).select('svg').remove();
+    // Clear any existing content
+    containerElement.innerHTML = '';
+    
+    // Create a new SVG element
+    const svgElement = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svgElement.setAttribute('id', 'chartSvg');
+    svgElement.setAttribute('class', 'chart-svg');
+    containerElement.appendChild(svgElement);
     
     const width = containerElement.clientWidth;
     const height = containerElement.clientHeight;
@@ -120,7 +126,7 @@ function initChart(container = '#chart-area') {
     window.state.width = width;
     window.state.height = height;
     
-    // Create SVG element
+    // Select the SVG element with D3
     const svg = d3.select('#chartSvg')
         .attr('width', width)
         .attr('height', height)
@@ -618,18 +624,21 @@ function resetView() {
  * rendering functions for them.
  */
 function renderChart(rootNode, selector) {
+    console.log('renderChart called with rootNode:', rootNode, 'selector:', selector);
+    
     if (!rootNode) {
-        console.log('No data to render');
+        console.error('No data to render');
         return;
     }
     
     // Initialize chart if selector is provided
     if (selector) {
+        console.log('Initializing chart with selector:', selector);
         initChart(selector);
     }
     
-    if (!window.state.g) {
-        console.log('Chart not initialized');
+    if (!window.state || !window.state.g) {
+        console.error('Chart not initialized properly. state:', window.state);
         return;
     }
     
@@ -637,25 +646,34 @@ function renderChart(rootNode, selector) {
     window.state.rootNode = rootNode;
     
     // Calculate layout
+    console.log('Calculating layout...');
     calculateLayout(window.state.rootNode, window.state.width / 2, 100);
     
     // Get only visible nodes and links based on expanded state
     const nodes = getVisibleNodes(window.state.rootNode);
     const links = getVisibleLinks(window.state.rootNode);
+    
+    console.log('Visible nodes:', nodes.length, 'Visible links:', links.length);
 
     // Render connections first (so they appear behind nodes)
+    console.log('Rendering connections...');
     renderConnections(links);
     
     // Render nodes
+    console.log('Rendering nodes...');
     renderNodes(nodes);
     
     // Auto-fit the chart
+    console.log('Scheduling fitChartToView...');
     setTimeout(() => {
+        console.log('Fitting chart to view...');
         fitChartToView();
-    }, 100);
+    }, 300); // Increased timeout to ensure DOM is ready
     
     // Setup tooltip
     setupTooltip();
+    
+    console.log('Chart rendering complete');
 }
 
 /**
@@ -1065,7 +1083,6 @@ window.addEventListener('resize', function() {
 });
 
 // Export functions to global window object
-window.renderChart = renderChart;
 window.initChart = initChart;
 window.buildHierarchy = buildHierarchy;
 window.expandAll = expandAll;
@@ -1074,3 +1091,4 @@ window.resetView = resetView;
 window.centerChart = centerChart;
 window.fitChartToView = fitChartToView;
 window.selectNode = selectNode;
+window.renderChart = renderChart;
