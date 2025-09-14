@@ -7,7 +7,7 @@
  * @param {string|number} id The ID to normalize.
  * @returns {string} The normalized ID.
  */
-export function normalizeId(id) {
+function normalizeId(id) {
     if (id === null || id === undefined) return '';
     return String(id).trim().toLowerCase();
 }
@@ -17,7 +17,7 @@ export function normalizeId(id) {
  * @param {*} value The value to check.
  * @returns {boolean} True if the value is considered blank or empty.
  */
-export function isBlankOrEmpty(value) {
+function isBlankOrEmpty(value) {
     return value === null || value === undefined || String(value).trim() === '';
 }
 
@@ -30,7 +30,7 @@ export function isBlankOrEmpty(value) {
  * @param {number} [maxLines=2] The maximum number of lines to render.
  * @param {number} [startY=0] The initial y-coordinate for the first line of text.
  */
-export function wrapSVGText(textElement, text, width, maxLines = 2, startY = 0) {
+function wrapSVGText(textElement, text, width, maxLines = 2, startY = 0) {
     if (!text) return;
     textElement.text(null);
     const words = text.toString().split(/\s+/);
@@ -55,3 +55,8 @@ export function wrapSVGText(textElement, text, width, maxLines = 2, startY = 0) 
         }
     }
 }
+
+// Expose functions to global window object
+window.normalizeId = normalizeId;
+window.isBlankOrEmpty = isBlankOrEmpty;
+window.wrapSVGText = wrapSVGText;

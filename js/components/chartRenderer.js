@@ -3,12 +3,79 @@
  * and layout calculations for the organization chart.
  */
 
-import { 
-    CONFIG, state,
-    setSvgElements, setDimensions, setRootNode, setSelectedNode
-} from '../main.js';
-import { updateSelectedNodeStats } from './statsManager.js';
-import { normalizeId, isBlankOrEmpty, wrapSVGText } from '../utils/helpers.js';
+// Use global variables instead of imports
+const CONFIG = window.CONFIG || {
+    nodeWidth: 160,
+    nodeHeight: 80,
+    horizontalGap: 25,
+    verticalGap: 100,
+    animationDuration: 300
+};
+
+const state = window.state || {
+    rootNode: null,
+    selectedNode: null,
+    svg: null,
+    g: null,
+    zoom: null,
+    width: 1200,
+    height: 800,
+    isComparisonMode: false
+};
+
+// Helper functions
+function wrapSVGText(textElement, text, width, maxLines, baseY) {
+    if (!text) return;
+    
+    const words = text.split(/\s+/).reverse();
+    let word;
+    let line = [];
+    let lineNumber = 0;
+    const lineHeight = 1.1; // ems
+    const y = baseY || 0;
+    
+    let tspan = textElement.text(null).append("tspan")
+        .attr("x", 0)
+        .attr("y", y)
+        .attr("dy", 0);
+        
+    while (word = words.pop()) {
+        line.push(word);
+        tspan.text(line.join(" "));
+        
+        if (tspan.node().getComputedTextLength() > width) {
+            line.pop();
+            tspan.text(line.join(" "));
+            line = [word];
+            
+            lineNumber++;
+            if (maxLines && lineNumber >= maxLines) {
+                // Add ellipsis if we've reached max lines
+                if (line.join(" ").length > 3) {
+                    tspan.text(tspan.text() + "...");
+                }
+                break;
+            }
+            
+            tspan = textElement.append("tspan")
+                .attr("x", 0)
+                .attr("y", y)
+                .attr("dy", lineHeight + "em")
+                .text(word);
+        }
+    }
+    
+    // Center the text vertically based on number of lines
+    const tspans = textElement.selectAll("tspan");
+    const lineCount = tspans.size();
+    
+    if (lineCount > 1) {
+        const offset = (lineCount - 1) * lineHeight / 2;
+        tspans.attr("dy", function(d, i) {
+            return (i === 0 ? -offset : lineHeight) + "em";
+        });
+    }
+}
 
 console.log('[OrgChart] chartRenderer loaded');
 
@@ -20,7 +87,7 @@ console.log('[OrgChart] chartRenderer loaded');
  * Initializes the chart with the given selector.
  * @param {string} selector The CSS selector for the chart container.
  */
-export function initChart(selector) {
+function initChart(selector) {
     const container = d3.select(selector);
     if (container.empty()) {
         console.error(`Container not found: ${selector}`);
@@ -65,35 +132,23 @@ export function initChart(selector) {
 }
 
 /**
- * Initializes the main SVG container and D3 zoom behavior.
- * This should be called once when the application loads.
+ * Centers the chart in the viewport.
  */
-export function initializeChart() {
-    // Get container dimensions
-    const container = document.querySelector('.chart-area');
-    const newWidth = container.clientWidth;
-    const newHeight = container.clientHeight;
-    setDimensions(newWidth, newHeight);
-
-    // Initialize SVG
-    const svgElement = d3.select('#chartSvg')
-        .attr('width', newWidth)
-        .attr('height', newHeight);
-
-    // Create main group for zoom/pan
-    const gElement = svgElement.append('g').attr('class', 'main-group');
-
-    // Setup zoom behavior
-    const zoomBehavior = d3.zoom()
-        .scaleExtent([0.1, 3])
-        .on('zoom', function(event) {
-            gElement.attr('transform', event.transform);
-        });
-
-    svgElement.call(zoomBehavior);
+function centerChart() {
+    if (!state.g || !state.svg || !state.zoom) return;
     
-    // Store references in global state
-    setSvgElements(svgElement, gElement, zoomBehavior);
+    const bounds = state.g.node().getBBox();
+    const width = state.width;
+    const height = state.height;
+    
+    const scale = 0.9;
+    const translateX = width / 2 - bounds.x * scale - bounds.width * scale / 2;
+    const translateY = height / 2 - bounds.y * scale - bounds.height * scale / 2;
+    
+    state.svg.transition().duration(500).call(
+        state.zoom.transform,
+        d3.zoomIdentity.translate(translateX, translateY).scale(scale)
+    );
 }
 
 /* ===========================================
@@ -101,95 +156,58 @@ export function initializeChart() {
 =========================================== */
 
 /**
- * Constructs the hierarchical data structure from the flat `currentData` array.
- * It identifies the root node and builds parent-child relationships.
- * @returns {Object|null} The root node of the hierarchy, or null if data is empty.
+ * Constructs the hierarchical data structure from the flat data array.
+ * @param {Array} data The flat array of employee data.
+ * @returns {Object|null} The root node of the hierarchy.
  */
-export function buildHierarchy() {
-    if (!state.currentData || state.currentData.length === 0) {
+function buildHierarchy(data) {
+    if (!data || data.length === 0) {
         console.log('No data available for hierarchy building');
         return null;
     }
 
     // Create lookup map
     const employeeMap = new Map();
-    state.currentData.forEach(emp => {
-        const normalizedId = normalizeId(emp.id);
-        employeeMap.set(normalizedId, {
+    data.forEach(emp => {
+        employeeMap.set(emp.id, {
             ...emp,
-            id: normalizedId,
             children: [],
-            _children: null
+            expanded: true
         });
     });
 
-    let root = null;
-
-    // Build parent-child relationships
-    const potentialRoots = [];
-    
-    state.currentData.forEach(emp => {
-        const normalizedId = normalizeId(emp.id);
-        const employee = employeeMap.get(normalizedId);
+    // Find root and build hierarchy
+    let rootNode = null;
+    data.forEach(emp => {
+        const node = employeeMap.get(emp.id);
         
-        // Check if manager field is blank/empty (root node)
-        if (isBlankOrEmpty(emp.managerId)) {
-            potentialRoots.push(employee);
+        if (!emp.manager || emp.manager === '' || emp.manager === emp.id) {
+            // This is a root node (no manager or self-managed)
+            rootNode = node;
+        } else if (employeeMap.has(emp.manager)) {
+            // Add as child to manager
+            const managerNode = employeeMap.get(emp.manager);
+            managerNode.children.push(node);
         } else {
-            const normalizedManagerId = normalizeId(emp.managerId);
-            const manager = employeeMap.get(normalizedManagerId);
-            
-            if (manager) {
-                manager.children.push(employee);
-                employee.parent = manager;
-            } else {
-                console.warn(`Manager "${emp.managerId}" not found for employee "${emp.name}", treating as potential root.`);
-                potentialRoots.push(employee);
-            }
+            // Manager not found, treat as root
+            console.warn(`Manager ${emp.manager} not found for employee ${emp.id}`);
+            if (!rootNode) rootNode = node;
         }
     });
+
+    // Sort children by name
+    const sortChildren = (node) => {
+        if (node.children && node.children.length > 0) {
+            node.children.sort((a, b) => a.name.localeCompare(b.name));
+            node.children.forEach(sortChildren);
+        }
+    };
     
-    // Select the best root node using a more robust algorithm
-    if (potentialRoots.length === 0) {
-        console.error('No top-level employee (CEO) found. Please check your data for an employee with a blank manager field.');
-        root = state.currentData.length > 0 ? state.currentData[0] : null; // Fallback
-    } else {
-        // First, try to find a node with an empty managerId
-        const trueRoot = potentialRoots.find(r => isBlankOrEmpty(r.managerId));
-        
-        if (trueRoot) {
-            // We found a node with empty managerId - this is the true root
-            root = trueRoot;
-            console.log(`Root node selected by empty manager: ${root.name}`);
-        } else {
-            // Otherwise, use the node with the most direct reports as the root
-            root = potentialRoots.reduce((best, current) => 
-                (current.children.length > best.children.length) ? current : best, potentialRoots[0]
-            );
-            console.log(`Root node selected by most reports: ${root.name} with ${root.children.length} direct reports`);
-        }
-        
-        console.log('Potential roots found:', potentialRoots.map(r => `${r.name} (${r.children.length} children)`));
-        
-        if (potentialRoots.length > 1) {
-            console.warn(`Multiple potential CEOs found (${potentialRoots.length}). Selected: ${root.name} as root.`);
-        }
+    if (rootNode) {
+        sortChildren(rootNode);
     }
 
-    // Initialize all nodes as collapsed
-    employeeMap.forEach(employee => {
-        employee.expanded = false;
-    });
-
-    if (root) {
-        // Set initial collapsed state: root expanded, all others collapsed
-        root.expanded = true;
-        setRootNode(root);
-        // Calculate layout starting from center position
-        calculateLayout(root, 0, 0);
-    }
-
-    return root;
+    return rootNode;
 }
 
 /* ===========================================
@@ -197,153 +215,116 @@ export function buildHierarchy() {
 =========================================== */
 
 /**
- * Calculates the total width needed for a node and all its visible children.
- * This is used to properly space nodes in the layout.
- * @param {Object} node The node to calculate width for
- * @returns {number} The total width needed for this node and its subtree
+ * Recursively calculates the x and y coordinates for each node in the hierarchy.
+ * @param {Object} node The current node to calculate layout for.
+ * @param {number} x The x-coordinate for the current node.
+ * @param {number} y The y-coordinate for the current node.
+ * @returns {number} The total width of the subtree rooted at this node.
  */
-function calculateSubtreeWidth(node) {
-    // Base case: node with no children or collapsed node
-    if (!node.children || node.children.length === 0 || !node.expanded) {
-        return CONFIG.nodeWidth;
-    }
-    
-    // Calculate sum of children's subtree widths
-    const childrenWidth = node.children.reduce((sum, child) => {
-        return sum + calculateSubtreeWidth(child);
-    }, 0);
-    
-    // Add horizontal gaps between children
-    const gapsWidth = (node.children.length - 1) * CONFIG.horizontalGap;
-    
-    // Return the maximum of node's own width or the total width of its children
-    return Math.max(CONFIG.nodeWidth, childrenWidth + gapsWidth);
-}
-
-/**
- * Recursively calculates the x and y coordinates for each node in the tree.
- * This uses a custom algorithm to position children centered beneath their parent.
- * @param {Object} node The current node to calculate the layout for.
- * @param {number} [x=0] The x-coordinate of the current node.
- * @param {number} [y=0] The y-coordinate of the current node.
- */
-export function calculateLayout(node, x = 0, y = 0) {
-    if (!node) return;
-
+function calculateLayout(node, x, y) {
     node.x = x;
     node.y = y;
     
-    console.log(`Setting coordinates for ${node.name}: x=${x}, y=${y}`);
-
-    // Only calculate layout for expanded nodes with children
-    if (node.expanded && node.children && node.children.length > 0) {
-        // Compute subtree width for this node (used to center children block)
-        node.subtreeWidth = calculateSubtreeWidth(node);
-
-        // Sort children by change status if in comparison mode
-        if (state.isComparisonMode) {
-            sortChildrenByChangeStatus(node.children);
-        }
-
-        // Vertical spacing: move down by vertical gap (centers are separated by verticalGap)
-        const childY = y + CONFIG.verticalGap;
-
-        // Starting X so that total children block is centered under the parent
-        let currentX = x - (node.subtreeWidth - CONFIG.nodeWidth) / 2;
-
-        node.children.forEach((child, i) => {
-            const childSubtreeWidth = calculateSubtreeWidth(child);
-            const childCenterX = currentX + childSubtreeWidth / 2;
-            
-            calculateLayout(child, childCenterX, childY);
-            
-            // Advance currentX by this child's subtree width plus horizontal gap
-            currentX += childSubtreeWidth + CONFIG.horizontalGap;
+    if (!node.children || node.children.length === 0 || !node.expanded) {
+        // Leaf node or collapsed node
+        node.width = CONFIG.nodeWidth;
+        return node.width;
+    }
+    
+    // Calculate layout for visible children
+    let totalChildrenWidth = 0;
+    const visibleChildren = node.children;
+    
+    visibleChildren.forEach(child => {
+        const childWidth = calculateLayout(
+            child, 
+            x - node.width / 2 + totalChildrenWidth + child.width / 2, 
+            y + CONFIG.verticalGap
+        );
+        totalChildrenWidth += childWidth + CONFIG.horizontalGap;
+    });
+    
+    // Adjust for the last horizontal gap
+    if (visibleChildren.length > 0) {
+        totalChildrenWidth -= CONFIG.horizontalGap;
+    }
+    
+    // Center parent over children
+    if (totalChildrenWidth > CONFIG.nodeWidth) {
+        node.width = totalChildrenWidth;
+        
+        // Recenter children
+        let currentX = x - totalChildrenWidth / 2 + visibleChildren[0].width / 2;
+        visibleChildren.forEach(child => {
+            child.x = currentX;
+            currentX += child.width + CONFIG.horizontalGap;
         });
+    } else {
+        node.width = CONFIG.nodeWidth;
     }
-}
-
-/* ===========================================
-   EXPAND/COLLAPSE UTILITY FUNCTIONS
-=========================================== */
-
-/**
- * Recursively collapses all nodes in a subtree by setting `expanded` to false.
- * @param {Object} node The starting node of the subtree to collapse.
- */
-export function collapseAllNodes(node) {
-    node.expanded = false;
-    if (node.children) {
-        node.children.forEach(collapseAllNodes);
-    }
+    
+    return node.width;
 }
 
 /**
- * Resets the chart to its initial view: collapses all nodes except the root and re-renders.
+ * Gets all visible nodes in the hierarchy based on expanded state.
+ * @param {Object} node The root node to start from.
+ * @returns {Array} Array of visible nodes.
  */
-export function resetView() {
-    if (!state.rootNode) return;
-    collapseAllNodes(state.rootNode);
-    state.rootNode.expanded = true;
-    renderChart();
-}
-
-/* ===========================================
-   VISIBILITY FUNCTIONS
-=========================================== */
-
-/**
- * Traverses the hierarchy and returns a flat array of all visible nodes.
- * A node is visible if it's the root or if its parent is expanded.
- * @param {Object} node The root node of the hierarchy to traverse.
- * @returns {Array<Object>} A flat array of visible nodes.
- */
-export function getVisibleNodes(node) {
-    let nodes = [node];
-    if (node.expanded && node.children && node.children.length > 0) {
+function getVisibleNodes(node) {
+    if (!node) return [];
+    
+    const nodes = [node];
+    
+    if (node.expanded && node.children) {
         node.children.forEach(child => {
-            nodes = nodes.concat(getVisibleNodes(child));
+            nodes.push(...getVisibleNodes(child));
         });
     }
+    
     return nodes;
 }
 
 /**
- * Traverses the hierarchy and returns a flat array of all visible links.
- * A link is visible if it connects a parent to a child and the parent is expanded.
- * @param {Object} node The root node of the hierarchy to traverse.
- * @returns {Array<Object>} A flat array of visible link objects.
+ * Gets all visible links in the hierarchy based on expanded state.
+ * @param {Object} node The root node to start from.
+ * @returns {Array} Array of visible links.
  */
-export function getVisibleLinks(node) {
-    let links = [];
-    if (node.expanded && node.children && node.children.length > 0) {
-        node.children.forEach(child => {
-            links.push({ source: node, target: child, changeType: child.changeType });
-            links = links.concat(getVisibleLinks(child));
-        });
+function getVisibleLinks(node) {
+    if (!node || !node.expanded || !node.children || node.children.length === 0) {
+        return [];
     }
+    
+    const links = node.children.map(child => ({
+        source: node,
+        target: child,
+        changeType: child.changeType
+    }));
+    
+    node.children.forEach(child => {
+        links.push(...getVisibleLinks(child));
+    });
+    
     return links;
 }
 
 /* ===========================================
-   TEXT WRAPPING AND INTERACTION HANDLERS
+   NODE INTERACTION HANDLERS
 =========================================== */
 
-
 /**
- * Handles click events on a chart node.
- * Sets the clicked node as the `selectedNode` and updates the stats panel.
- * @param {Event} event The D3 event object.
- * @param {Object} d The data object for the clicked node.
+ * Handle node click event.
+ * @param {Event} event The mouse event.
+ * @param {Object} d The node data object.
  */
 function handleNodeClick(event, d) {
     event.stopPropagation();
     if (d.isStub) return;
     
-    // Update global selected node state
-    setSelectedNode(d);
+    // Update selected node in state
+    state.selectedNode = d;
     
-    // Update visual selection styling
+    // Update visual selection
     state.g.selectAll('.node-card').classed('selected', node => node.id === d.id);
     
     // Update node statistics
@@ -524,7 +505,7 @@ function setupTooltip() {
 /**
  * Expands all nodes in the chart.
  */
-export function expandAll() {
+function expandAll() {
     if (!state.rootNode) return;
     expandAllNodes(state.rootNode);
     renderChart();
@@ -544,7 +525,7 @@ function expandAllNodes(node) {
 /**
  * Collapses all nodes except the root.
  */
-export function collapseAll() {
+function collapseAll() {
     if (!state.rootNode) return;
     collapseAllNodes(state.rootNode);
     state.rootNode.expanded = true; // Keep root expanded
@@ -565,7 +546,7 @@ function collapseAllNodes(node) {
 /**
  * Resets the view to center on the root node.
  */
-export function resetView() {
+function resetView() {
     if (!state.rootNode || !state.svg || !state.zoom) return;
     
     collapseAllNodes(state.rootNode);
@@ -585,7 +566,7 @@ export function resetView() {
  * It clears the SVG, gets the visible nodes and links, and calls the respective
  * rendering functions for them.
  */
-export function renderChart(rootNode, selector) {
+function renderChart(rootNode, selector) {
     if (!rootNode) {
         console.log('No data to render');
         return;
@@ -798,17 +779,16 @@ function getNodeBorderColor(node) {
    NODE SELECTION & INTERACTION
 =========================================== */
 
-export function selectNode(node) {
+function selectNode(node) {
     // Update selected node in global state
-    setSelectedNode(node);
+    state.selectedNode = node;
     
     // Update visual selection
-    state.g.selectAll('.node rect')
-        .style('stroke-width', d => d === node ? 4 : 2)
-        .style('stroke', d => d === node ? '#AACFCB' : getNodeBorderColor(d));
+    state.g.selectAll('.node-card')
+        .classed('selected', d => d.id === node.id);
     
-    // Update stats panel (handled by statsManager)
-    updateSelectedNodeStats();
+    // Update node statistics
+    updateSelectedNodeStatistics(node);
 }
 
 /* ===========================================
@@ -818,7 +798,7 @@ export function selectNode(node) {
 /**
  * Calculates the optimal scale and translation to fit the entire chart within the viewport.
  */
-export function fitChartToView() {
+function fitChartToView() {
     if (!state.g || !state.svg) return;
     
     const bounds = state.g.node().getBBox();
@@ -830,43 +810,45 @@ export function fitChartToView() {
     const heightScale = fullHeight / bounds.height;
     const scale = Math.min(widthScale, heightScale) * 0.9; // 90% to add some padding
     
-    const centerX = fullWidth / 2 - bounds.x * scale - (bounds.width * scale) / 2;
-    const centerY = fullHeight / 2 - bounds.y * scale - (bounds.height * scale) / 2;
+    const translateX = fullWidth / 2 - (bounds.x + bounds.width / 2) * scale;
+    const translateY = fullHeight / 2 - (bounds.y + bounds.height / 2) * scale;
     
-    const transform = d3.zoomIdentity.translate(centerX, centerY).scale(scale);
-    state.svg.transition().duration(750).call(state.zoom.transform, transform);
+    state.svg.transition().duration(500).call(
+        state.zoom.transform,
+        d3.zoomIdentity.translate(translateX, translateY).scale(scale)
+    );
 }
 
 /**
  * Handles window resize events by updating the SVG dimensions and re-fitting the chart.
  */
-export function handleResize() {
+function handleResize() {
     const container = document.querySelector('.chart-area');
     const newWidth = container.clientWidth;
     const newHeight = container.clientHeight;
     
-    setDimensions(newWidth, newHeight);
-    
     if (state.svg) {
         state.svg.attr('width', newWidth).attr('height', newHeight);
+        state.width = newWidth;
+        state.height = newHeight;
         fitChartToView();
     }
 }
 
-/* ===========================================
-   MODULE INITIALIZATION
-=========================================== */
+// Set up resize handler
+let resizeTimeout;
+window.addEventListener('resize', function() {
+    if (resizeTimeout) clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(handleResize, 200);
+});
 
-/**
- * Initializes the chart renderer module, setting up the debounced resize handler.
- */
-export function initChartRenderer() {
-    console.log('[OrgChart] Chart renderer initialized');
-    
-    // Set up resize handler
-    let resizeTimeout;
-    window.addEventListener('resize', function() {
-        if (resizeTimeout) clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(handleResize, 200);
-    });
-}
+// Export functions to global window object
+window.renderChart = renderChart;
+window.initChart = initChart;
+window.buildHierarchy = buildHierarchy;
+window.expandAll = expandAll;
+window.collapseAll = collapseAll;
+window.resetView = resetView;
+window.centerChart = centerChart;
+window.fitChartToView = fitChartToView;
+window.selectNode = selectNode;

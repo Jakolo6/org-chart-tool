@@ -1,16 +1,8 @@
 /**
  * @file Main application entry point. This module is responsible for:
  * - Defining the global application state and configuration.
- * - Importing all other modules.
  * - Initializing the application and wiring up event listeners.
  */
-
-import { initializeChart, buildHierarchy, renderChart, resetView, initChartRenderer } from './components/chartRenderer.js';
-import { handleFileUpload, showColumnMappingDialog, initFileHandler } from './components/fileHandler.js';
-import { initUIManager, updateSearchVisibility, showWelcomeModal, showStatusQuoUploadScreen, closeWelcomeModal, setupEventListeners, proceedFromUpload } from './components/uiManager.js';
-import { toggleComparisonMode } from './components/statsManager.js';
-import { updateOverallStatistics, updateSelectedNodeStats, toggleSummaryStatistics, initStatsManager } from './components/statsManager.js';
-import { initChartManager } from './components/chartManager.js';
 
 console.log('[OrgChart] App loading...');
 
@@ -22,7 +14,7 @@ console.log('[OrgChart] App loading...');
  * Global configuration object for the chart's appearance and animations.
  * @const {Object}
  */
-export const CONFIG = {
+const CONFIG = {
     nodeWidth: 160,
     nodeHeight: 80,
     horizontalGap: 25,
@@ -31,7 +23,7 @@ export const CONFIG = {
 };
 
 // --- GLOBAL STATE ---
-export const state = {
+const state = {
     baselineData: [],
     updateData: [],
     currentData: [],
@@ -102,23 +94,27 @@ setInterval(ensureHeaderTitle, 500);
  * It also determines whether to show the welcome modal or the upload screen on startup.
  */
 function initializeApplication() {
-    initializeChart();
-    setupEventListeners();
+    if (window.initializeChart) window.initializeChart();
+    if (window.setupEventListeners) window.setupEventListeners();
     ensureHeaderTitle(); // Set the correct title immediately
     
     // Initialize all modules
-    initFileHandler();
-    initChartRenderer();
-    initStatsManager();
-    initUIManager();
-    initChartManager(); // Initialize chart manager for saving/loading
+    if (window.initFileHandler) window.initFileHandler();
+    if (window.initChartRenderer) window.initChartRenderer();
+    if (window.initStatsManager) window.initStatsManager();
+    if (window.initUIManager) window.initUIManager();
+    if (window.initChartManager) window.initChartManager(); // Initialize chart manager for saving/loading
 
     // Wire Compare button (single source) now that inline onclick is removed
     const compareBtnEl = document.getElementById('compareBtn');
     if (compareBtnEl && !compareBtnEl.__orgBound) {
         compareBtnEl.addEventListener('click', () => {
             console.log('[OrgChart] toggleComparison clicked');
-            try { toggleComparisonMode(); } catch (e) { console.error('toggleComparison failed:', e); }
+            try { 
+                if (window.toggleComparisonMode) window.toggleComparisonMode(); 
+            } catch (e) { 
+                console.error('toggleComparison failed:', e); 
+            }
         });
         compareBtnEl.__orgBound = true;
     }
@@ -130,12 +126,12 @@ function initializeApplication() {
         // If user has seen welcome before, show upload screen directly
         // But only if no baseline file has been loaded yet
         if (!state.baselineData || state.baselineData.length === 0) {
-            showStatusQuoUploadScreen();
+            if (window.showStatusQuoUploadScreen) window.showStatusQuoUploadScreen();
         }
     } else {
         // For new users, show welcome modal first
         // The upload screen will be shown after closing the welcome modal
-        showWelcomeModal();
+        if (window.showWelcomeModal) window.showWelcomeModal();
     }
 }
 
@@ -144,53 +140,27 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeApplication();
 });
 
-// --- GLOBAL FUNCTIONS ---
-// Expose key functions to the `window` object to make them accessible
-// from inline `onclick` attributes in the HTML.
-window.resetView = resetView;
-// Wire compare toggle directly to statsManager for reliability
-window.toggleComparison = function() {
-    console.log('[OrgChart] toggleComparison clicked');
-    try {
-        toggleComparisonMode();
-    } catch (e) {
-        console.error('toggleComparison failed:', e);
-        alert('Unable to toggle comparison mode. Please ensure both baseline and update files are loaded.');
-    }
-};
-window.toggleSummaryStatistics = toggleSummaryStatistics;
-window.closeWelcomeModal = closeWelcomeModal;
-// Expose proceedFromUpload for inline onclick fallback
-window.proceedFromUpload = function() {
-    console.log('[Upload] Global proceedFromUpload invoked');
-    try {
-        proceedFromUpload();
-    } catch (e) {
-        console.error('proceedFromUpload failed:', e);
-        alert('Unable to proceed to the chart. Please try again.');
-    }
-};
+// Make state and CONFIG available globally
+window.state = state;
+window.CONFIG = CONFIG;
 
-// Export for use by other modules
-export { 
-    initializeApplication, 
-    ensureHeaderTitle,
-    // State setters
-    setBaselineData,
-    setUpdateData,
-    setCurrentData,
-    setRootNode,
-    setSelectedNode,
-    setSvgElements,
-    setDimensions,
-    setComparisonMode,
-    setChangeAnalysis,
-    setChangelogOpen,
-    setSidebarMinimized,
-    setColumnMapping,
-    setCurrentFileData,
-    setCurrentFileHeaders,
-    setCurrentFileType,
-    setValidationErrors,
-    setCurrentValidationData
-};
+// Expose state setters
+window.setBaselineData = setBaselineData;
+window.setUpdateData = setUpdateData;
+window.setCurrentData = setCurrentData;
+window.setRootNode = setRootNode;
+window.setSelectedNode = setSelectedNode;
+window.setSvgElements = setSvgElements;
+window.setDimensions = setDimensions;
+window.setComparisonMode = setComparisonMode;
+window.setChangeAnalysis = setChangeAnalysis;
+window.setChangelogOpen = setChangelogOpen;
+window.setSidebarMinimized = setSidebarMinimized;
+window.setColumnMapping = setColumnMapping;
+window.setCurrentFileData = setCurrentFileData;
+window.setCurrentFileHeaders = setCurrentFileHeaders;
+window.setCurrentFileType = setCurrentFileType;
+window.setValidationErrors = setValidationErrors;
+window.setCurrentValidationData = setCurrentValidationData;
+window.initializeApplication = initializeApplication;
+window.ensureHeaderTitle = ensureHeaderTitle;
