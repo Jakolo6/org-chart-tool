@@ -265,6 +265,43 @@ function buildHierarchy(data) {
 =========================================== */
 
 /**
+ * Calculates the total width needed for all children of a node.
+ * @param {Object} node The node to calculate children width for.
+ * @returns {number} The total width.
+ */
+function getTotalChildrenWidth(node) {
+    if (!node.children || node.children.length === 0 || !node.expanded) {
+        return window.CONFIG.nodeWidth;
+    }
+    
+    // Sum up the width of all children plus gaps between them
+    let totalWidth = 0;
+    node.children.forEach((child, index) => {
+        totalWidth += getNodeWidth(child);
+        // Add horizontal gap between children (except after the last child)
+        if (index < node.children.length - 1) {
+            totalWidth += window.CONFIG.horizontalGap;
+        }
+    });
+    
+    return Math.max(window.CONFIG.nodeWidth, totalWidth);
+}
+
+/**
+ * Gets the width of a node, considering its children if expanded.
+ * @param {Object} node The node to get width for.
+ * @returns {number} The node width.
+ */
+function getNodeWidth(node) {
+    if (!node.children || node.children.length === 0 || !node.expanded) {
+        return window.CONFIG.nodeWidth;
+    }
+    
+    // For expanded nodes, return the total width of all children
+    return getTotalChildrenWidth(node);
+}
+
+/**
  * Recursively calculates the x and y coordinates for each node in the hierarchy.
  * @param {Object} node The current node to calculate layout for.
  * @param {number} x The x-coordinate for the current node.
@@ -279,15 +316,15 @@ function calculateLayout(node, x0 = 0, y0 = 0, level = 0) {
     
     if (!node.children || node.children.length === 0 || !node.expanded) {
         // Leaf node or collapsed node
-        node.width = CONFIG.nodeWidth;
-        node.height = CONFIG.nodeHeight;
+        node.width = window.CONFIG.nodeWidth;
+        node.height = window.CONFIG.nodeHeight;
         return node;
     }
     
     // Process children
     let totalChildrenWidth = getTotalChildrenWidth(node);
     let currentX = x0 - (totalChildrenWidth / 2);
-    const childY = y0 + CONFIG.nodeHeight + CONFIG.verticalGap;
+    const childY = y0 + window.CONFIG.nodeHeight + window.CONFIG.verticalGap;
     
     // Ensure minimum horizontal gap between nodes
     node.children.forEach(child => {
@@ -298,15 +335,16 @@ function calculateLayout(node, x0 = 0, y0 = 0, level = 0) {
         // Recursively calculate layout for this child
         calculateLayout(child, childX, childY, level + 1);
         // Move to the next child position
-        currentX += childWidth + CONFIG.horizontalGap;
+        currentX += childWidth + window.CONFIG.horizontalGap;
     });
     
     // Update node dimensions
-    node.width = Math.max(CONFIG.nodeWidth, totalChildrenWidth);
-    node.height = CONFIG.nodeHeight;
+    node.width = Math.max(window.CONFIG.nodeWidth, totalChildrenWidth);
+    node.height = window.CONFIG.nodeHeight;
     
     return node;
 }
+
 
 /**
  * Gets all visible nodes in the hierarchy based on expanded state.
