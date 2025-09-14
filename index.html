@@ -476,7 +476,7 @@
         window.initComparisonManager();
       }
       // Check authentication
-      const { user, profile, error } = await getCurrentUser();
+      const { user, profile, error } = await window.getCurrentUser();
       if (error || !user) {
         window.location.href = './auth/login.html?redirect=index.html' + window.location.search;
         return;
