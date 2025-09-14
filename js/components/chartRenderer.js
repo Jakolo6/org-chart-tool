@@ -758,9 +758,33 @@ function renderNodes(nodes) {
         .attr('height', window.CONFIG.nodeHeight)
         .attr('rx', 4)
         .attr('ry', 4)
-        .style('fill', d => getNodeColor(d))
-        .style('stroke', d => getNodeBorderColor(d))
-        .style('stroke-width', d => d.changeType ? '3px' : '1.5px');
+        .each(function(d) {
+            // Apply styles directly based on change type
+            const nodeElement = d3.select(this);
+            console.log('Creating node with changeType:', d.changeType);
+            
+            if (d.changeType === 'added') {
+                nodeElement
+                    .style('fill', '#dcfce7')
+                    .style('stroke', '#16a34a')
+                    .style('stroke-width', '3px');
+            } else if (d.changeType === 'moved') {
+                nodeElement
+                    .style('fill', '#fefce8')
+                    .style('stroke', '#ca8a04')
+                    .style('stroke-width', '3px');
+            } else if (d.changeType === 'exit') {
+                nodeElement
+                    .style('fill', '#fef2f2')
+                    .style('stroke', '#dc2626')
+                    .style('stroke-width', '3px');
+            } else {
+                nodeElement
+                    .style('fill', '#ffffff')
+                    .style('stroke', '#e2e8f0')
+                    .style('stroke-width', '1.5px');
+            }
+        });
     
     // Add name text with wrapping
     enterGroups.append('text')
@@ -834,16 +858,39 @@ function renderNodes(nodes) {
     // Update selected state and change type
     allGroups.select('.node-card')
         .attr('class', d => `node-card ${d.changeType || ''} ${window.state.selectedNode && window.state.selectedNode.id === d.id ? 'selected' : ''}`)
-        .style('fill', d => getNodeColor(d))
-        .style('stroke', d => getNodeBorderColor(d))
-        .style('stroke-width', d => d.changeType ? '3px' : '1.5px')
         .each(function(d) {
             // Force apply colors based on change type
-            if (d.changeType) {
-                console.log('Applying colors for node:', d.id, 'changeType:', d.changeType);
-                d3.select(this)
-                    .style('fill', getNodeColor(d))
-                    .style('stroke', getNodeBorderColor(d));
+            const nodeElement = d3.select(this);
+            console.log('Applying colors for node:', d.id, 'changeType:', d.changeType);
+            
+            // Apply styles directly based on change type
+            if (d.changeType === 'added') {
+                nodeElement
+                    .style('fill', '#dcfce7')
+                    .style('stroke', '#16a34a')
+                    .style('stroke-width', '3px');
+            } else if (d.changeType === 'moved') {
+                nodeElement
+                    .style('fill', '#fefce8')
+                    .style('stroke', '#ca8a04')
+                    .style('stroke-width', '3px');
+            } else if (d.changeType === 'exit') {
+                nodeElement
+                    .style('fill', '#fef2f2')
+                    .style('stroke', '#dc2626')
+                    .style('stroke-width', '3px');
+            } else {
+                nodeElement
+                    .style('fill', '#ffffff')
+                    .style('stroke', '#e2e8f0')
+                    .style('stroke-width', '1.5px');
+            }
+            
+            // If selected, add selected styling
+            if (window.state.selectedNode && window.state.selectedNode.id === d.id) {
+                nodeElement
+                    .style('stroke', '#3b82f6')
+                    .style('stroke-width', '3px');
             }
         });
 }
@@ -856,7 +903,7 @@ function getNodeColor(node) {
         case 'added': return '#dcfce7'; // Light green background
         case 'moved': return '#fefce8'; // Light yellow background
         case 'exit': return '#fef2f2'; // Light red background
-        default: return '#f8fafc'; // Default light gray
+        default: return '#ffffff'; // Default white
     }
 }
 
