@@ -445,10 +445,32 @@
               // In this case, we need to set manager to empty string
               let obj;
               
-              if (row.length === 3) {
+              // Based on the logs, we need to fix the column mapping
+              // The actual format is:
+              // [0] = ID (employee name)
+              // [1] = Manager name (not ID)
+              // [2] = Title
+              // [3] = FTE
+              // [4] = Location
+              // [5] = Job Family
+              // [6] = Management Level
+              
+              // First row is special - it's the company name with no manager
+              if (i === 1 && row[0] === 'The Nunatak Group GmbH') {
+                obj = {
+                  id: 'company',
+                  name: row[0] || 'Unknown',
+                  manager: '', // Root node has no manager
+                  title: row[2] || '',
+                  fte: 1,
+                  location: '',
+                  jobFamily: '',
+                  managementLevel: ''
+                };
+              } else if (row.length === 3) {
                 obj = {
                   id: String(row[0] || `emp_${i}`),
-                  name: row[1] || 'Unknown',
+                  name: row[0] || 'Unknown',
                   manager: '', // No manager in 3-element rows
                   title: row[2] || '',
                   fte: 1,
@@ -457,16 +479,18 @@
                   managementLevel: ''
                 };
               } else {
-                // Normal case with all fields
+                // Find the employee ID for the manager name
+                const managerName = row[1];
+                
                 obj = {
                   id: String(row[0] || `emp_${i}`),
-                  name: row[1] || 'Unknown',
-                  manager: row[3] ? String(row[3]) : '',
+                  name: row[0] || 'Unknown',
+                  manager: managerName || '', // Store manager name for now
                   title: row[2] || '',
-                  fte: row[4] || 1,
-                  location: row[5] || '',
-                  jobFamily: row[6] || '',
-                  managementLevel: ''
+                  fte: row[3] || 1,
+                  location: row[4] || '',
+                  jobFamily: row[5] || '',
+                  managementLevel: row[6] || ''
                 };
               }
               
@@ -475,7 +499,23 @@
             }
           }
           
-          console.log('Converted data:', result);
+          // Now we need to convert manager names to IDs
+          // Create a map of names to IDs
+          const nameToIdMap = new Map();
+          result.forEach(emp => {
+            nameToIdMap.set(emp.name, emp.id);
+          });
+          
+          // Replace manager names with manager IDs
+          result.forEach(emp => {
+            if (emp.manager && nameToIdMap.has(emp.manager)) {
+              emp.manager = nameToIdMap.get(emp.manager);
+            } else if (emp.manager === 'The Nunatak Group GmbH') {
+              emp.manager = 'company';
+            }
+          });
+          
+          console.log('Converted data with proper manager IDs:', result);
           return result;
         }
         
