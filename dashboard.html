@@ -954,6 +954,12 @@
     <script src="./js/orgChartService.js"></script>
     <script src="./js/services/dashboardService.js"></script>
     
+    <!-- Initialize Chart.js global settings -->
+    <script>
+        // Ensure Chart.js is loaded
+        window.chartInitialized = false;
+    </script>
+    
     <script>
         // Access global functions directly from window object without local declarations
         
@@ -1546,38 +1552,58 @@
         
         // Initialize chart analytics
         function initChartAnalytics() {
-            // Create empty chart container - data will be populated when stats load
-            const ctx = document.getElementById('teamDistributionChart');
-            if (!ctx) return;
-            
-            // Create empty chart with placeholder data
-            const config = {
-                type: 'doughnut',
-                data: {
-                    labels: ['Loading...'],
-                    datasets: [{
-                        data: [1],
-                        backgroundColor: ['#e2e8f0'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '70%',
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            enabled: false
+            try {
+                // Create empty chart container - data will be populated when stats load
+                const ctx = document.getElementById('teamDistributionChart');
+                if (!ctx) {
+                    console.warn('Chart canvas not found');
+                    return;
+                }
+                
+                // Check if Chart.js is loaded
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js is not loaded');
+                    return;
+                }
+                
+                // Create empty chart with placeholder data
+                const config = {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Loading...'],
+                        datasets: [{
+                            data: [1],
+                            backgroundColor: ['#e2e8f0'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: false
+                            }
                         }
                     }
+                };
+                
+                // Destroy existing chart if it exists
+                if (window.teamDistributionChart && typeof window.teamDistributionChart.destroy === 'function') {
+                    window.teamDistributionChart.destroy();
                 }
-            };
-            
-            // Create chart and store reference
-            window.teamDistributionChart = new Chart(ctx, config);
+                
+                // Create chart and store reference
+                window.teamDistributionChart = new Chart(ctx, config);
+                window.chartInitialized = true;
+                console.log('Chart initialized successfully');
+            } catch (error) {
+                console.error('Error initializing chart:', error);
+            }
         }
         
         // Update chart analytics with real data
@@ -1620,13 +1646,23 @@
         
         // Update department distribution chart
         function updateDepartmentChart(departmentData) {
-            const ctx = document.getElementById('teamDistributionChart');
-            if (!ctx) return;
-            
-            // Convert department data to chart format
-            const labels = [];
-            const data = [];
-            const colors = [
+            try {
+                const ctx = document.getElementById('teamDistributionChart');
+                if (!ctx) {
+                    console.warn('Chart canvas not found');
+                    return;
+                }
+                
+                // Check if Chart.js is loaded
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js is not loaded');
+                    return;
+                }
+                
+                // Convert department data to chart format
+                const labels = [];
+                const data = [];
+                const colors = [
                 '#0066cc',
                 '#29cc6a',
                 '#ff9f0a',
@@ -1699,12 +1735,23 @@
             };
             
             // Check if chart already exists and destroy it
-            if (window.teamDistributionChart) {
-                window.teamDistributionChart.destroy();
+            try {
+                if (window.teamDistributionChart && typeof window.teamDistributionChart.destroy === 'function') {
+                    window.teamDistributionChart.destroy();
+                } else if (window.teamDistributionChart) {
+                    // If chart exists but destroy is not a function, it might not be a Chart.js instance
+                    console.log('Chart exists but is not a valid Chart.js instance, creating new one');
+                }
+            } catch (error) {
+                console.error('Error destroying chart:', error);
+                // Continue with creating a new chart
             }
             
             // Create new chart
             window.teamDistributionChart = new Chart(ctx, config);
+            } catch (error) {
+                console.error('Error updating department chart:', error);
+            }
         }
     </script>
 </body>
