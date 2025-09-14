@@ -208,11 +208,12 @@ body {
 
 .node-text {
     text-anchor: middle;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     fill: #1e293b;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     pointer-events: none;
+    dominant-baseline: middle;
 }
 
 .node-text.added {
@@ -233,11 +234,12 @@ body {
 
 .node-title {
     text-anchor: middle;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 400;
     fill: #64748b;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     pointer-events: none;
+    font-style: italic;
 }
 
 .node-title.added {
@@ -367,19 +369,27 @@ body {
 /* Selected Node Stats Floating Panel */
 .selected-stats-display {
     position: fixed;
-    top: 260px;
-    right: 20px;
-    width: 300px;
-    background: white;
-    border: 1px solid #e2e8f0;
+    top: 260px; /* Position much further below overall stats */
+    right: 20px; /* Same right position as overall stats */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(170, 207, 203, 0.3);
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    z-index: 100;
-    transition: all 0.3s ease;
+    padding: 0;
+    font-size: 0.8rem;
+    color: #000000;
+    z-index: 500;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    width: 320px;
     max-height: 600px;
     display: flex;
     flex-direction: column;
     overflow: visible !important; /* Ensure tooltips can extend beyond container */
+}
+
+.selected-stats-display.changelog-open {
+    right: 500px; /* Move much further left to completely avoid changelog overlap */
 }
 
 .selected-stats-display:hover {
@@ -391,8 +401,7 @@ body {
     background: linear-gradient(135deg, #AACFCB 0%, #8AAFAB 100%);
     color: white;
     padding: 8px 12px;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
+    border-radius: 8px 8px 0 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -407,14 +416,15 @@ body {
     background: none;
     border: none;
     color: white;
-    font-size: 20px;
-    line-height: 1;
+    font-size: 1.2rem;
     cursor: pointer;
-    padding: 0 4px;
-    border-radius: 4px;
+    padding: 0;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 50%;
     transition: all 0.2s ease;
 }
 
@@ -426,7 +436,7 @@ body {
     padding: 15px;
     overflow-y: auto;
     flex: 1;
-    max-height: calc(600px - 50px);
+    max-height: calc(600px - 50px); /* Account for header height */
 }
 
 .node-stats {
@@ -494,6 +504,22 @@ body {
 .node-stats-item.change-type.exit {
     border-color: #dc2626;
     background-color: rgba(220, 38, 38, 0.1);
+}
+
+.selected-stats-display .stat-item {
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+}
+
+.selected-stats-display .stat-label {
+    font-size: 0.7rem;
+    margin-bottom: 4px;
+}
+
+.selected-stats-display .stat-value {
+    font-size: 1.4rem;
+    margin-bottom: 4px;
 }
 
 /* Stats panel */

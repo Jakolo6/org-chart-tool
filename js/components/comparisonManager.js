@@ -23,6 +23,12 @@ function initComparisonManager() {
 function toggleComparisonMode() {
     const state = window.state || {};
     
+    console.log('Toggle comparison mode called. Current state:', { 
+        isComparisonMode: state.isComparisonMode,
+        hasBaselineData: state.baselineData && state.baselineData.length > 0,
+        hasUpdateData: state.updateData && state.updateData.length > 0
+    });
+    
     // Check if we have both baseline and target data
     if (!state.baselineData || !state.baselineData.length || !state.updateData || !state.updateData.length) {
         alert('Both baseline and target data must be loaded to use comparison mode.');
@@ -31,6 +37,7 @@ function toggleComparisonMode() {
     
     // Toggle comparison mode state
     state.isComparisonMode = !state.isComparisonMode;
+    window.setComparisonMode(state.isComparisonMode); // Make sure global state is updated
     
     // Update UI elements
     const toggleViewBtn = document.getElementById('toggleViewBtn');
@@ -50,6 +57,7 @@ function toggleComparisonMode() {
         
         // Set current data to target data
         state.currentData = state.updateData;
+        window.setCurrentData(state.updateData);
         
         // Analyze changes between baseline and target
         analyzeChanges();
@@ -62,8 +70,10 @@ function toggleComparisonMode() {
         
         // Update state with new root node
         state.rootNode = rootNode;
+        window.setRootNode(rootNode);
         
         console.log('Switched to target view. Root node:', rootNode);
+        console.log('Change analysis:', state.changeAnalysis);
     } else {
         // Switch to baseline view
         if (toggleViewBtn) toggleViewBtn.innerHTML = '⚖️ Switch to Target';
@@ -77,22 +87,28 @@ function toggleComparisonMode() {
         
         // Set current data to baseline data
         state.currentData = state.baselineData;
+        window.setCurrentData(state.baselineData);
         
         // Reset change analysis
         state.changeAnalysis = null;
+        window.setChangeAnalysis(null);
         
         // Rebuild hierarchy with baseline data
         const rootNode = buildHierarchy(state.currentData);
         
         // Update state with new root node
         state.rootNode = rootNode;
+        window.setRootNode(rootNode);
         
         console.log('Switched to baseline view. Root node:', rootNode);
     }
     
     // Re-render the chart with the new data
     if (window.renderChart) {
+        console.log('Rendering chart with new data...');
         window.renderChart(state.rootNode, '#chart-area');
+    } else {
+        console.error('window.renderChart function not found!');
     }
 }
 
@@ -175,6 +191,26 @@ function updateChangeSummary(analysis) {
 }
 
 /**
+ * Sort children by change status to show changes on the left side
+ * @param {Array} children - The array of child nodes to sort
+ * @returns {Array} The sorted array of child nodes
+ */
+function sortChildrenByChangeStatus(children) {
+    if (!children || !children.length) return children;
+    
+    // Sort children so that new/moved employees appear on the left,
+    // existing employees appear after them
+    return children.slice().sort((a, b) => {
+        const aIsChanged = a.changeType === 'added' || a.changeType === 'moved';
+        const bIsChanged = b.changeType === 'added' || b.changeType === 'moved';
+        
+        if (aIsChanged && !bIsChanged) return -1; // a comes first (left)
+        if (!aIsChanged && bIsChanged) return 1;  // b comes first (left)
+        return 0; // maintain relative order within same category
+    });
+}
+
+/**
  * Apply change types to nodes in the hierarchy
  * @param {Object} node - The root node of the hierarchy
  */
@@ -215,8 +251,12 @@ function applyChangeTypesToNodes(node) {
             }
         }
         
-        // Recursively process all children
+        // Sort children by change status (changed nodes on the left)
         if (node.children && node.children.length > 0) {
+            // Sort children before recursively processing them
+            node.children = sortChildrenByChangeStatus(node.children);
+            
+            // Recursively process all children
             node.children.forEach(markNode);
         }
     }
@@ -242,3 +282,4 @@ window.initComparisonManager = initComparisonManager;
 window.toggleComparisonMode = toggleComparisonMode;
 window.analyzeChanges = analyzeChanges;
 window.applyChangeTypesToNodes = applyChangeTypesToNodes;
+window.sortChildrenByChangeStatus = sortChildrenByChangeStatus;
