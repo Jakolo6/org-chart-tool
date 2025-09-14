@@ -7,12 +7,15 @@
     <link rel="stylesheet" href="./css/styles.css">
     <link rel="stylesheet" href="./css/auth.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <style>
         /* Dashboard specific styles */
         body {
-            background-color: #f8fafc;
+            background-color: #f5f5f7;
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: #1d1d1f;
+            line-height: 1.5;
         }
         
         .dashboard {
@@ -22,19 +25,20 @@
         
         /* Sidebar styles */
         .sidebar {
-            width: 250px;
-            background-color: #1e293b;
-            color: #f8fafc;
+            width: 260px;
+            background-color: #ffffff;
+            color: #1d1d1f;
             padding: 20px 0;
             position: fixed;
             height: 100vh;
             overflow-y: auto;
             transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
         }
         
         .sidebar-header {
             padding: 0 20px 20px;
-            border-bottom: 1px solid #334155;
+            border-bottom: 1px solid #e5e5e5;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
@@ -65,16 +69,17 @@
             display: flex;
             align-items: center;
             padding: 12px 20px;
-            color: #94a3b8;
+            color: #86868b;
             text-decoration: none;
             transition: all 0.3s ease;
-            border-left: 3px solid transparent;
+            border-radius: 8px;
+            margin: 0 8px;
+            font-weight: 500;
         }
         
         .sidebar-menu a:hover, .sidebar-menu a.active {
-            background-color: #334155;
-            color: #f8fafc;
-            border-left-color: #3b82f6;
+            background-color: #f5f5f7;
+            color: #0066cc;
         }
         
         .sidebar-menu i {
@@ -85,7 +90,7 @@
         
         .sidebar-footer {
             padding: 20px;
-            border-top: 1px solid #334155;
+            border-top: 1px solid #e5e5e5;
             margin-top: 20px;
         }
         
@@ -99,7 +104,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background-color: #3b82f6;
+            background-color: #0066cc;
             color: white;
             display: flex;
             align-items: center;
@@ -122,31 +127,32 @@
         
         .user-role {
             font-size: 0.8rem;
-            color: #94a3b8;
+            color: #86868b;
         }
         
         .sidebar-footer .btn {
             width: 100%;
             text-align: center;
-            padding: 8px;
+            padding: 10px;
             background-color: transparent;
-            border: 1px solid #475569;
-            color: #94a3b8;
-            border-radius: 4px;
+            border: 1px solid #e5e5e5;
+            color: #1d1d1f;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-weight: 500;
         }
         
         .sidebar-footer .btn:hover {
-            background-color: #475569;
-            color: #f8fafc;
+            background-color: #f5f5f7;
+            border-color: #d2d2d7;
         }
         
         /* Main content area */
         .main-content {
             flex: 1;
-            margin-left: 250px;
-            padding: 20px;
+            margin-left: 260px;
+            padding: 40px;
             transition: all 0.3s ease;
         }
         
@@ -158,35 +164,39 @@
         }
         
         .page-title h1 {
-            font-size: 1.8rem;
-            color: #1e293b;
+            font-size: 2rem;
+            color: #1d1d1f;
             margin: 0;
+            font-weight: 600;
+            letter-spacing: -0.5px;
         }
         
         .page-title p {
-            color: #64748b;
-            margin: 5px 0 0;
+            color: #86868b;
+            margin: 8px 0 0;
+            font-size: 1.1rem;
         }
         
         .header-actions .btn {
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 10px 20px;
+            border-radius: 980px;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
+            font-size: 0.95rem;
         }
         
         .btn-primary {
-            background-color: #3b82f6;
+            background-color: #0066cc;
             color: white;
             border: none;
         }
         
         .btn-primary:hover {
-            background-color: #2563eb;
+            background-color: #0077ed;
             transform: translateY(-1px);
         }
         
@@ -197,21 +207,22 @@
         /* Dashboard cards */
         .dashboard-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
         }
         
         .card {
             background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            padding: 24px;
             transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.03);
         }
         
         .card:hover {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
             transform: translateY(-2px);
         }
         
@@ -219,22 +230,23 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         .card-title {
             font-size: 1.1rem;
             font-weight: 600;
-            color: #1e293b;
+            color: #1d1d1f;
             margin: 0;
+            letter-spacing: -0.3px;
         }
         
         .card-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            background-color: rgba(59, 130, 246, 0.1);
-            color: #3b82f6;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background-color: #f5f5f7;
+            color: #0066cc;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -246,15 +258,16 @@
         }
         
         .stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 5px;
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
         }
         
         .stat-label {
-            color: #64748b;
-            font-size: 0.9rem;
+            color: #86868b;
+            font-size: 0.95rem;
         }
         
         .card-footer {
@@ -271,15 +284,116 @@
         }
         
         .trend.up {
-            color: #10b981;
+            color: #29cc6a;
         }
         
         .trend.down {
-            color: #ef4444;
+            color: #ff453a;
         }
         
         .trend i {
             margin-right: 4px;
+        }
+        
+        /* Storage meter styles */
+        .storage-meter {
+            margin-bottom: 15px;
+        }
+        
+        .storage-bar {
+            height: 8px;
+            background-color: #f5f5f7;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        
+        .storage-fill {
+            height: 100%;
+            background-color: #0066cc;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .storage-labels {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 5px;
+        }
+        
+        .storage-details {
+            color: #86868b;
+            font-size: 0.9rem;
+        }
+        
+        /* Analytics styles */
+        .analytics-card {
+            overflow: hidden;
+        }
+        
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .analytics-item {
+            text-align: center;
+            padding: 10px;
+            background-color: #f5f5f7;
+            border-radius: 8px;
+        }
+        
+        .analytics-value {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 4px;
+        }
+        
+        .analytics-label {
+            color: #86868b;
+            font-size: 0.85rem;
+        }
+        
+        .insights-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .insight-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f5f5f7;
+        }
+        
+        .insight-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+        
+        .insight-icon {
+            margin-right: 12px;
+            color: #0066cc;
+            font-size: 1rem;
+            padding-top: 2px;
+        }
+        
+        .insight-text {
+            flex: 1;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        
+        .chart-container {
+            width: 100%;
+            margin: 0 auto;
         }
         
         /* Projects section */
@@ -287,22 +401,24 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 24px;
         }
         
         .section-title {
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             font-weight: 600;
-            color: #1e293b;
+            color: #1d1d1f;
             margin: 0;
+            letter-spacing: -0.5px;
         }
         
         .section-action {
-            color: #3b82f6;
+            color: #0066cc;
             font-weight: 500;
             text-decoration: none;
             display: flex;
             align-items: center;
+            font-size: 0.95rem;
         }
         
         .section-action i {
@@ -311,23 +427,24 @@
         
         .projects-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
         }
         
         .project-card {
             background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
             overflow: hidden;
             transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
             height: 100%;
+            border: 1px solid rgba(0, 0, 0, 0.03);
         }
         
         .project-card:hover {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
             transform: translateY(-2px);
         }
         
@@ -355,13 +472,13 @@
         }
         
         .project-type.baseline {
-            background-color: rgba(59, 130, 246, 0.1);
-            color: #3b82f6;
+            background-color: rgba(0, 102, 204, 0.1);
+            color: #0066cc;
         }
         
         .project-type.target {
-            background-color: rgba(16, 185, 129, 0.1);
-            color: #10b981;
+            background-color: rgba(41, 204, 106, 0.1);
+            color: #29cc6a;
         }
         
         .project-details {
@@ -421,62 +538,65 @@
         }
         
         .project-btn.primary {
-            background-color: #3b82f6;
+            background-color: #0066cc;
             color: white;
             border: none;
         }
         
         .project-btn.primary:hover {
-            background-color: #2563eb;
+            background-color: #0077ed;
         }
         
         .project-btn.secondary {
-            background-color: #f1f5f9;
-            color: #64748b;
+            background-color: #f5f5f7;
+            color: #1d1d1f;
             border: none;
         }
         
         .project-btn.secondary:hover {
-            background-color: #e2e8f0;
-            color: #1e293b;
+            background-color: #e5e5e5;
         }
         
         /* Empty state */
         .empty-state {
             background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            padding: 60px 40px;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(0, 0, 0, 0.03);
         }
         
         .empty-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background-color: rgba(59, 130, 246, 0.1);
-            color: #3b82f6;
+            width: 90px;
+            height: 90px;
+            border-radius: 45px;
+            background-color: #f5f5f7;
+            color: #0066cc;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
-            margin: 0 auto 20px;
+            font-size: 2.2rem;
+            margin: 0 auto 24px;
         }
         
         .empty-title {
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             font-weight: 600;
-            color: #1e293b;
-            margin: 0 0 10px;
+            color: #1d1d1f;
+            margin: 0 0 12px;
+            letter-spacing: -0.5px;
         }
         
         .empty-description {
-            color: #64748b;
-            margin-bottom: 20px;
+            color: #86868b;
+            margin-bottom: 24px;
             max-width: 500px;
             margin-left: auto;
             margin-right: auto;
+            font-size: 1.05rem;
+            line-height: 1.5;
         }
         
         /* Responsive adjustments */
@@ -578,7 +698,7 @@
                     <div class="card-header">
                         <h3 class="card-title">Total Charts</h3>
                         <div class="card-icon">
-                            <i class="fas fa-chart-network"></i>
+                            <i class="fas fa-sitemap"></i>
                         </div>
                     </div>
                     <div class="card-content">
@@ -622,12 +742,108 @@
                         </div>
                     </div>
                     <div class="card-content">
-                        <div class="stat-value">20%</div>
-                        <div class="stat-label">Of 100MB used</div>
+                        <div class="storage-meter">
+                            <div class="storage-bar">
+                                <div class="storage-fill" id="storageFill" style="width: 20%;"></div>
+                            </div>
+                            <div class="storage-labels">
+                                <div class="stat-value" id="storagePercent">20%</div>
+                                <div class="storage-details" id="storageDetails">100 KB of 500 KB</div>
+                            </div>
+                        </div>
+                        <div class="stat-label">Excel upload capacity</div>
                     </div>
                     <div class="card-footer">
-                        <span>Upgrade for more</span>
-                        <a href="#upgrade" style="color: #3b82f6; text-decoration: none;">Details</a>
+                        <span>Last upload: <span id="lastUpload">2 days ago</span></span>
+                        <a href="#storage-details" style="color: #0066cc; text-decoration: none;">Details</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chart Analytics Section -->
+            <div class="section-header">
+                <h2 class="section-title">Chart Analytics</h2>
+                <a href="#analytics" class="section-action">View details <i class="fas fa-chevron-right"></i></a>
+            </div>
+            
+            <div class="dashboard-cards">
+                <div class="card analytics-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Organizational Structure</h3>
+                        <div class="card-icon">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="analytics-grid">
+                            <div class="analytics-item">
+                                <div class="analytics-value" id="avgDepth">3.2</div>
+                                <div class="analytics-label">Avg. Depth</div>
+                            </div>
+                            <div class="analytics-item">
+                                <div class="analytics-value" id="maxDepth">5</div>
+                                <div class="analytics-label">Max Depth</div>
+                            </div>
+                            <div class="analytics-item">
+                                <div class="analytics-value" id="avgSpan">4.8</div>
+                                <div class="analytics-label">Avg. Span</div>
+                            </div>
+                            <div class="analytics-item">
+                                <div class="analytics-value" id="maxSpan">12</div>
+                                <div class="analytics-label">Max Span</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <span>Based on latest chart</span>
+                        <a href="#structure-details" style="color: #0066cc; text-decoration: none;">Optimize</a>
+                    </div>
+                </div>
+                
+                <div class="card analytics-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Team Distribution</h3>
+                        <div class="card-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="chart-container" style="height: 160px;">
+                            <canvas id="teamDistributionChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <span>By department</span>
+                        <a href="#distribution-details" style="color: #0066cc; text-decoration: none;">Details</a>
+                    </div>
+                </div>
+                
+                <div class="card analytics-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Workforce Insights</h3>
+                        <div class="card-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <ul class="insights-list">
+                            <li class="insight-item">
+                                <div class="insight-icon"><i class="fas fa-info-circle"></i></div>
+                                <div class="insight-text">Management ratio is <strong>1:7</strong> (industry avg: 1:8)</div>
+                            </li>
+                            <li class="insight-item">
+                                <div class="insight-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                                <div class="insight-text"><strong>3 managers</strong> have more than 10 direct reports</div>
+                            </li>
+                            <li class="insight-item">
+                                <div class="insight-icon"><i class="fas fa-check-circle"></i></div>
+                                <div class="insight-text">FTE utilization is at <strong>92%</strong> efficiency</div>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-footer">
+                        <span>Based on latest chart</span>
+                        <a href="#insights-details" style="color: #0066cc; text-decoration: none;">View all</a>
                     </div>
                 </div>
             </div>
@@ -654,6 +870,7 @@
     
     <!-- Load scripts in correct order -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <script src="./js/supabase.js"></script>
     <script src="./js/auth.js"></script>
     <script src="./js/orgChartService.js"></script>
@@ -763,9 +980,51 @@
                 if (totalEmployeesEl) totalEmployeesEl.textContent = stats.totalEmployees || 0;
                 if (lastUpdatedEl) lastUpdatedEl.textContent = stats.lastUpdated ? formatDate(new Date(stats.lastUpdated)) : 'Never';
                 
+                // Update storage usage
+                updateStorageUsage();
+                
             } catch (error) {
                 console.error('Error loading dashboard stats:', error);
                 showError('Could not load dashboard statistics');
+            }
+        }
+        
+        // Update storage usage metrics
+        async function updateStorageUsage() {
+            try {
+                // In a real app, we would fetch this from the server
+                // For now, we'll simulate storage usage
+                const storageLimit = 500; // 500 KB
+                const storageUsed = Math.floor(Math.random() * 350) + 50; // Random between 50-400 KB
+                const percentage = Math.round((storageUsed / storageLimit) * 100);
+                
+                // Update UI elements
+                const storageFill = document.getElementById('storageFill');
+                const storagePercent = document.getElementById('storagePercent');
+                const storageDetails = document.getElementById('storageDetails');
+                const lastUpload = document.getElementById('lastUpload');
+                
+                if (storageFill) storageFill.style.width = percentage + '%';
+                if (storagePercent) storagePercent.textContent = percentage + '%';
+                if (storageDetails) storageDetails.textContent = `${storageUsed} KB of ${storageLimit} KB`;
+                
+                // Change color based on usage
+                if (storageFill) {
+                    if (percentage > 80) {
+                        storageFill.style.backgroundColor = '#ff453a'; // Red for high usage
+                    } else if (percentage > 60) {
+                        storageFill.style.backgroundColor = '#ff9f0a'; // Orange for medium usage
+                    } else {
+                        storageFill.style.backgroundColor = '#29cc6a'; // Green for low usage
+                    }
+                }
+                
+                // Set last upload date (simulated)
+                const dates = ['2 days ago', 'Yesterday', '3 days ago', 'Last week', 'Just now'];
+                if (lastUpload) lastUpload.textContent = dates[Math.floor(Math.random() * dates.length)];
+                
+            } catch (error) {
+                console.error('Error updating storage usage:', error);
             }
         }
         
@@ -1097,6 +1356,10 @@
                     
                     // User is logged in, load their data
                     await loadUserData();
+                    
+                    // Add event listeners for dashboard interactions
+                    setupDashboardInteractions();
+                    
                 } catch (error) {
                     console.error('Session check error:', error);
                     window.location.href = './auth/login.html';
@@ -1105,6 +1368,124 @@
             
             checkSession();
         });
+        
+        // Setup dashboard interactions
+        function setupDashboardInteractions() {
+            // Add hover effects to cards
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-4px)';
+                });
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0)';
+                });
+            });
+            
+            // Add click event for storage details
+            const storageDetailsLink = document.querySelector('a[href="#storage-details"]');
+            if (storageDetailsLink) {
+                storageDetailsLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    alert('Storage details: You can upload Excel files up to 500 KB in size. Contact support to increase your limit.');
+                });
+            }
+            
+            // Add click events for analytics links
+            document.querySelector('a[href="#structure-details"]')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert('Organizational structure optimization recommendations will be provided here.');
+            });
+            
+            document.querySelector('a[href="#distribution-details"]')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert('Detailed team distribution analysis will be provided here.');
+            });
+            
+            document.querySelector('a[href="#insights-details"]')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert('Complete workforce insights and recommendations will be provided here.');
+            });
+            
+            // Initialize chart analytics
+            initChartAnalytics();
+        }
+        
+        // Initialize chart analytics
+        function initChartAnalytics() {
+            // Create team distribution chart
+            const ctx = document.getElementById('teamDistributionChart');
+            if (!ctx) return;
+            
+            // Sample data - in a real app, this would come from the database
+            const data = {
+                labels: ['Operations', 'Finance', 'IT', 'HR', 'Legal', 'Sales'],
+                datasets: [{
+                    data: [12, 8, 6, 5, 4, 7],
+                    backgroundColor: [
+                        '#0066cc',
+                        '#29cc6a',
+                        '#ff9f0a',
+                        '#ac39ff',
+                        '#ff453a',
+                        '#64d2ff'
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 5
+                }]
+            };
+            
+            // Chart configuration
+            const config = {
+                type: 'doughnut',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#1d1d1f',
+                            bodyColor: '#1d1d1f',
+                            borderColor: '#e5e5e5',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            boxPadding: 6,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            
+            // Create chart
+            new Chart(ctx, config);
+            
+            // Update analytics values with simulated data
+            updateAnalyticsValues();
+        }
+        
+        // Update analytics values
+        function updateAnalyticsValues() {
+            // In a real app, these values would be calculated from actual org chart data
+            // For now, we'll use simulated values
+            document.getElementById('avgDepth')?.textContent = (Math.random() * 2 + 2).toFixed(1);
+            document.getElementById('maxDepth')?.textContent = Math.floor(Math.random() * 3 + 4);
+            document.getElementById('avgSpan')?.textContent = (Math.random() * 3 + 3).toFixed(1);
+            document.getElementById('maxSpan')?.textContent = Math.floor(Math.random() * 6 + 8);
+        }
     </script>
 </body>
 </html>
