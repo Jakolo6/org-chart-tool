@@ -759,7 +759,8 @@ function renderNodes(nodes) {
         .attr('rx', 4)
         .attr('ry', 4)
         .style('fill', d => getNodeColor(d))
-        .style('stroke', d => getNodeBorderColor(d));
+        .style('stroke', d => getNodeBorderColor(d))
+        .style('stroke-width', d => d.changeType ? '3px' : '1.5px');
     
     // Add name text with wrapping
     enterGroups.append('text')
@@ -834,28 +835,40 @@ function renderNodes(nodes) {
     allGroups.select('.node-card')
         .attr('class', d => `node-card ${d.changeType || ''} ${window.state.selectedNode && window.state.selectedNode.id === d.id ? 'selected' : ''}`)
         .style('fill', d => getNodeColor(d))
-        .style('stroke', d => getNodeBorderColor(d));
+        .style('stroke', d => getNodeBorderColor(d))
+        .style('stroke-width', d => d.changeType ? '3px' : '1.5px')
+        .each(function(d) {
+            // Force apply colors based on change type
+            if (d.changeType) {
+                console.log('Applying colors for node:', d.id, 'changeType:', d.changeType);
+                d3.select(this)
+                    .style('fill', getNodeColor(d))
+                    .style('stroke', getNodeBorderColor(d));
+            }
+        });
 }
 
 function getNodeColor(node) {
-    if (!window.state.isComparisonMode) return '#f8fafc';
+    console.log('getNodeColor called for node:', node.id, 'changeType:', node.changeType, 'isComparisonMode:', window.state.isComparisonMode);
     
+    // Always show colors for changes, regardless of comparison mode
     switch (node.changeType) {
-        case 'added': return 'rgba(5, 150, 105, 0.1)';
-        case 'moved': return 'rgba(245, 158, 11, 0.1)';
-        case 'exit': return 'rgba(220, 38, 38, 0.1)';
-        default: return '#f8fafc';
+        case 'added': return '#dcfce7'; // Light green background
+        case 'moved': return '#fefce8'; // Light yellow background
+        case 'exit': return '#fef2f2'; // Light red background
+        default: return '#f8fafc'; // Default light gray
     }
 }
 
 function getNodeBorderColor(node) {
-    if (!window.state.isComparisonMode) return '#e2e8f0';
+    console.log('getNodeBorderColor called for node:', node.id, 'changeType:', node.changeType);
     
+    // Always show border colors for changes, regardless of comparison mode
     switch (node.changeType) {
-        case 'added': return '#059669';
-        case 'moved': return '#f59e0b';
-        case 'exit': return '#dc2626';
-        default: return '#e2e8f0';
+        case 'added': return '#16a34a'; // Green border
+        case 'moved': return '#ca8a04'; // Yellow/amber border
+        case 'exit': return '#dc2626'; // Red border
+        default: return '#e2e8f0'; // Default light gray border
     }
 }
 
