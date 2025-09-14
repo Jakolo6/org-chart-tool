@@ -1003,10 +1003,14 @@
             const chartId = urlParams.get('chart');
             const targetId = urlParams.get('target');
             
+            console.log('URL parameters:', { chartId, targetId });
+            
             if (targetId && targetId !== chartId) {
+              console.log('Target chart ID found, loading target data:', targetId);
               // Load target data
               loadTargetData(targetId);
             } else {
+              console.log('No target chart ID found or same as baseline, hiding toggle button');
               // Hide toggle button if no target chart
               const toggleViewBtn = document.getElementById('toggleViewBtn');
               if (toggleViewBtn) toggleViewBtn.style.display = 'none';
@@ -1028,6 +1032,7 @@
         try {
           console.log('Loading target chart data for ID:', targetId);
           const result = await window.getOrgChartById(targetId);
+          console.log('Target chart data loaded:', result);
           
           const { chart, employees, version, error } = result;
           
@@ -1036,10 +1041,15 @@
             return;
           }
           
+          console.log('Target chart info:', { chart });
+          console.log('Target employees:', employees);
+          console.log('Target version:', version);
+          
           let targetData = [];
           
           // First try to get data from employees table
           if (employees && employees.length > 0) {
+            console.log('Using employees data for target chart');
             targetData = employees.map(emp => ({
               id: emp.employee_id,
               name: emp.name,
@@ -1053,19 +1063,26 @@
           }
           // If no employees, try to get data from version
           else if (version && version.data) {
+            console.log('Using version data for target chart');
             // Handle different data formats as in renderChartWithData
             if (version.data.raw_data && Array.isArray(version.data.raw_data)) {
+              console.log('Using raw_data from version');
               targetData = version.data.raw_data;
             } 
             else if (Array.isArray(version.data)) {
+              console.log('Using direct data from version');
               targetData = version.data;
             }
             else if (typeof version.data === 'string') {
+              console.log('Attempting to parse string data from version');
               try {
                 const parsedData = JSON.parse(version.data);
+                console.log('Parsed version data:', parsedData);
                 if (Array.isArray(parsedData)) {
+                  console.log('Using parsed array data');
                   targetData = parsedData;
                 } else if (parsedData.raw_data && Array.isArray(parsedData.raw_data)) {
+                  console.log('Using parsed raw_data');
                   targetData = parsedData.raw_data;
                 }
               } catch (e) {
@@ -1074,11 +1091,16 @@
             }
           }
           
+          console.log('Target data before processing:', targetData);
+          
           if (targetData && targetData.length > 0) {
             // Convert data if needed
+            console.log('Converting target data to objects...');
             const formattedTargetData = convertArrayDataToObjects(targetData);
+            console.log('Formatted target data:', formattedTargetData);
             
             // Store the target data in state
+            console.log('Storing target data in state...');
             window.setUpdateData(formattedTargetData);
             
             // Show toggle button
@@ -1087,10 +1109,17 @@
               toggleViewBtn.style.display = 'inline-flex';
               toggleViewBtn.disabled = false;
               
+              // Remove any existing event listeners
+              const newToggleBtn = toggleViewBtn.cloneNode(true);
+              toggleViewBtn.parentNode.replaceChild(newToggleBtn, toggleViewBtn);
+              
               // Add event listener for toggle button
-              toggleViewBtn.addEventListener('click', () => {
+              newToggleBtn.addEventListener('click', () => {
+                console.log('Toggle comparison mode clicked');
                 if (window.toggleComparisonMode) {
                   window.toggleComparisonMode();
+                } else {
+                  console.error('toggleComparisonMode function not found');
                 }
               });
             }
