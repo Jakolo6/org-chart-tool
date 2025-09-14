@@ -326,6 +326,12 @@ function processFile(file, fileType) {
         targetFileSize.textContent = formatFileSize(file.size);
         targetFileInfo.style.display = 'flex';
         targetUpload.style.display = 'none';
+        
+        // Show column mapping modal for target file
+        currentFileData = jsonData;
+        currentFileType = 'target';
+        currentFileHeaders = jsonData[0];
+        showColumnMappingModal();
       }
       
       hideLoading();
@@ -424,9 +430,11 @@ function showColumnMappingModal() {
 function cancelColumnMapping() {
   columnMappingModal.classList.remove('show');
   
-  // If this was the initial status quo upload and mapping was cancelled, remove the file
+  // If mapping was cancelled, remove the file based on file type
   if (currentFileType === 'statusQuo' && !columnMapping.employeeName) {
     removeFile('statusQuo');
+  } else if (currentFileType === 'target') {
+    removeFile('target');
   }
 }
 
