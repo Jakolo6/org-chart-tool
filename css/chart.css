@@ -150,16 +150,17 @@ body {
 
 .node-card {
     fill: white;
-    stroke: #e2e8f0;
-    stroke-width: 1;
-    rx: 4;
-    ry: 4;
+    stroke: #4299e1;
+    stroke-width: 1.5;
+    rx: 8;
+    ry: 8;
     transition: all 0.3s ease;
+    filter: drop-shadow(0 2px 8px rgba(66, 153, 225, 0.15));
 }
 
 .node-card:hover {
-    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
-    stroke: #3b82f6;
+    filter: drop-shadow(0 4px 12px rgba(66, 153, 225, 0.25));
+    stroke: #3182ce;
     stroke-width: 2;
 }
 
@@ -179,31 +180,33 @@ body {
 .node-card.added {
     fill: #dcfce7 !important;
     stroke: #16a34a !important;
-    stroke-width: 3 !important;
-    filter: drop-shadow(0 0 12px rgba(22, 163, 74, 0.4)) !important;
+    stroke-width: 2 !important;
+    filter: drop-shadow(0 0 8px rgba(22, 163, 74, 0.3)) !important;
 }
 
 .node-card.exit {
     fill: #fef2f2 !important;
     stroke: #dc2626 !important;
-    stroke-width: 3 !important;
+    stroke-width: 2 !important;
     stroke-dasharray: 4 !important;
-    filter: drop-shadow(0 0 12px rgba(220, 38, 38, 0.4)) !important;
+    filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.3)) !important;
 }
 
 .node-card.moved {
     fill: #fefce8 !important;
     stroke: #ca8a04 !important;
-    stroke-width: 3 !important;
-    filter: drop-shadow(0 0 12px rgba(202, 138, 4, 0.4)) !important;
+    stroke-width: 2 !important;
+    filter: drop-shadow(0 0 8px rgba(202, 138, 4, 0.3)) !important;
 }
 
 .moved-halo {
     fill: none;
     stroke: #f59e0b;
-    stroke-width: 3;
-    rx: 6;
-    ry: 6;
+    stroke-width: 2;
+    rx: 10;
+    ry: 10;
+    stroke-dasharray: 4;
+    opacity: 0.6;
 }
 
 .node-text {
@@ -214,32 +217,34 @@ body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     pointer-events: none;
     dominant-baseline: middle;
+    letter-spacing: -0.2px;
 }
 
 .node-text.added {
     fill: #15803d;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .node-text.moved {
     fill: #a16207;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .node-text.exit {
     text-decoration: line-through;
     fill: #dc2626;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .node-title {
     text-anchor: middle;
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 400;
     fill: #64748b;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     pointer-events: none;
-    font-style: italic;
+    letter-spacing: -0.1px;
+    opacity: 0.9;
 }
 
 .node-title.added {
@@ -261,8 +266,8 @@ body {
 /* Connection lines */
 .connection-line {
     fill: none;
-    stroke: #64748b;
-    stroke-width: 1;
+    stroke: #cbd5e1;
+    stroke-width: 1.5;
     opacity: 0.6;
     transition: all 0.3s ease;
 }
@@ -274,39 +279,44 @@ body {
 
 .connection-line.moved {
     stroke: #f59e0b !important;
-    stroke-width: 2 !important;
-    stroke-dasharray: 8,4 !important;
-    opacity: 0.8 !important;
+    stroke-width: 1.5 !important;
+    stroke-dasharray: 6,3 !important;
+    opacity: 0.7 !important;
 }
 
 .connection-line.added {
     stroke: #059669 !important;
-    stroke-width: 2 !important;
-    opacity: 0.8 !important;
+    stroke-width: 1.5 !important;
+    opacity: 0.7 !important;
 }
 
 .connection-line.exit {
     stroke: #dc2626 !important;
-    stroke-width: 1 !important;
+    stroke-width: 1.5 !important;
     stroke-dasharray: 3,3 !important;
     opacity: 0.5 !important;
 }
 
 /* Expand/collapse buttons */
 .expand-button {
-    fill: #AACFCB;
-    stroke: none;
+    fill: #4299e1;
+    stroke: #ffffff;
+    stroke-width: 1;
     cursor: pointer;
+    rx: 10;
+    ry: 10;
     transition: all 0.2s ease;
 }
 
 .expand-button:hover {
-    fill: #D60047;
+    fill: #3182ce;
     transform: scale(1.1);
 }
 
 .expand-icon {
     font-size: 12px;
+    fill: white;
+    font-weight: bold;
     font-weight: bold;
     fill: white;
     text-anchor: middle;

@@ -7,10 +7,10 @@
 // Access CONFIG from window object
 if (!window.CONFIG) {
     window.CONFIG = {
-        nodeWidth: 160,
-        nodeHeight: 80,
-        horizontalGap: 25,
-        verticalGap: 100,
+        nodeWidth: 180,
+        nodeHeight: 70,
+        horizontalGap: 40,
+        verticalGap: 80,
         animationDuration: 300
     };
 }
@@ -290,43 +290,32 @@ function getNodeWidth(node) {
  * @param {Object} node The current node to calculate layout for.
  * @param {number} x The x-coordinate for the current node.
  * @param {number} y The y-coordinate for the current node.
- * @returns {number} The total width of the subtree rooted at this node.
  */
-function calculateLayout(node, x0 = 0, y0 = 0, level = 0) {
+function calculateLayout(node, x, y) {
+    if (!node) return;
+    
     // Set node position
-    node.x = x0;
-    node.y = y0;
-    node.level = level;
+    node.x = x;
+    node.y = y;
     
-    if (!node.children || node.children.length === 0 || !node.expanded) {
-        // Leaf node or collapsed node
-        node.width = window.CONFIG.nodeWidth;
-        node.height = window.CONFIG.nodeHeight;
-        return node;
-    }
+    // If node is not expanded, don't layout children
+    if (!node.expanded) return;
     
-    // Process children
-    let totalChildrenWidth = getTotalChildrenWidth(node);
-    let currentX = x0 - (totalChildrenWidth / 2);
-    const childY = y0 + window.CONFIG.nodeHeight + window.CONFIG.verticalGap;
+    // If no children or children are empty array, return
+    if (!node.children || node.children.length === 0) return;
     
-    // Ensure minimum horizontal gap between nodes
+    // Calculate total width needed for all children
+    const childrenCount = node.children.length;
+    const totalChildrenWidth = childrenCount * window.CONFIG.nodeWidth + (childrenCount - 1) * window.CONFIG.horizontalGap;
+    
+    // Calculate starting x position for first child
+    let startX = x - totalChildrenWidth / 2 + window.CONFIG.nodeWidth / 2;
+    
+    // Position each child
     node.children.forEach(child => {
-        // Calculate width for this child (including its descendants if expanded)
-        const childWidth = getNodeWidth(child);
-        // Position child in the center of its allocated space
-        const childX = currentX + (childWidth / 2);
-        // Recursively calculate layout for this child
-        calculateLayout(child, childX, childY, level + 1);
-        // Move to the next child position
-        currentX += childWidth + window.CONFIG.horizontalGap;
+        calculateLayout(child, startX, y + window.CONFIG.verticalGap);
+        startX += window.CONFIG.nodeWidth + window.CONFIG.horizontalGap;
     });
-    
-    // Update node dimensions
-    node.width = Math.max(window.CONFIG.nodeWidth, totalChildrenWidth);
-    node.height = window.CONFIG.nodeHeight;
-    
-    return node;
 }
 
 
@@ -838,11 +827,12 @@ function renderNodes(nodes) {
         .each(function(d) {
             const group = d3.select(this);
             
+            // Position the button in the top-right corner
             group.append('circle')
                 .attr('class', 'expand-button')
-                .attr('cx', window.CONFIG.nodeWidth / 2 - 10)
-                .attr('cy', -window.CONFIG.nodeHeight / 2 + 10)
-                .attr('r', 8)
+                .attr('cx', window.CONFIG.nodeWidth / 2 - 5)
+                .attr('cy', -window.CONFIG.nodeHeight / 2 + 5)
+                .attr('r', 10)
                 .on('click', (event, d) => {
                     event.stopPropagation();
                     d.expanded = !d.expanded;
@@ -851,8 +841,9 @@ function renderNodes(nodes) {
             
             group.append('text')
                 .attr('class', 'expand-icon')
-                .attr('x', window.CONFIG.nodeWidth / 2 - 10)
-                .attr('y', -window.CONFIG.nodeHeight / 2 + 10)
+                .attr('x', window.CONFIG.nodeWidth / 2 - 5)
+                .attr('y', -window.CONFIG.nodeHeight / 2 + 5)
+                .attr('dy', '0.35em')
                 .text(d => d.expanded ? '−' : '+');
         });
     
@@ -875,21 +866,21 @@ function renderNodes(nodes) {
                 nodeElement
                     .style('fill', '#dcfce7')
                     .style('stroke', '#16a34a')
-                    .style('stroke-width', '3px');
+                    .style('stroke-width', '2px');
             } else if (d.changeType === 'moved') {
                 nodeElement
                     .style('fill', '#fefce8')
                     .style('stroke', '#ca8a04')
-                    .style('stroke-width', '3px');
+                    .style('stroke-width', '2px');
             } else if (d.changeType === 'exit') {
                 nodeElement
                     .style('fill', '#fef2f2')
                     .style('stroke', '#dc2626')
-                    .style('stroke-width', '3px');
+                    .style('stroke-width', '2px');
             } else {
                 nodeElement
                     .style('fill', '#ffffff')
-                    .style('stroke', '#e2e8f0')
+                    .style('stroke', '#4299e1')
                     .style('stroke-width', '1.5px');
             }
             
