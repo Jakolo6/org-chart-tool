@@ -107,21 +107,21 @@ function hideEmployeeTooltip() {
  */
 function updateNodeStatistics(node) {
     if (!node) {
-        console.warn('Node is undefined in updateNodeStatistics');
+        // Silently handle undefined node
         hideNodeStatistics();
         return;
     }
     
     // Check if node has the expected structure
     if (typeof node !== 'object') {
-        console.warn('Node is not an object in updateNodeStatistics');
+        // Silently handle invalid node type
         hideNodeStatistics();
         return;
     }
     
     // Ensure node.data exists to prevent errors
     if (!node.data) {
-        console.warn('Node data is missing, creating empty object');
+        // Silently create empty data object
         node.data = {};
     }
     
@@ -149,19 +149,19 @@ function updateNodeStatistics(node) {
  */
 function calculateNodeStatistics(node) {
     if (!node) {
-        console.error('Node is undefined in calculateNodeStatistics');
+        // Silently handle undefined node
         return {};
     }
     
     // Ensure node.data exists
     if (!node.data) {
-        console.warn('Node data is undefined in calculateNodeStatistics, creating empty object');
+        // Silently create empty data object
         node.data = {};
     }
     
     // Double-check that node.data is an object
     if (typeof node.data !== 'object') {
-        console.error('Node data is not an object in calculateNodeStatistics');
+        // Silently fix invalid data type
         node.data = {};
     }
     
