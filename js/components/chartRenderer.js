@@ -845,18 +845,20 @@ function selectNode(node) {
     d3.selectAll('.node-card').classed('selected', false);
     d3.selectAll('.node-title').classed('selected', false);
     
-    if (node) {
+    if (node && node.data && node.data.id) {
         // Add selection to new node
         const nodeElement = d3.select(`[data-id="${node.data.id}"]`);
-        nodeElement.classed('selected', true);
-        nodeElement.select('.node-card').classed('selected', true);
-        nodeElement.select('.node-title').classed('selected', true);
-        
-        // Bring selected node to front
-        nodeElement.raise();
-        
-        // Center the selected node in the view
-        centerOnNode(node);
+        if (!nodeElement.empty()) {
+            nodeElement.classed('selected', true);
+            nodeElement.select('.node-card').classed('selected', true);
+            nodeElement.select('.node-title').classed('selected', true);
+            
+            // Bring selected node to front
+            nodeElement.raise();
+            
+            // Center the selected node in the view
+            centerOnNode(node);
+        }
     }
 }
 
@@ -889,6 +891,15 @@ function handleNodeUnhover() {
     window.state.g.selectAll('.node-card')
         .classed('ancestor-highlight', false)
         .classed('hover', false);
+}
+
+/**
+ * Normalizes an ID to ensure consistent string format
+ * @param {string|number} id - The ID to normalize
+ * @returns {string} - The normalized ID
+ */
+function normalizeId(id) {
+    return id ? String(id).trim() : '';
 }
 
 /**
