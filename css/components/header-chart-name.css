@@ -1,0 +1,40 @@
+/**
+ * Styles for the header chart name
+ */
+
+.header-chart-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+    margin-left: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+    align-self: center;
+}
+
+/* Make the header flex to accommodate the chart name */
+.header-content {
+    display: flex;
+    align-items: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .header-chart-name {
+        max-width: 150px;
+        font-size: 1rem;
+    }
+}
+
+/* Add a subtle animation when the chart name changes */
+@keyframes highlight {
+    0% { color: #333; }
+    50% { color: #0ea5e9; }
+    100% { color: #333; }
+}
+
+.header-chart-name.updated {
+    animation: highlight 1.5s ease;
+}

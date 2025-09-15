@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="./css/components/comparison.css">
   <link rel="stylesheet" href="./css/components/node-stats.css">
   <link rel="stylesheet" href="./css/components/zoom-controls.css">
+  <link rel="stylesheet" href="./css/components/header-chart-name.css">
   <link rel="stylesheet" href="./css/chart.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -105,16 +106,43 @@
         </div>
       </div>
 
-      <!-- Chart toolbar -->
-      <div class="chart-toolbar">
-        <div class="chart-info">
-          <h2 id="chartName">Loading chart...</h2>
-        </div>
-        <!-- Chart controls removed as they're now provided by the floating zoom controls -->
-        <div class="chart-controls">
-          <!-- Placeholder for any future non-zoom controls -->
-        </div>
-      </div>
+      <!-- Chart name moved to header -->
+      <script>
+        // Move chart name to the header
+        document.addEventListener('DOMContentLoaded', () => {
+          const chartNameElement = document.getElementById('chartName');
+          if (chartNameElement) {
+            // Create a new element for the chart name in the header
+            const headerChartName = document.createElement('div');
+            headerChartName.id = 'headerChartName';
+            headerChartName.className = 'header-chart-name';
+            
+            // Get the header content element
+            const headerContent = document.querySelector('.header-content');
+            if (headerContent) {
+              // Insert after the logo
+              const logo = headerContent.querySelector('.logo');
+              if (logo && logo.nextSibling) {
+                headerContent.insertBefore(headerChartName, logo.nextSibling);
+              } else {
+                headerContent.appendChild(headerChartName);
+              }
+              
+              // Update the header chart name when the chart name changes
+              const observer = new MutationObserver((mutations) => {
+                headerChartName.textContent = chartNameElement.textContent;
+              });
+              observer.observe(chartNameElement, { childList: true, characterData: true, subtree: true });
+              
+              // Initial update
+              headerChartName.textContent = chartNameElement.textContent;
+              
+              // Hide the original chart name
+              chartNameElement.style.display = 'none';
+            }
+          }
+        });
+      </script>
       
       <!-- Chart area (full width) -->
       <div class="chart-area" id="chart-area">
@@ -250,6 +278,7 @@
   <script src="./js/components/nodeStatistics.js"></script>
   <script src="./js/components/comparisonManager.js"></script>
   <script src="./js/components/zoomControls.js"></script>
+  <script src="./js/components/uxEnhancements.js"></script>
   <script src="./js/app.js" type="module"></script>
   <script>
     // Initialize authentication and comparison manager
@@ -267,6 +296,11 @@
       // Initialize zoom controls
       if (window.initZoomControls) {
         window.initZoomControls();
+      }
+      
+      // Initialize UX enhancements
+      if (window.initUxEnhancements) {
+        window.initUxEnhancements();
       }
       // Check authentication
       const { user, profile, error } = await window.getCurrentUser();
