@@ -63,18 +63,49 @@ body {
 .chart-container {
     width: 100% !important;
     height: calc(100vh - 120px) !important;
-    overflow: auto !important;
+    overflow: hidden !important;
     position: relative !important;
     border: 1px solid #e2e8f0 !important;
     border-radius: 12px !important;
     background-color: #ffffff !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.chart-svg {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+}
+
+/* Chart area */
+.chart-area {
+    flex: 1 !important;
+    padding: 20px !important;
+    overflow: auto !important;
+    background-color: #ffffff !important;
+    position: relative !important;
+}
+
+#chart-area {
+    flex: 1 !important;
+    min-height: 500px !important;
+    padding: 30px !important;
+    overflow: auto !important;
+    background-color: #ffffff !important;
+}
+
+.chart-content-wrapper {
+    display: flex !important;
+    height: calc(100% - 60px) !important;
 }
 
 .chart-toolbar {
     display: flex !important;
     justify-content: space-between !important;
-    padding: 16px !important;
+    align-items: center !important;
+    padding: 16px 20px !important;
     background-color: #f8fafc !important;
     border-bottom: 1px solid #e2e8f0 !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03) !important;
@@ -82,6 +113,62 @@ body {
 
 .chart-toolbar .btn {
     margin-left: 8px;
+}
+
+.chart-info {
+    display: flex !important;
+    align-items: center !important;
+    gap: 20px !important;
+}
+
+.chart-info h2 {
+    margin: 0 !important;
+    font-size: 1.2rem !important;
+    font-weight: 600 !important;
+    color: #1d1d1f !important;
+}
+
+.legend {
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
+}
+
+.legend-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-size: 0.9rem !important;
+}
+
+.legend-color {
+    width: 14px !important;
+    height: 14px !important;
+    border-radius: 4px !important;
+}
+
+.chart-controls {
+    display: flex !important;
+    gap: 8px !important;
+}
+
+.btn-icon {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: white !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #64748b !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.btn-icon:hover {
+    background-color: #f1f5f9 !important;
+    color: #0066cc !important;
 }
 
 .chart-controls {
