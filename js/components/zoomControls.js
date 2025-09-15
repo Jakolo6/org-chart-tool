@@ -13,10 +13,19 @@ function initZoomControls() {
     if (!zoomControlsContainer) {
         zoomControlsContainer = document.createElement('div');
         zoomControlsContainer.className = 'zoom-controls';
+        zoomControlsContainer.style.position = 'absolute';
+        zoomControlsContainer.style.top = '20px';
+        zoomControlsContainer.style.right = '20px';
+        zoomControlsContainer.style.left = 'auto';
+        zoomControlsContainer.style.zIndex = '1000';
         
         // Add to the chart area
         const chartArea = document.getElementById('chart-area');
         if (chartArea) {
+            // Ensure chart area has position relative for proper absolute positioning of controls
+            if (window.getComputedStyle(chartArea).position === 'static') {
+                chartArea.style.position = 'relative';
+            }
             chartArea.appendChild(zoomControlsContainer);
         }
     }
@@ -117,7 +126,8 @@ function addZoomControlStyles() {
         .zoom-controls {
             position: absolute;
             top: 20px;
-            right: 20px;
+            right: 20px; /* Ensure controls are on the right side */
+            left: auto; /* Override any left positioning */
             display: flex;
             flex-direction: column;
             gap: 10px;
