@@ -657,11 +657,11 @@ function renderConnections(links) {
         .append('path')
         .attr('class', d => `connection-line ${d.changeType || ''}`)
         .attr('d', d => generateLShapedPath(d))
-        .style('fill', 'none')
-        .style('opacity', 0)
+        .attr('fill', 'none')
+        .attr('opacity', 0)
         .transition()
         .duration(window.CONFIG.animationDuration)
-        .style('opacity', d => d.changeType === 'exit' ? 0.5 : (d.changeType ? 0.8 : 0.6));
+        .attr('opacity', 1);
     
     // Handle update selection with class updates
     connectionLines
@@ -677,20 +677,10 @@ function renderConnections(links) {
         .style('opacity', 0)
         .remove();
     
-    // Update connection styles based on change type
+    // Update connection styles based on change type - use classes instead of inline styles
     window.state.g.selectAll('.connection-line')
-        .style('stroke', d => {
-            if (!window.state.isComparisonMode) return '#cbd5e1';
-            
-            switch (d.changeType) {
-                case 'added': return '#059669';
-                case 'moved': return '#f59e0b';
-                case 'exit': return '#dc2626';
-                default: return '#cbd5e1';
-            }
-        })
-        .style('stroke-width', d => d.changeType ? '2px' : '1.5px')
-        .style('stroke-dasharray', d => d.changeType === 'moved' ? '8,4' : (d.changeType === 'exit' ? '3,3' : 'none'));
+        .attr('class', d => `connection-line ${d.changeType || ''}`);
+    
 }
 
 /**
@@ -806,8 +796,6 @@ function renderNodes(nodes) {
         .attr('class', 'change-indicator')
         .attr('y', window.CONFIG.nodeHeight / 2 - 5)
         .attr('text-anchor', 'middle')
-        .style('font-size', '10px')
-        .style('fill', '#f59e0b')
         .text(d => `Moved from: ${d.previousManagerName}`);
     
     // Add hover and click handlers
@@ -853,44 +841,10 @@ function renderNodes(nodes) {
         .attr('transform', d => `translate(${d.x}, ${d.y})`)
         .style('opacity', 1);
     
-    // Update selected state and change type
+    // Update selected state and change type - use classes instead of inline styles
     allGroups.select('.node-card')
-        .attr('class', d => `node-card ${d.changeType || ''} ${window.state.selectedNode && window.state.selectedNode.id === d.id ? 'selected' : ''}`)
-        .each(function(d) {
-            // Force apply colors based on change type
-            const nodeElement = d3.select(this);
-            console.log('Applying colors for node:', d.id, 'changeType:', d.changeType);
-            
-            // Apply styles directly based on change type
-            if (d.changeType === 'added') {
-                nodeElement
-                    .style('fill', '#dcfce7')
-                    .style('stroke', '#16a34a')
-                    .style('stroke-width', '2px');
-            } else if (d.changeType === 'moved') {
-                nodeElement
-                    .style('fill', '#fefce8')
-                    .style('stroke', '#ca8a04')
-                    .style('stroke-width', '2px');
-            } else if (d.changeType === 'exit') {
-                nodeElement
-                    .style('fill', '#fef2f2')
-                    .style('stroke', '#dc2626')
-                    .style('stroke-width', '2px');
-            } else {
-                nodeElement
-                    .style('fill', '#ffffff')
-                    .style('stroke', '#4299e1')
-                    .style('stroke-width', '1.5px');
-            }
-            
-            // If selected, add selected styling
-            if (window.state.selectedNode && window.state.selectedNode.id === d.id) {
-                nodeElement
-                    .style('stroke', '#3b82f6')
-                    .style('stroke-width', '3px');
-            }
-        });
+        .attr('class', d => `node-card ${d.changeType || ''} ${window.state.selectedNode && window.state.selectedNode.id === d.id ? 'selected' : ''}`);
+
 }
 
 function getNodeColor(node) {

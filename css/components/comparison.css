@@ -147,11 +147,4 @@
   stroke-dasharray: 4;
 }
 
-/* Moved node halo */
-.moved-halo {
-  fill: rgba(245, 158, 11, 0.1);
-  stroke: #f59e0b;
-  stroke-width: 1px;
-  rx: 6px;
-  ry: 6px;
-}
+/* Moved node halo styling moved to chart.css */

@@ -148,20 +148,20 @@ body {
     transition: all 0.3s ease;
 }
 
-.node-card {
-    fill: white;
-    stroke: #4299e1;
-    stroke-width: 1.5;
-    rx: 8;
-    ry: 8;
-    transition: all 0.3s ease;
-    filter: drop-shadow(0 2px 8px rgba(66, 153, 225, 0.15));
+svg .node-card {
+    fill: white !important;
+    stroke: #4299e1 !important;
+    stroke-width: 1.5 !important;
+    rx: 8 !important;
+    ry: 8 !important;
+    transition: all 0.3s ease !important;
+    filter: drop-shadow(0 2px 8px rgba(66, 153, 225, 0.15)) !important;
 }
 
-.node-card:hover {
-    filter: drop-shadow(0 4px 12px rgba(66, 153, 225, 0.25));
-    stroke: #3182ce;
-    stroke-width: 2;
+svg .node-card:hover {
+    filter: drop-shadow(0 4px 12px rgba(66, 153, 225, 0.25)) !important;
+    stroke: #3182ce !important;
+    stroke-width: 2 !important;
 }
 
 .node-card.selected {
@@ -264,12 +264,12 @@ body {
 }
 
 /* Connection lines */
-.connection-line {
-    fill: none;
-    stroke: #cbd5e1;
-    stroke-width: 1.5;
-    opacity: 0.6;
-    transition: all 0.3s ease;
+svg .connection-line {
+    fill: none !important;
+    stroke: #cbd5e1 !important;
+    stroke-width: 1.5 !important;
+    opacity: 0.6 !important;
+    transition: all 0.3s ease !important;
 }
 
 .connection-line:hover {
@@ -277,20 +277,20 @@ body {
     stroke-width: 2;
 }
 
-.connection-line.moved {
+svg .connection-line.moved {
     stroke: #f59e0b !important;
     stroke-width: 1.5 !important;
     stroke-dasharray: 6,3 !important;
     opacity: 0.7 !important;
 }
 
-.connection-line.added {
+svg .connection-line.added {
     stroke: #059669 !important;
     stroke-width: 1.5 !important;
     opacity: 0.7 !important;
 }
 
-.connection-line.exit {
+svg .connection-line.exit {
     stroke: #dc2626 !important;
     stroke-width: 1.5 !important;
     stroke-dasharray: 3,3 !important;
@@ -298,13 +298,13 @@ body {
 }
 
 /* Expand/collapse buttons */
-.expand-button {
-    fill: #4299e1;
-    stroke: #ffffff;
-    stroke-width: 1;
-    cursor: pointer;
-    rx: 10;
-    ry: 10;
+svg .expand-button {
+    fill: #4299e1 !important;
+    stroke: #ffffff !important;
+    stroke-width: 1 !important;
+    cursor: pointer !important;
+    rx: 10 !important;
+    ry: 10 !important;
     transition: all 0.2s ease;
 }
 
