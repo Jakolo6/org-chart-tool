@@ -112,7 +112,7 @@ body {
 }
 
 .chart-toolbar .btn {
-    margin-left: 8px;
+    margin-left: 8px !important;
 }
 
 .chart-info {
@@ -126,12 +126,14 @@ body {
     font-size: 1.2rem !important;
     font-weight: 600 !important;
     color: #1d1d1f !important;
+    white-space: nowrap !important;
 }
 
-.legend {
+.legend-container {
     display: flex !important;
     align-items: center !important;
     gap: 16px !important;
+    margin-left: 20px !important;
 }
 
 .legend-item {
@@ -145,6 +147,23 @@ body {
     width: 14px !important;
     height: 14px !important;
     border-radius: 4px !important;
+}
+
+.legend-color.added {
+    background-color: #16a34a !important;
+}
+
+.legend-color.moved {
+    background-color: #ca8a04 !important;
+}
+
+.legend-color.exit {
+    background-color: #dc2626 !important;
+}
+
+.legend-label {
+    font-size: 0.85rem !important;
+    color: #64748b !important;
 }
 
 .chart-controls {

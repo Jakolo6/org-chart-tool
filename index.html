@@ -50,7 +50,10 @@
 
   <main class="container">
     <div class="page-header">
-      <h1 id="chartTitle">Organization Chart</h1>
+      <div class="page-header-left">
+        <h1 id="chartTitle">Organization Chart</h1>
+        <div id="modeIndicator" class="mode-indicator baseline">📊 Baseline View</div>
+      </div>
       <div class="page-actions">
         <button id="backToDashboard" class="btn btn-secondary">
           <i class="fas fa-arrow-left"></i> Back to Dashboard
@@ -62,7 +65,6 @@
           <i class="fas fa-file-export"></i> Export
         </button>
       </div>
-      <div id="modeIndicator" class="mode-indicator baseline">📊 Baseline View</div>
     </div>
 
     <!-- Main container like in original tool -->
@@ -71,9 +73,9 @@
       <div class="chart-toolbar">
         <div class="chart-info">
           <h2 id="chartName">Loading chart...</h2>
-          <div id="legendContainer" class="legend-container" style="display: none;">
+          <div id="legendContainer" class="legend-container">
             <div class="legend-item">
-              <div class="legend-color new"></div>
+              <div class="legend-color added"></div>
               <div class="legend-label">New</div>
             </div>
             <div class="legend-item">
