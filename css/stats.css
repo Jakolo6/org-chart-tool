@@ -1,0 +1,148 @@
+/* Stats display styling */
+
+/* Change type indicator */
+.change-type-indicator {
+    margin-top: 8px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.change-type-indicator.added {
+    background: rgba(5, 150, 105, 0.1);
+    color: #059669;
+}
+
+.change-type-indicator.moved {
+    background: rgba(217, 119, 6, 0.1);
+    color: #d97706;
+}
+
+.change-type-indicator.exit {
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+}
+
+/* Previous manager info */
+.previous-manager {
+    margin-top: 5px;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.previous-manager span {
+    font-weight: 600;
+}
+
+/* Stats panel styling */
+.stats-panel {
+    padding: 15px;
+}
+
+.stat-item {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 6px;
+    background-color: #f8fafc;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.stat-name {
+    font-weight: 600;
+    color: #000000;
+    margin-top: 5px;
+    font-size: 1.1rem;
+}
+
+.stat-title {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+/* Change breakdown styling */
+.stat-breakdown {
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 0.85rem;
+}
+
+.stat-change-item {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.stat-change-item.added {
+    background-color: rgba(5, 150, 105, 0.1);
+    color: #059669;
+}
+
+.stat-change-item.removed {
+    background-color: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+    margin-left: 5px;
+}
+
+.stat-change-equals {
+    margin: 0 5px;
+    color: #64748b;
+}
+
+.stat-change-net {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.stat-change-net.positive {
+    background-color: rgba(5, 150, 105, 0.1);
+    color: #059669;
+}
+
+.stat-change-net.negative {
+    background-color: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+}
+
+.stat-change-net.neutral {
+    background-color: rgba(100, 116, 139, 0.1);
+    color: #64748b;
+}
+
+.stat-simple-change {
+    margin-top: 5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.stat-simple-change.positive {
+    background-color: rgba(5, 150, 105, 0.1);
+    color: #059669;
+}
+
+.stat-simple-change.negative {
+    background-color: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+}
+
+.stat-simple-change.neutral {
+    background-color: rgba(100, 116, 139, 0.1);
+    color: #64748b;
+}
