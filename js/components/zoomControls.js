@@ -16,19 +16,14 @@ function initZoomControls() {
     
     // Create the zoom controls container
     const zoomControlsContainer = document.createElement('div');
-    zoomControlsContainer.className = 'zoom-controls';
-    zoomControlsContainer.style.position = 'fixed';
-    zoomControlsContainer.style.top = '100px';
-    zoomControlsContainer.style.right = '20px';
-    zoomControlsContainer.style.left = 'auto';
-    zoomControlsContainer.style.zIndex = '9999';
+    zoomControlsContainer.className = 'zoom-controls floating-control';
     
     // Add directly to the body for fixed positioning
     document.body.appendChild(zoomControlsContainer);
     
     // Create zoom in button
     const zoomInBtn = document.createElement('button');
-    zoomInBtn.className = 'zoom-btn zoom-in';
+    zoomInBtn.className = 'zoom-btn zoom-in control-button';
     zoomInBtn.innerHTML = '<i class="fas fa-plus"></i>';
     zoomInBtn.title = 'Zoom In';
     zoomInBtn.addEventListener('click', () => {
@@ -39,7 +34,7 @@ function initZoomControls() {
     
     // Create zoom out button
     const zoomOutBtn = document.createElement('button');
-    zoomOutBtn.className = 'zoom-btn zoom-out';
+    zoomOutBtn.className = 'zoom-btn zoom-out control-button';
     zoomOutBtn.innerHTML = '<i class="fas fa-minus"></i>';
     zoomOutBtn.title = 'Zoom Out';
     zoomOutBtn.addEventListener('click', () => {
@@ -50,14 +45,14 @@ function initZoomControls() {
     
     // Create fullscreen button
     const fullscreenBtn = document.createElement('button');
-    fullscreenBtn.className = 'zoom-btn fullscreen';
+    fullscreenBtn.className = 'zoom-btn fullscreen control-button';
     fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
     fullscreenBtn.title = 'Toggle Fullscreen';
     fullscreenBtn.addEventListener('click', toggleFullscreen);
     
     // Create center button
     const centerBtn = document.createElement('button');
-    centerBtn.className = 'zoom-btn center';
+    centerBtn.className = 'zoom-btn center control-button';
     centerBtn.innerHTML = '<i class="fas fa-bullseye"></i>';
     centerBtn.title = 'Center Chart';
     centerBtn.addEventListener('click', () => {

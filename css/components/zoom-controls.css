@@ -4,12 +4,13 @@
 
 .zoom-controls {
     position: fixed;
-    top: 100px;
+    top: 80px;
     right: 20px;
+    left: auto;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    z-index: 1000;
+    z-index: 1001; /* Slightly higher than comparison controls */
 }
 
 .zoom-btn {

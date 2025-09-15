@@ -1,0 +1,80 @@
+/**
+ * Unified UI controls system
+ * This file contains shared styles and variables for all floating UI controls
+ */
+
+:root {
+  --control-primary-color: #0ea5e9;
+  --control-bg-color: white;
+  --control-border-color: #ddd;
+  --control-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  --control-border-radius: 8px;
+  --control-button-radius: 50%;
+  --control-transition: all 0.3s ease;
+}
+
+/* Common styles for all floating controls */
+.floating-control {
+  background-color: var(--control-bg-color);
+  box-shadow: var(--control-shadow);
+  border-radius: var(--control-border-radius);
+  transition: var(--control-transition);
+}
+
+/* Common button styles */
+.control-button {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--control-button-radius);
+  background-color: var(--control-bg-color);
+  border: 1px solid var(--control-border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--control-transition);
+}
+
+.control-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.control-button:active {
+  transform: scale(0.95);
+}
+
+/* Z-index hierarchy */
+.comparison-controls {
+  z-index: 1000;
+}
+
+.zoom-controls {
+  z-index: 1001;
+}
+
+.help-button,
+.help-tooltip {
+  z-index: 1002;
+}
+
+/* Media queries for responsive layout */
+@media (max-width: 768px) {
+  .comparison-controls {
+    top: auto;
+    bottom: 70px;
+    left: 20px;
+    max-width: 200px;
+  }
+  
+  .zoom-controls {
+    top: auto;
+    bottom: 70px;
+    right: 20px;
+  }
+  
+  .help-button {
+    bottom: 20px;
+    right: 20px;
+  }
+}

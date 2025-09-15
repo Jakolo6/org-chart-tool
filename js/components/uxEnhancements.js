@@ -166,13 +166,13 @@ function improveChartLoadingAnimation() {
 function addHelpTooltip() {
     // Create help button
     const helpButton = document.createElement('button');
-    helpButton.className = 'help-button';
+    helpButton.className = 'help-button control-button';
     helpButton.innerHTML = '<i class="fas fa-question-circle"></i>';
     helpButton.title = 'Keyboard Shortcuts';
     
     // Create help tooltip
     const helpTooltip = document.createElement('div');
-    helpTooltip.className = 'help-tooltip';
+    helpTooltip.className = 'help-tooltip floating-control';
     helpTooltip.innerHTML = `
         <h3>Keyboard Shortcuts</h3>
         <ul>
@@ -207,7 +207,7 @@ function addHelpTooltip() {
             justify-content: center;
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 1000;
+            z-index: 1002; /* Higher than other controls */
             transition: all 0.2s ease;
         }
         
