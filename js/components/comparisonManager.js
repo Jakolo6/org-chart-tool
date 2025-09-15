@@ -37,23 +37,30 @@ function toggleComparisonMode() {
     
     // Toggle comparison mode state
     state.isComparisonMode = !state.isComparisonMode;
-    window.setComparisonMode(state.isComparisonMode); // Make sure global state is updated
+    window.setComparisonMode(state.isComparisonMode);
     
     // Update UI elements
     const toggleViewBtn = document.getElementById('toggleViewBtn');
     const modeIndicator = document.getElementById('modeIndicator');
     const legendContainer = document.getElementById('legendContainer');
+    const changeSummary = document.getElementById('changeSummary');
+    const comparisonControls = document.querySelector('.comparison-controls');
     
     if (state.isComparisonMode) {
         // Switch to target view
-        if (toggleViewBtn) toggleViewBtn.innerHTML = '📊 Switch to Baseline';
+        if (toggleViewBtn) {
+            toggleViewBtn.innerHTML = '<i class="fas fa-exchange-alt"></i> Switch to Baseline';
+            toggleViewBtn.classList.add('active');
+        }
         if (modeIndicator) {
             modeIndicator.textContent = '⚖️ Target View';
             modeIndicator.className = 'mode-indicator target';
         }
         
-        // Show legend for changes
-        if (legendContainer) legendContainer.style.display = 'block';
+        // Show comparison controls
+        if (comparisonControls) comparisonControls.style.display = 'block';
+        if (legendContainer) legendContainer.style.display = 'flex';
+        if (changeSummary) changeSummary.style.display = 'flex';
         
         // Set current data to target data
         state.currentData = state.updateData;
@@ -72,18 +79,28 @@ function toggleComparisonMode() {
         state.rootNode = rootNode;
         window.setRootNode(rootNode);
         
+        // Build comparison maps for node statistics
+        if (window.buildComparisonMaps) {
+            window.buildComparisonMaps();
+        }
+        
         console.log('Switched to target view. Root node:', rootNode);
         console.log('Change analysis:', state.changeAnalysis);
     } else {
         // Switch to baseline view
-        if (toggleViewBtn) toggleViewBtn.innerHTML = '⚖️ Switch to Target';
+        if (toggleViewBtn) {
+            toggleViewBtn.innerHTML = '<i class="fas fa-exchange-alt"></i> Switch to Target';
+            toggleViewBtn.classList.remove('active');
+        }
         if (modeIndicator) {
             modeIndicator.textContent = '📊 Baseline View';
             modeIndicator.className = 'mode-indicator baseline';
         }
         
-        // Hide legend
+        // Hide comparison controls but keep the container visible
+        if (comparisonControls) comparisonControls.style.display = 'block';
         if (legendContainer) legendContainer.style.display = 'none';
+        if (changeSummary) changeSummary.style.display = 'none';
         
         // Set current data to baseline data
         state.currentData = state.baselineData;
@@ -95,6 +112,9 @@ function toggleComparisonMode() {
         
         // Rebuild hierarchy with baseline data
         const rootNode = buildHierarchy(state.currentData);
+        
+        // Store baseline hierarchy for comparison purposes
+        state.baselineHierarchy = rootNode;
         
         // Update state with new root node
         state.rootNode = rootNode;

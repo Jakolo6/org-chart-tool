@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="./css/styles.css">
   <link rel="stylesheet" href="./css/app-ui.css">
   <link rel="stylesheet" href="./css/components/comparison.css">
-  <link rel="stylesheet" href="./css/stats.css">
+  <link rel="stylesheet" href="./css/components/node-stats.css">
   <link rel="stylesheet" href="./css/chart.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -58,35 +58,56 @@
         <button id="backToDashboard" class="btn btn-secondary">
           <i class="fas fa-arrow-left"></i> Back to Dashboard
         </button>
-        <button id="toggleViewBtn" class="btn btn-secondary">
-          <i class="fas fa-exchange-alt"></i> Switch to Target
-        </button>
         <button id="exportBtn" class="btn btn-primary">
           <i class="fas fa-file-export"></i> Export
         </button>
       </div>
     </div>
 
-    <!-- Main container like in original tool -->
+    <!-- Main container -->
     <div class="main-container">
+      <!-- Comparison Controls -->
+      <div class="comparison-controls">
+        <div class="comparison-header">
+          <h3>Comparison Mode</h3>
+          <button id="toggleViewBtn" class="btn btn-secondary">
+            <i class="fas fa-exchange-alt"></i> Switch to Target
+          </button>
+        </div>
+        <div id="changeSummary" class="change-summary" style="display: none;">
+          <div class="summary-item added">
+            <div class="count">0</div>
+            <div class="label">New</div>
+          </div>
+          <div class="summary-item moved">
+            <div class="count">0</div>
+            <div class="label">Moved</div>
+          </div>
+          <div class="summary-item exit">
+            <div class="count">0</div>
+            <div class="label">Exit</div>
+          </div>
+        </div>
+        <div id="legendContainer" class="legend-container" style="display: none;">
+          <div class="legend-item">
+            <div class="legend-color new"></div>
+            <span class="legend-label">New</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color moved"></div>
+            <span class="legend-label">Moved</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color exit"></div>
+            <span class="legend-label">Exit</span>
+          </div>
+        </div>
+      </div>
+
       <!-- Chart toolbar -->
       <div class="chart-toolbar">
         <div class="chart-info">
           <h2 id="chartName">Loading chart...</h2>
-          <div id="legendContainer" class="legend-container">
-            <div class="legend-item">
-              <div class="legend-color added"></div>
-              <div class="legend-label">New</div>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color moved"></div>
-              <div class="legend-label">Moved</div>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color exit"></div>
-              <div class="legend-label">Removed</div>
-            </div>
-          </div>
         </div>
         <div class="chart-controls">
           <button id="zoomInBtn" class="btn btn-icon" title="Zoom In">
@@ -98,41 +119,12 @@
           <button id="resetZoomBtn" class="btn btn-icon" title="Reset Zoom">
             <i class="fas fa-expand"></i>
           </button>
-          <button id="toggleStatsBtn" class="btn btn-icon" title="Toggle Stats Panel">
-            <i class="fas fa-chart-bar"></i>
-          </button>
         </div>
       </div>
       
       <!-- Chart area (full width) -->
       <div class="chart-area" id="chart-area">
         <svg id="chartSvg" class="chart-svg"></svg>
-      </div>
-      
-      <!-- Selected Node Statistics Floating Panel -->
-      <div class="selected-stats-display" id="selectedStatsDisplay" style="display: none;">
-        <div class="selected-stats-header">
-          <span class="selected-stats-title">👤 Selected Node</span>
-          <button class="selected-stats-close" title="Close">×</button>
-        </div>
-        <div id="selectedStatsContainer" class="stats-container">
-          <div class="loading-state">
-            Click on an employee to view their statistics
-          </div>
-        </div>
-      </div>
-      
-      <!-- Right Stats Panel (Collapsible) -->
-      <div id="statsPanel" class="stats-panel">
-        <div class="stats-panel-header">
-          <h3>Statistics & Details</h3>
-          <button id="closePanelBtn" class="btn btn-icon">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <div class="stats-panel-content">
-          <div id="changeSummary" class="change-summary" style="display: none;"></div>
-        </div>
       </div>
     </div>
   </main>
@@ -144,6 +136,112 @@
   <!-- Tooltip container -->
   <div id="tooltip" class="tooltip" style="display: none;"></div>
 
+  <!-- Selected Node Statistics Panel -->
+  <div id="selectedNodeStats" class="selected-node-stats" style="display: none;">
+    <div class="stats-panel-header">
+      <h3><i class="fas fa-user"></i> Selected Node</h3>
+      <button id="closeNodeStats" class="close-btn"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="stats-panel-content">
+      <!-- Employee Info -->
+      <div class="stats-card employee-info">
+        <div class="stats-card-header">
+          <h4>Selected Employee</h4>
+          <div id="employeeChangeType" class="change-badge" style="display: none;"></div>
+        </div>
+        <div class="stats-card-body">
+          <div id="employeeName" class="employee-name">-</div>
+          <div id="employeeTitle" class="employee-title">-</div>
+        </div>
+      </div>
+
+      <!-- Previous Manager (only in comparison mode) -->
+      <div id="previousManagerCard" class="stats-card previous-manager" style="display: none;">
+        <div class="stats-card-header">
+          <h4>Previous Manager</h4>
+        </div>
+        <div class="stats-card-body">
+          <div id="previousManagerName">-</div>
+        </div>
+      </div>
+
+      <!-- FTE Stats -->
+      <div class="stats-card fte-stats">
+        <div class="stats-card-header">
+          <h4>FTE</h4>
+        </div>
+        <div class="stats-card-body">
+          <div class="stats-row">
+            <div class="stats-label">Current FTE</div>
+            <div id="currentFte" class="stats-value">-</div>
+          </div>
+          <div class="stats-row">
+            <div class="stats-label">Total FTE in Team</div>
+            <div id="totalFte" class="stats-value">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team Stats -->
+      <div class="stats-card team-stats">
+        <div class="stats-card-header">
+          <h4>Team Size</h4>
+        </div>
+        <div class="stats-card-body">
+          <div class="stats-row">
+            <div class="stats-label">Direct Reports</div>
+            <div id="directReports" class="stats-value">-</div>
+          </div>
+          <div id="directReportsChange" class="stats-change" style="display: none;">
+            <div class="stats-row">
+              <div class="stats-label">Added</div>
+              <div id="directReportsAdded" class="stats-value added" data-tooltip="">+0</div>
+            </div>
+            <div class="stats-row">
+              <div class="stats-label">Removed</div>
+              <div id="directReportsRemoved" class="stats-value removed" data-tooltip="">-0</div>
+            </div>
+            <div class="stats-row">
+              <div class="stats-label">Net Change</div>
+              <div id="directReportsNet" class="stats-value">0</div>
+            </div>
+          </div>
+          <div class="stats-row">
+            <div class="stats-label">Total Reports</div>
+            <div id="totalReports" class="stats-value">-</div>
+          </div>
+          <div id="totalReportsChange" class="stats-change" style="display: none;">
+            <div class="stats-row">
+              <div class="stats-label">Net Change</div>
+              <div id="totalReportsNet" class="stats-value">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Optional Fields -->
+      <div id="optionalFields" class="stats-card optional-fields">
+        <div class="stats-card-header">
+          <h4>Additional Information</h4>
+        </div>
+        <div class="stats-card-body">
+          <div id="locationField" class="stats-row" style="display: none;">
+            <div class="stats-label">Location</div>
+            <div id="locationValue" class="stats-value">-</div>
+          </div>
+          <div id="jobFamilyField" class="stats-row" style="display: none;">
+            <div class="stats-label">Job Family</div>
+            <div id="jobFamilyValue" class="stats-value">-</div>
+          </div>
+          <div id="managementLevelField" class="stats-row" style="display: none;">
+            <div class="stats-label">Management Level</div>
+            <div id="managementLevelValue" class="stats-value">-</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Load scripts in correct order -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
@@ -152,10 +250,9 @@
   <script src="./js/orgChartService.js"></script>
   <script src="./js/main.js"></script>
   <script src="./js/components/chartRenderer.js"></script>
-  <script src="./js/components/chartManager.js"></script>
-  <script src="./js/components/comparisonManager.js"></script>
-  <script src="./js/components/statsManager.js"></script>
+  <script src="./js/components/exportManager.js"></script>
   <script src="./js/components/tooltips.js"></script>
+  <script src="./js/components/nodeStatistics.js"></script>
   <script src="./js/app.js" type="module"></script>
   <script>
     // Initialize authentication and comparison manager
@@ -163,6 +260,11 @@
       // Initialize comparison manager if available
       if (window.initComparisonManager) {
         window.initComparisonManager();
+      }
+      
+      // Initialize node statistics component
+      if (window.initNodeStatistics) {
+        window.initNodeStatistics();
       }
       // Check authentication
       const { user, profile, error } = await window.getCurrentUser();
@@ -187,25 +289,6 @@
         } catch (error) {
           console.error('Sign out error:', error);
         }
-      });
-      
-      // Initialize stats panel (collapsed by default)
-      const statsPanel = document.getElementById('statsPanel');
-      statsPanel.classList.add('collapsed');
-      
-      // Toggle stats panel
-      document.getElementById('toggleStatsBtn').addEventListener('click', () => {
-        statsPanel.classList.toggle('collapsed');
-      });
-      
-      // Close stats panel
-      document.getElementById('closePanelBtn').addEventListener('click', () => {
-        statsPanel.classList.add('collapsed');
-      });
-      
-      // Close selected node stats panel
-      document.querySelector('.selected-stats-close').addEventListener('click', () => {
-        document.getElementById('selectedStatsDisplay').style.display = 'none';
       });
       
       // Toggle user dropdown

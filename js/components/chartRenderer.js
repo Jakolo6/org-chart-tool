@@ -840,16 +840,24 @@ function getNodeBorderColor(node) {
 =========================================== */
 
 function selectNode(node) {
-    // Deselect all nodes
-    window.state.g.selectAll('.node-card').classed('selected', false);
+    // Remove previous selection
+    d3.selectAll('.node-group').classed('selected', false);
+    d3.selectAll('.node-card').classed('selected', false);
+    d3.selectAll('.node-title').classed('selected', false);
     
-    // Select the clicked node
-    window.state.g.selectAll('.node-card')
-        .filter(d => d.id === node.id)
-        .classed('selected', true);
-    
-    // Store the selected node in state
-    window.state.selectedNode = node;
+    if (node) {
+        // Add selection to new node
+        const nodeElement = d3.select(`[data-id="${node.data.id}"]`);
+        nodeElement.classed('selected', true);
+        nodeElement.select('.node-card').classed('selected', true);
+        nodeElement.select('.node-title').classed('selected', true);
+        
+        // Bring selected node to front
+        nodeElement.raise();
+        
+        // Center the selected node in the view
+        centerOnNode(node);
+    }
 }
 
 /**
@@ -912,112 +920,49 @@ function findAncestors(node) {
 }
 
 /**
+ * Centers the chart in the viewport without changing the zoom level.
+ */
+function centerOnNode(node) {
+    if (!node || !window.state.svg) return;
+    
+    const svg = d3.select('#chartSvg');
+    const width = parseInt(svg.style('width')) || 1200;
+    const height = parseInt(svg.style('height')) || 800;
+    
+    // Get current transform
+    const currentTransform = d3.zoomTransform(window.state.svg.node());
+    const scale = currentTransform.k || 1;
+    
+    // Calculate the transform to center the node
+    const x = (width / 2) - (node.x * scale);
+    const y = (height / 3) - (node.y * scale); // Position at 1/3 from top for better hierarchy view
+    
+    // Apply the transform with smooth transition
+    window.state.g.transition()
+        .duration(500)
+        .attr('transform', `translate(${x},${y}) scale(${scale})`);
+        
+    // Ensure selected node is visible
+    const nodeElement = d3.select(`[data-id="${node.data.id}"]`);
+    nodeElement.raise();
+}
+
+/**
  * Shows the statistics for the selected node.
  * @param {Object} node The node to show statistics for.
  */
 function showNodeStats(node) {
-    const statsDisplay = document.getElementById('selectedStatsDisplay');
-    const statsContainer = document.getElementById('selectedStatsContainer');
+    // Store the selected node in state
+    window.state.selectedNode = node;
     
-    if (!statsDisplay || !statsContainer) return;
-    
-    // Show the stats panel
-    statsDisplay.style.display = 'block';
-    
-    // Generate HTML content for the stats
-    let statsHTML = `
-        <div class="node-stats">
-            <div class="node-stats-header">
-                <h3>${node.name || 'Unknown'}</h3>
-                <div class="node-stats-title">${node.title || 'No title'}</div>
-            </div>
-            <div class="node-stats-details">
-                <div class="node-stats-item" data-tooltip="Employee ID">
-                    <span class="node-stats-label">ID:</span>
-                    <span class="node-stats-value">${node.id || 'N/A'}</span>
-                </div>
-                <div class="node-stats-item" data-tooltip="Reporting Manager">
-                    <span class="node-stats-label">Manager:</span>
-                    <span class="node-stats-value">${node.manager || 'None'}</span>
-                </div>
-    `;
-    
-    // Add additional properties if they exist
-    if (node.department) {
-        statsHTML += `
-            <div class="node-stats-item" data-tooltip="Department or Business Unit">
-                <span class="node-stats-label">Department:</span>
-                <span class="node-stats-value">${node.department}</span>
-            </div>
-        `;
+    // Use the new node statistics component if available
+    if (window.updateNodeStatistics) {
+        window.updateNodeStatistics(node);
+    } else {
+        console.warn('Node statistics component not loaded');
     }
     
-    if (node.location) {
-        statsHTML += `
-            <div class="node-stats-item" data-tooltip="Office Location">
-                <span class="node-stats-label">Location:</span>
-                <span class="node-stats-value">${node.location}</span>
-            </div>
-        `;
-    }
-    
-    // Add direct reports count if the node has children
-    if (node.children && node.children.length > 0) {
-        // Create a tooltip with the names of direct reports
-        const directReportNames = node.children.map(child => child.name).join(', ');
-        const directReportsTooltip = `Direct Reports: ${directReportNames}`;
-        
-        statsHTML += `
-            <div class="node-stats-item" data-tooltip="${directReportsTooltip}">
-                <span class="node-stats-label">Direct Reports:</span>
-                <span class="node-stats-value">${node.children.length}</span>
-            </div>
-        `;
-    }
-    
-    // Add change type information if in comparison mode
-    if (window.state.isComparisonMode && node.changeType) {
-        let changeTypeText = '';
-        let changeTypeClass = '';
-        let tooltipText = '';
-        
-        switch (node.changeType) {
-            case 'added':
-                changeTypeText = 'New Position';
-                changeTypeClass = 'added';
-                tooltipText = 'This position was added in the target organization';
-                break;
-            case 'moved':
-                changeTypeText = `Moved from ${node.previousManagerName || 'Unknown'}`;
-                changeTypeClass = 'moved';
-                tooltipText = `This position was moved from reporting to ${node.previousManagerName || 'Unknown'}`;
-                break;
-            case 'exit':
-                changeTypeText = 'Position Removed';
-                changeTypeClass = 'exit';
-                tooltipText = 'This position was removed in the target organization';
-                break;
-        }
-        
-        if (changeTypeText) {
-            statsHTML += `
-                <div class="node-stats-item change-type ${changeTypeClass}" data-tooltip="${tooltipText}">
-                    <span class="node-stats-label">Change:</span>
-                    <span class="node-stats-value">${changeTypeText}</span>
-                </div>
-            `;
-        }
-    }
-    
-    statsHTML += `
-            </div>
-        </div>
-    `;
-    
-    // Update the container with the stats HTML
-    statsContainer.innerHTML = statsHTML;
-    
-    // Initialize tooltips for the new content
+    // Initialize tooltips if available
     if (window.initializeTooltips) {
         window.initializeTooltips();
     }

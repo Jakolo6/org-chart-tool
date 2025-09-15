@@ -62,38 +62,40 @@ body {
 /* Chart Styling */
 .chart-container {
     width: 100% !important;
-    height: calc(100vh - 120px) !important;
-    overflow: hidden !important;
+    height: calc(100vh - 180px) !important;
+    overflow: auto !important;
     position: relative !important;
     border: 1px solid #e2e8f0 !important;
     border-radius: 12px !important;
-    background-color: #ffffff !important;
+    background-color: #f8fafc !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
     display: flex !important;
     flex-direction: column !important;
+    padding: 20px !important;
 }
 
 .chart-svg {
     width: 100% !important;
-    height: 100% !important;
+    min-height: 600px !important;
     display: block !important;
+    background-color: #ffffff !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
 }
 
 /* Chart area */
 .chart-area {
     flex: 1 !important;
-    padding: 20px !important;
+    padding: 0 !important;
     overflow: auto !important;
-    background-color: #ffffff !important;
+    background-color: transparent !important;
     position: relative !important;
 }
 
 #chart-area {
-    flex: 1 !important;
-    min-height: 500px !important;
-    padding: 30px !important;
+    padding: 20px !important;
     overflow: auto !important;
-    background-color: #ffffff !important;
+    background-color: transparent !important;
 }
 
 .chart-content-wrapper {
@@ -186,66 +188,13 @@ body {
 }
 
 .btn-icon:hover {
-    background-color: #f1f5f9 !important;
-    color: #0066cc !important;
+    background-color: #f1f5f9;
+    color: #0066cc;
 }
 
 .chart-controls {
     display: flex;
     align-items: center;
-}
-
-.chart-info {
-    display: flex;
-    align-items: center;
-}
-
-.chart-info h2 {
-    margin: 0;
-    font-size: 18px;
-    margin-right: 12px;
-}
-
-.legend {
-    display: flex;
-    align-items: center;
-    margin-left: 16px;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    margin-right: 16px;
-    font-size: 14px;
-}
-
-.legend-color {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-    margin-right: 6px;
-}
-
-.chart-content-wrapper {
-    display: flex;
-    height: calc(100vh - 180px);
-    background-color: #ffffff;
-}
-
-#chart-area {
-    flex: 1;
-    min-height: 500px;
-    padding: 30px;
-    overflow: auto;
-    background-color: #ffffff;
-}
-
-.stats-container {
-    width: 300px;
-    padding: 20px;
-    border-left: 1px solid #e2e8f0;
-    overflow-y: auto;
-    background-color: #f8fafc;
 }
 
 /* Node styling */
@@ -255,54 +204,64 @@ body {
 }
 
 svg .node-card {
-    fill: white !important;
-    stroke: #4299e1 !important;
-    stroke-width: 1.5 !important;
-    rx: 8 !important;
-    ry: 8 !important;
-    transition: all 0.3s ease !important;
-    filter: drop-shadow(0 2px 8px rgba(66, 153, 225, 0.15)) !important;
+    fill: #ffffff;
+    stroke: #cbd5e1;
+    stroke-width: 1.5;
+    rx: 8;
+    ry: 8;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.05));
 }
 
 svg .node-card:hover {
-    filter: drop-shadow(0 4px 12px rgba(66, 153, 225, 0.25)) !important;
-    stroke: #3182ce !important;
-    stroke-width: 2 !important;
+    filter: drop-shadow(0 6px 16px rgba(66, 153, 225, 0.25));
+    stroke: #3182ce;
+    transform: translateY(-1px);
 }
 
 .node-card.selected {
-    stroke: #3b82f6 !important;
-    stroke-width: 3 !important;
-    filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.5)) !important;
+    stroke: #2563eb !important;
+    stroke-width: 3px !important;
+    filter: drop-shadow(0 6px 16px rgba(37, 99, 235, 0.3)) !important;
+    z-index: 10;
+    transform: scale(1.02);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1.02); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1.02); }
 }
 
 .node-card.ancestor-highlight {
-    stroke: #AACFCB !important;
-    stroke-width: 2 !important;
+    stroke: #AACFCB;
+    stroke-width: 2;
     filter: drop-shadow(0 0 0 2px rgba(138, 175, 171, 0.3));
 }
 
 /* Change type styles - Enhanced visibility */
 .node-card.added {
-    fill: #dcfce7 !important;
-    stroke: #16a34a !important;
-    stroke-width: 2 !important;
-    filter: drop-shadow(0 0 8px rgba(22, 163, 74, 0.3)) !important;
+    fill: #dcfce7;
+    stroke: #16a34a;
+    stroke-width: 2;
+    filter: drop-shadow(0 0 8px rgba(22, 163, 74, 0.3));
 }
 
 .node-card.exit {
-    fill: #fef2f2 !important;
-    stroke: #dc2626 !important;
-    stroke-width: 2 !important;
-    stroke-dasharray: 4 !important;
-    filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.3)) !important;
+    fill: #fef2f2;
+    stroke: #dc2626;
+    stroke-width: 2;
+    stroke-dasharray: 4;
+    filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.3));
 }
 
 .node-card.moved {
-    fill: #fefce8 !important;
-    stroke: #ca8a04 !important;
-    stroke-width: 2 !important;
-    filter: drop-shadow(0 0 8px rgba(202, 138, 4, 0.3)) !important;
+    fill: #fefce8;
+    stroke: #ca8a04;
+    stroke-width: 2;
+    filter: drop-shadow(0 0 8px rgba(202, 138, 4, 0.3));
 }
 
 .moved-halo {
@@ -344,13 +303,19 @@ svg .node-card:hover {
 
 .node-title {
     text-anchor: middle;
-    font-size: 11px;
-    font-weight: 400;
-    fill: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+    fill: #1e293b;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     pointer-events: none;
     letter-spacing: -0.1px;
     opacity: 0.9;
+    cursor: pointer;
+}
+
+.node-title.selected {
+    font-weight: 700;
+    fill: #1e40af;
 }
 
 .node-title.added {
@@ -371,46 +336,55 @@ svg .node-card:hover {
 
 /* Connection lines */
 svg .connection-line {
-    fill: none !important;
-    stroke: #cbd5e1 !important;
-    stroke-width: 1.5 !important;
-    opacity: 0.6 !important;
-    transition: all 0.3s ease !important;
+    fill: none;
+    stroke: #e2e8f0;
+    stroke-width: 2;
+    opacity: 0.8;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    stroke-linecap: round;
 }
 
 .connection-line:hover {
     opacity: 1;
-    stroke-width: 2;
+    stroke-width: 2.5;
+    stroke: #94a3b8;
+}
+
+/* Highlight connection to selected node */
+.node-group.selected ~ .connection-line {
+    stroke: #3b82f6 !important;
+    stroke-width: 2.5px !important;
+    opacity: 0.8 !important;
 }
 
 svg .connection-line.moved {
-    stroke: #f59e0b !important;
-    stroke-width: 1.5 !important;
-    stroke-dasharray: 6,3 !important;
-    opacity: 0.7 !important;
+    stroke: #f59e0b;
+    stroke-width: 1.5;
+    stroke-dasharray: 6,3;
+    opacity: 0.7;
 }
 
 svg .connection-line.added {
-    stroke: #059669 !important;
-    stroke-width: 1.5 !important;
-    opacity: 0.7 !important;
+    stroke: #059669;
+    stroke-width: 1.5;
+    opacity: 0.7;
 }
 
 svg .connection-line.exit {
-    stroke: #dc2626 !important;
-    stroke-width: 1.5 !important;
-    stroke-dasharray: 3,3 !important;
-    opacity: 0.5 !important;
+    stroke: #dc2626;
+    stroke-width: 1.5;
+    stroke-dasharray: 3,3;
+    opacity: 0.5;
 }
 
 /* Expand/collapse buttons */
 svg .expand-button {
-    fill: #4299e1 !important;
-    stroke: #ffffff !important;
-    stroke-width: 1 !important;
-    cursor: pointer !important;
-    rx: 10 !important;
-    ry: 10 !important;
+    fill: #4299e1;
+    stroke: #ffffff;
+    stroke-width: 1;
+    cursor: pointer;
+    rx: 10;
+    ry: 10;
     transition: all 0.2s ease;
 }
 
@@ -485,8 +459,8 @@ svg .expand-button {
 /* Selected Node Stats Floating Panel */
 .selected-stats-display {
     position: fixed;
-    top: 260px; /* Position much further below overall stats */
-    right: 20px; /* Same right position as overall stats */
+    top: 260px;
+    right: 20px;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(170, 207, 203, 0.3);
@@ -501,11 +475,11 @@ svg .expand-button {
     max-height: 600px;
     display: flex;
     flex-direction: column;
-    overflow: visible !important; /* Ensure tooltips can extend beyond container */
+    overflow: visible;
 }
 
 .selected-stats-display.changelog-open {
-    right: 500px; /* Move much further left to completely avoid changelog overlap */
+    right: 500px;
 }
 
 .selected-stats-display:hover {
@@ -552,7 +526,7 @@ svg .expand-button {
     padding: 15px;
     overflow-y: auto;
     flex: 1;
-    max-height: calc(600px - 50px); /* Account for header height */
+    max-height: calc(600px - 50px);
 }
 
 .node-stats {
