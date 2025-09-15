@@ -129,12 +129,23 @@ function updateNodeStatistics(node) {
  * @returns {Object} The calculated statistics
  */
 function calculateNodeStatistics(node) {
+    if (!node) {
+        console.error('Node is undefined in calculateNodeStatistics');
+        return {};
+    }
+    
+    // Ensure node.data exists
+    if (!node.data) {
+        console.error('Node data is undefined in calculateNodeStatistics');
+        node.data = {};
+    }
+    
     const state = window.state || {};
     const isComparisonMode = state.isComparisonMode || false;
     
     // Basic statistics
     const stats = {
-        id: node.data.id,
+        id: node.data.id || 'unknown',
         name: node.data.name || 'Unknown',
         title: node.data.title || '',
         fte: node.data.fte || 1,
@@ -211,7 +222,7 @@ function findEmployeeById(id, data) {
  * @returns {number} The total number of descendants
  */
 function countTotalDescendants(node) {
-    if (!node.children || node.children.length === 0) {
+    if (!node || !node.children || node.children.length === 0) {
         return 0;
     }
     
@@ -230,7 +241,11 @@ function countTotalDescendants(node) {
  * @returns {number} The total FTE
  */
 function calculateTotalFte(node) {
-    const nodeFte = parseFloat(node.data.fte) || 1;
+    if (!node) {
+        return 0;
+    }
+    
+    const nodeFte = node.data && node.data.fte ? parseFloat(node.data.fte) : 1;
     
     if (!node.children || node.children.length === 0) {
         return nodeFte;
