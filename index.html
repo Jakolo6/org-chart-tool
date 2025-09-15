@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="./css/components/node-stats.css">
   <link rel="stylesheet" href="./css/components/zoom-controls.css">
   <link rel="stylesheet" href="./css/components/header-chart-name.css">
+  <link rel="stylesheet" href="./css/components/floating-comparison-controls.css">
   <link rel="stylesheet" href="./css/chart.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -68,8 +69,14 @@
 
     <!-- Main container -->
     <div class="main-container">
-      <!-- Comparison Controls -->
+      <!-- Floating Comparison Controls -->
       <div class="comparison-controls">
+        <div class="comparison-icon">
+          <i class="fas fa-exchange-alt"></i>
+        </div>
+        <button class="comparison-toggle-btn" id="comparisonToggleBtn" title="Minimize/Maximize">
+          <i class="fas fa-minus"></i>
+        </button>
         <div class="comparison-header">
           <h3>Comparison Mode</h3>
           <button id="toggleViewBtn" class="btn btn-secondary">
@@ -105,6 +112,34 @@
           </div>
         </div>
       </div>
+      
+      <script>
+        // Initialize comparison controls toggle functionality
+        document.addEventListener('DOMContentLoaded', () => {
+          const comparisonControls = document.querySelector('.comparison-controls');
+          const toggleBtn = document.getElementById('comparisonToggleBtn');
+          
+          if (comparisonControls && toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+              comparisonControls.classList.toggle('minimized');
+              const icon = toggleBtn.querySelector('i');
+              if (comparisonControls.classList.contains('minimized')) {
+                icon.className = 'fas fa-plus';
+              } else {
+                icon.className = 'fas fa-minus';
+              }
+            });
+            
+            // Allow clicking on the minimized control to expand it
+            comparisonControls.addEventListener('click', (e) => {
+              if (comparisonControls.classList.contains('minimized') && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
+                comparisonControls.classList.remove('minimized');
+                toggleBtn.querySelector('i').className = 'fas fa-minus';
+              }
+            });
+          }
+        });
+      </script>
 
       <!-- Hidden element to store chart name -->
       <div id="chartName" style="display: none;">Loading chart...</div>
@@ -785,36 +820,8 @@
         }
       });
       
-      // Zoom controls
-      const zoomInBtn = document.getElementById('zoomInBtn');
-      const zoomOutBtn = document.getElementById('zoomOutBtn');
-      const resetZoomBtn = document.getElementById('resetZoomBtn');
-      
-      let currentZoom = 1;
-      const zoomStep = 0.1;
-      const chartArea = document.getElementById('chart-area');
-      
-      zoomInBtn.addEventListener('click', () => {
-        currentZoom += zoomStep;
-        applyZoom();
-      });
-      
-      zoomOutBtn.addEventListener('click', () => {
-        currentZoom = Math.max(0.1, currentZoom - zoomStep);
-        applyZoom();
-      });
-      
-      resetZoomBtn.addEventListener('click', () => {
-        currentZoom = 1;
-        applyZoom();
-      });
-      
-      function applyZoom() {
-        const svg = d3.select('#chart-area svg');
-        if (!svg.empty()) {
-          svg.attr('transform', `scale(${currentZoom})`);
-        }
-      }
+      // Zoom controls are now handled by zoomControls.js
+      // Legacy zoom code removed to prevent errors
     });
     
     // Helper functions
