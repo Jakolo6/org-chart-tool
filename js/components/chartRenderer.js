@@ -743,34 +743,8 @@ function renderNodes(nodes) {
         .attr('width', window.CONFIG.nodeWidth)
         .attr('height', window.CONFIG.nodeHeight)
         .attr('rx', 4)
-        .attr('ry', 4)
-        .each(function(d) {
-            // Apply styles directly based on change type
-            const nodeElement = d3.select(this);
-            console.log('Creating node with changeType:', d.changeType);
-            
-            if (d.changeType === 'added') {
-                nodeElement
-                    .style('fill', '#dcfce7')
-                    .style('stroke', '#16a34a')
-                    .style('stroke-width', '3px');
-            } else if (d.changeType === 'moved') {
-                nodeElement
-                    .style('fill', '#fefce8')
-                    .style('stroke', '#ca8a04')
-                    .style('stroke-width', '3px');
-            } else if (d.changeType === 'exit') {
-                nodeElement
-                    .style('fill', '#fef2f2')
-                    .style('stroke', '#dc2626')
-                    .style('stroke-width', '3px');
-            } else {
-                nodeElement
-                    .style('fill', '#ffffff')
-                    .style('stroke', '#e2e8f0')
-                    .style('stroke-width', '1.5px');
-            }
-        });
+        .attr('ry', 4);
+
     
     // Add name text with wrapping
     enterGroups.append('text')
@@ -847,28 +821,18 @@ function renderNodes(nodes) {
 
 }
 
+// These functions are no longer needed as we're using CSS classes for styling
+// Keeping them as stubs for backward compatibility
 function getNodeColor(node) {
     console.log('getNodeColor called for node:', node.id, 'changeType:', node.changeType, 'isComparisonMode:', window.state.isComparisonMode);
-    
-    // Always show colors for changes, regardless of comparison mode
-    switch (node.changeType) {
-        case 'added': return '#dcfce7'; // Light green background
-        case 'moved': return '#fefce8'; // Light yellow background
-        case 'exit': return '#fef2f2'; // Light red background
-        default: return '#ffffff'; // Default white
-    }
+    // Return null to let CSS handle the styling
+    return null;
 }
 
 function getNodeBorderColor(node) {
     console.log('getNodeBorderColor called for node:', node.id, 'changeType:', node.changeType);
-    
-    // Always show border colors for changes, regardless of comparison mode
-    switch (node.changeType) {
-        case 'added': return '#16a34a'; // Green border
-        case 'moved': return '#ca8a04'; // Yellow/amber border
-        case 'exit': return '#dc2626'; // Red border
-        default: return '#e2e8f0'; // Default light gray border
-    }
+    // Return null to let CSS handle the styling
+    return null;
 }
 
 /* ===========================================
