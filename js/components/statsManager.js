@@ -6,168 +6,11 @@
 console.log('[OrgChart] statsManager loaded');
 
 /* ===========================================
-   COMPARISON MODE MANAGEMENT
+   STATISTICS MANAGEMENT
 =========================================== */
 
-let __toggleInProgress = false;
-
-/**
- * Toggles between baseline and comparison mode.
- * In comparison mode, the chart shows changes between baseline and update data.
- */
-function toggleComparisonMode() {
-    if (__toggleInProgress) return;
-    __toggleInProgress = true;
-    
-    try {
-        // Get state from window object
-        const state = window.state || {};
-        
-        // Check if we have both baseline and update data
-        if (!state.baselineData || state.baselineData.length === 0 || 
-            !state.updateData || state.updateData.length === 0) {
-            alert('Both baseline and update data must be loaded to enable comparison mode.');
-            return;
-        }
-        
-        // Toggle mode
-        const newMode = !state.isComparisonMode;
-        
-        // Update button text
-        const compareBtn = document.getElementById('compareBtn');
-        if (compareBtn) {
-            compareBtn.textContent = newMode ? '⟵ Baseline' : '⇄ Compare';
-        }
-        
-        // Update mode indicator
-        const modeIndicator = document.getElementById('modeIndicator');
-        if (modeIndicator) {
-            modeIndicator.textContent = newMode ? '🔄 Comparison View' : '📊 Baseline View';
-            modeIndicator.className = `mode-indicator ${newMode ? 'comparison' : 'baseline'}`;
-        }
-        
-        // Set the data to use based on mode
-        const dataToUse = newMode ? performChangeAnalysis() : state.baselineData;
-        
-        // Update state
-        if (window.setComparisonMode) window.setComparisonMode(newMode);
-        if (window.setCurrentData) window.setCurrentData(dataToUse);
-        
-        // Build hierarchy and render chart
-        const rootNode = window.buildHierarchy ? window.buildHierarchy(dataToUse) : null;
-        if (window.setRootNode) window.setRootNode(rootNode);
-        if (window.renderChart) window.renderChart(rootNode);
-        
-        // Update UI
-        if (window.updateLayoutClasses) window.updateLayoutClasses();
-        
-        // Show overall stats in comparison mode
-        const overallStatsDisplay = document.getElementById('overallStatsDisplay');
-        if (overallStatsDisplay) {
-            if (newMode) {
-                updateOverallStatistics();
-                overallStatsDisplay.classList.add('visible');
-                overallStatsDisplay.style.display = 'block';
-            } else {
-                overallStatsDisplay.classList.remove('visible');
-                setTimeout(() => {
-                    if (!state.isComparisonMode) {
-                        overallStatsDisplay.style.display = 'none';
-                    }
-                }, 300);
-            }
-        }
-    } catch (error) {
-        console.error('Error toggling comparison mode:', error);
-        alert('An error occurred while toggling comparison mode.');
-    } finally {
-        __toggleInProgress = false;
-    }
-}
-
-/**
- * Performs change analysis between baseline and update data.
- * @returns {Array} The processed data with change indicators.
- */
-function performChangeAnalysis() {
-    const state = window.state || {};
-    const baselineData = state.baselineData || [];
-    const updateData = state.updateData || [];
-    
-    // Create maps for quick lookup
-    const baselineMap = new Map();
-    const updateMap = new Map();
-    
-    baselineData.forEach(emp => {
-        baselineMap.set(window.normalizeId ? window.normalizeId(emp.id) : emp.id.toLowerCase(), emp);
-    });
-    
-    updateData.forEach(emp => {
-        updateMap.set(window.normalizeId ? window.normalizeId(emp.id) : emp.id.toLowerCase(), emp);
-    });
-    
-    // Identify changes
-    const changes = {
-        added: [],
-        removed: [],
-        changed: [],
-        unchanged: []
-    };
-    
-    // Find removed and changed employees
-    baselineData.forEach(baseEmp => {
-        const baseId = window.normalizeId ? window.normalizeId(baseEmp.id) : baseEmp.id.toLowerCase();
-        if (!updateMap.has(baseId)) {
-            changes.removed.push({
-                ...baseEmp,
-                changeType: 'exit'
-            });
-        } else {
-            const updateEmp = updateMap.get(baseId);
-            const baseManagerId = window.normalizeId ? window.normalizeId(baseEmp.manager) : (baseEmp.manager || '').toLowerCase();
-            const updateManagerId = window.normalizeId ? window.normalizeId(updateEmp.manager) : (updateEmp.manager || '').toLowerCase();
-            
-            if (baseManagerId !== updateManagerId) {
-                changes.changed.push({
-                    ...updateEmp,
-                    changeType: 'moved',
-                    previousManager: baseEmp.manager
-                });
-            } else {
-                changes.unchanged.push({
-                    ...updateEmp,
-                    changeType: null
-                });
-            }
-        }
-    });
-    
-    // Find new employees
-    updateData.forEach(updateEmp => {
-        const updateId = window.normalizeId ? window.normalizeId(updateEmp.id) : updateEmp.id.toLowerCase();
-        if (!baselineMap.has(updateId)) {
-            changes.added.push({
-                ...updateEmp,
-                changeType: 'new'
-            });
-        }
-    });
-    
-    // Combine all changes into one dataset
-    const combinedData = [
-        ...changes.unchanged,
-        ...changes.changed,
-        ...changes.added,
-        ...changes.removed
-    ];
-    
-    // Store change analysis in state
-    if (window.setChangeAnalysis) {
-        window.setChangeAnalysis(changes);
-    }
-    
-    return combinedData;
-}
+// Note: The toggleComparisonMode function is now imported from comparisonManager.js
+// to avoid duplicate implementations
 
 /**
  * Updates the overall statistics display with change analysis data.
@@ -552,7 +395,6 @@ function findAllSubordinates(nodeId, data) {
 }
 
 // Expose functions to global window object
-window.toggleComparisonMode = toggleComparisonMode;
 window.updateOverallStatistics = updateOverallStatistics;
 window.updateSelectedNodeStats = updateSelectedNodeStats;
 window.toggleSummaryStatistics = toggleSummaryStatistics;
