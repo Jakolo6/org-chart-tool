@@ -111,7 +111,7 @@
 }
 
 /* Node styles for comparison mode */
-.node-card.new {
+.node-card.added {
   fill: rgba(5, 150, 105, 0.1);
   stroke: #059669;
   stroke-width: 2px;
@@ -131,7 +131,7 @@
 }
 
 /* Connection line styles for comparison mode */
-.connection-line.new {
+.connection-line.added {
   stroke: #059669;
   stroke-width: 2px;
 }
