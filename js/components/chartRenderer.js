@@ -659,27 +659,34 @@ function renderChart(rootNode, selector) {
  * @param {Array<Object>} links The array of visible link objects to render.
  */
 function renderConnections(links) {
-    // Create connection lines
+    // Create connection lines with a more specific key function
     const connectionLines = window.state.g.selectAll('.connection-line')
-        .data(links, d => d.target.id);
+        .data(links, d => `${d.source.id}-${d.target.id}`);
     
-    // Handle enter selection
+    // Handle enter selection with improved styling
     connectionLines.enter()
         .append('path')
-        .attr('class', 'connection-line')
+        .attr('class', d => `connection-line ${d.changeType || ''}`)
         .attr('d', d => generateLShapedPath(d))
         .style('fill', 'none')
-        .style('stroke', '#cbd5e1')
-        .style('stroke-width', '1.5px');
+        .style('opacity', 0)
+        .transition()
+        .duration(window.CONFIG.animationDuration)
+        .style('opacity', d => d.changeType === 'exit' ? 0.5 : (d.changeType ? 0.8 : 0.6));
     
-    // Handle update selection
+    // Handle update selection with class updates
     connectionLines
         .transition()
         .duration(window.CONFIG.animationDuration)
-        .attr('d', d => generateLShapedPath(d));
+        .attr('d', d => generateLShapedPath(d))
+        .attr('class', d => `connection-line ${d.changeType || ''}`);
     
-    // Handle exit selection
-    connectionLines.exit().remove();
+    // Handle exit selection with fade out
+    connectionLines.exit()
+        .transition()
+        .duration(window.CONFIG.animationDuration)
+        .style('opacity', 0)
+        .remove();
     
     // Update connection styles based on change type
     window.state.g.selectAll('.connection-line')
@@ -694,7 +701,7 @@ function renderConnections(links) {
             }
         })
         .style('stroke-width', d => d.changeType ? '2px' : '1.5px')
-        .style('stroke-dasharray', d => d.changeType === 'exit' ? '4' : 'none');
+        .style('stroke-dasharray', d => d.changeType === 'moved' ? '8,4' : (d.changeType === 'exit' ? '3,3' : 'none'));
 }
 
 /**
@@ -816,8 +823,8 @@ function renderNodes(nodes) {
     
     // Add hover and click handlers
     enterGroups
-        .on('mouseenter', handleNodeHover)
-        .on('mouseleave', handleNodeUnhover)
+        .on('mouseenter', (event, d) => handleNodeHover(event, d))
+        .on('mouseleave', () => handleNodeUnhover())
         .on('click', (event, d) => handleNodeClick(event, d));
     
     // Merge enter and update selections
@@ -934,6 +941,65 @@ function selectNode(node) {
     
     // Store the selected node in state
     window.state.selectedNode = node;
+}
+
+/**
+ * Handles node hover event - highlights ancestors
+ * @param {Event} event - The mouse event
+ * @param {Object} node - The node being hovered
+ */
+function handleNodeHover(event, node) {
+    if (node.isStub) return;
+    
+    // Find ancestors of the hovered node
+    const ancestors = findAncestors(node);
+    
+    // Highlight the node and its ancestors
+    window.state.g.selectAll('.node-card')
+        .classed('ancestor-highlight', d => ancestors.includes(d.id));
+    
+    // Also highlight the hovered node
+    window.state.g.selectAll('.node-card')
+        .filter(d => d.id === node.id)
+        .classed('hover', true);
+}
+
+/**
+ * Handles node unhover event - removes all highlights
+ */
+function handleNodeUnhover() {
+    // Remove all highlights
+    window.state.g.selectAll('.node-card')
+        .classed('ancestor-highlight', false)
+        .classed('hover', false);
+}
+
+/**
+ * Finds all ancestors of a node
+ * @param {Object} node - The node to find ancestors for
+ * @returns {Array} - Array of ancestor node IDs
+ */
+function findAncestors(node) {
+    const ancestors = [];
+    const parentMap = new Map();
+    
+    // Create a map of child ID to parent ID
+    const data = window.state.currentData || [];
+    data.forEach(emp => {
+        if (emp.manager) {
+            parentMap.set(normalizeId(emp.id), normalizeId(emp.manager));
+        }
+    });
+    
+    // Traverse up the hierarchy to find all ancestors
+    let currentId = normalizeId(node.id);
+    while (parentMap.has(currentId)) {
+        const parentId = parentMap.get(currentId);
+        ancestors.push(parentId);
+        currentId = parentId;
+    }
+    
+    return ancestors;
 }
 
 /**
