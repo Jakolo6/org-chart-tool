@@ -106,40 +106,48 @@
         </div>
       </div>
 
+      <!-- Hidden element to store chart name -->
+      <div id="chartName" style="display: none;">Loading chart...</div>
+      
       <!-- Chart name moved to header -->
       <script>
         // Move chart name to the header
         document.addEventListener('DOMContentLoaded', () => {
-          const chartNameElement = document.getElementById('chartName');
-          if (chartNameElement) {
-            // Create a new element for the chart name in the header
-            const headerChartName = document.createElement('div');
-            headerChartName.id = 'headerChartName';
-            headerChartName.className = 'header-chart-name';
+          // Create a new element for the chart name in the header
+          const headerChartName = document.createElement('div');
+          headerChartName.id = 'headerChartName';
+          headerChartName.className = 'header-chart-name';
+          headerChartName.textContent = 'Loading chart...';
+          
+          // Get the header content element
+          const headerContent = document.querySelector('.header-content');
+          if (headerContent) {
+            // Insert after the logo
+            const logo = headerContent.querySelector('.logo');
+            if (logo && logo.nextSibling) {
+              headerContent.insertBefore(headerChartName, logo.nextSibling);
+            } else {
+              headerContent.appendChild(headerChartName);
+            }
             
-            // Get the header content element
-            const headerContent = document.querySelector('.header-content');
-            if (headerContent) {
-              // Insert after the logo
-              const logo = headerContent.querySelector('.logo');
-              if (logo && logo.nextSibling) {
-                headerContent.insertBefore(headerChartName, logo.nextSibling);
-              } else {
-                headerContent.appendChild(headerChartName);
+            // Set up a function to update the chart name
+            window.updateChartName = function(name) {
+              if (headerChartName) {
+                headerChartName.textContent = name || 'Untitled Chart';
+                
+                // Add and remove the updated class for animation
+                headerChartName.classList.add('updated');
+                setTimeout(() => {
+                  headerChartName.classList.remove('updated');
+                }, 1500);
               }
               
-              // Update the header chart name when the chart name changes
-              const observer = new MutationObserver((mutations) => {
-                headerChartName.textContent = chartNameElement.textContent;
-              });
-              observer.observe(chartNameElement, { childList: true, characterData: true, subtree: true });
-              
-              // Initial update
-              headerChartName.textContent = chartNameElement.textContent;
-              
-              // Hide the original chart name
-              chartNameElement.style.display = 'none';
-            }
+              // Also update the hidden element for compatibility
+              const chartNameElement = document.getElementById('chartName');
+              if (chartNameElement) {
+                chartNameElement.textContent = name || 'Untitled Chart';
+              }
+            };
           }
         });
       </script>
@@ -382,7 +390,9 @@
         console.log('Version data:', version);
         
         // Update chart title
-        document.getElementById('chartName').textContent = chart.name;
+        if (window.updateChartName) {
+          window.updateChartName(chart.name);
+        }
         document.getElementById('chartTitle').textContent = chart.name;
         
         let chartData = [];
