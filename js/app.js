@@ -261,20 +261,7 @@ export async function initApp() {
   const { initializeApplication } = await import('./main.js');
   initializeApplication();
   
-  // Chart controls
-  const zoomInBtn = document.getElementById('zoomInBtn');
-  const zoomOutBtn = document.getElementById('zoomOutBtn');
-  const resetZoomBtn = document.getElementById('resetZoomBtn');
-  const centerChartBtn = document.getElementById('centerChartBtn');
-  
-  if (zoomInBtn) zoomInBtn.addEventListener('click', () => zoomChart(1.2));
-  if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => zoomChart(0.8));
-  if (resetZoomBtn) resetZoomBtn.addEventListener('click', resetZoom);
-  if (centerChartBtn) centerChartBtn.addEventListener('click', () => {
-    if (window.centerChart) {
-      window.centerChart();
-    }
-  });
+  // Chart controls removed - now using floating zoom controls instead
   
   // Add save chart button event listener
   const saveChartBtn = document.getElementById('saveChartBtn');
