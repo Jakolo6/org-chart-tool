@@ -67,7 +67,48 @@ function fitChartToView() {
     centerChart();
 }
 
+/**
+ * Zooms the chart by the specified scale factor
+ * @param {number} scaleFactor - Scale factor to zoom by (> 1 to zoom in, < 1 to zoom out)
+ */
+function zoomChart(scaleFactor) {
+    const state = window.state || {};
+    if (!state.svg || !state.zoom) {
+        console.warn('Cannot zoom chart: svg or zoom not initialized');
+        return;
+    }
+    
+    // Get current transform
+    const transform = d3.zoomTransform(state.svg.node());
+    
+    // Calculate new scale
+    const newScale = transform.k * scaleFactor;
+    
+    // Apply new scale with smooth transition
+    state.svg.transition()
+        .duration(300)
+        .call(state.zoom.transform, transform.scale(scaleFactor));
+    
+    console.log(`Zoomed chart by factor ${scaleFactor}, new scale: ${newScale}`);
+}
+
+/**
+ * Resets the zoom level to 1
+ */
+function resetZoom() {
+    const state = window.state || {};
+    if (!state.svg || !state.zoom) return;
+    
+    state.svg.transition()
+        .duration(500)
+        .call(state.zoom.transform, d3.zoomIdentity);
+    
+    console.log('Reset zoom level to 1');
+}
+
 // Export functions to global window object
 window.centerChart = centerChart;
 window.fitChartToView = fitChartToView;
 window.getVisibleNodes = getVisibleNodes;
+window.zoomChart = zoomChart;
+window.resetZoom = resetZoom;
