@@ -107,20 +107,39 @@ function hideEmployeeTooltip() {
  */
 function updateNodeStatistics(node) {
     if (!node) {
+        console.warn('Node is undefined in updateNodeStatistics');
         hideNodeStatistics();
         return;
     }
     
+    // Check if node has the expected structure
+    if (typeof node !== 'object') {
+        console.warn('Node is not an object in updateNodeStatistics');
+        hideNodeStatistics();
+        return;
+    }
+    
+    // Ensure node.data exists to prevent errors
+    if (!node.data) {
+        console.warn('Node data is missing, creating empty object');
+        node.data = {};
+    }
+    
     selectedNode = node;
     
-    // Calculate statistics
-    const stats = calculateNodeStatistics(node);
-    
-    // Update UI with statistics
-    renderNodeStatistics(stats);
-    
-    // Show the statistics panel
-    showNodeStatistics();
+    try {
+        // Calculate statistics
+        const stats = calculateNodeStatistics(node);
+        
+        // Update UI with statistics
+        renderNodeStatistics(stats);
+        
+        // Show the statistics panel
+        showNodeStatistics();
+    } catch (error) {
+        console.error('Error updating node statistics:', error);
+        hideNodeStatistics();
+    }
 }
 
 /**
@@ -136,7 +155,13 @@ function calculateNodeStatistics(node) {
     
     // Ensure node.data exists
     if (!node.data) {
-        console.error('Node data is undefined in calculateNodeStatistics');
+        console.warn('Node data is undefined in calculateNodeStatistics, creating empty object');
+        node.data = {};
+    }
+    
+    // Double-check that node.data is an object
+    if (typeof node.data !== 'object') {
+        console.error('Node data is not an object in calculateNodeStatistics');
         node.data = {};
     }
     
