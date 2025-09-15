@@ -8,30 +8,23 @@ console.log('[OrgChart] zoomControls loaded');
  * Initialize the zoom controls for the chart
  */
 function initZoomControls() {
-    // Create the zoom controls container if it doesn't exist
-    let zoomControlsContainer = document.querySelector('.zoom-controls');
-    if (!zoomControlsContainer) {
-        zoomControlsContainer = document.createElement('div');
-        zoomControlsContainer.className = 'zoom-controls';
-        zoomControlsContainer.style.position = 'absolute';
-        zoomControlsContainer.style.top = '20px';
-        zoomControlsContainer.style.right = '20px';
-        zoomControlsContainer.style.left = 'auto';
-        zoomControlsContainer.style.zIndex = '1000';
-        
-        // Add to the chart area
-        const chartArea = document.getElementById('chart-area');
-        if (chartArea) {
-            // Ensure chart area has position relative for proper absolute positioning of controls
-            if (window.getComputedStyle(chartArea).position === 'static') {
-                chartArea.style.position = 'relative';
-            }
-            chartArea.appendChild(zoomControlsContainer);
-        }
+    // Remove any existing zoom controls
+    const existingControls = document.querySelector('.zoom-controls');
+    if (existingControls) {
+        existingControls.remove();
     }
     
-    // Clear existing controls
-    zoomControlsContainer.innerHTML = '';
+    // Create the zoom controls container
+    const zoomControlsContainer = document.createElement('div');
+    zoomControlsContainer.className = 'zoom-controls';
+    zoomControlsContainer.style.position = 'fixed';
+    zoomControlsContainer.style.top = '100px';
+    zoomControlsContainer.style.right = '20px';
+    zoomControlsContainer.style.left = 'auto';
+    zoomControlsContainer.style.zIndex = '9999';
+    
+    // Add directly to the body for fixed positioning
+    document.body.appendChild(zoomControlsContainer);
     
     // Create zoom in button
     const zoomInBtn = document.createElement('button');
