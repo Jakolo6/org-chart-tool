@@ -1146,3 +1146,4 @@ window.initChartRenderer = initChartRenderer;
 
 // Log that chart renderer is loaded
 console.log('[ChartRenderer] Chart renderer loaded with all exports');
+} // Add missing closing brace for the module
