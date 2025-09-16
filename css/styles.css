@@ -9,7 +9,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 /* ===========================================
    CHART AREA / NODES
 =========================================== */
-.chart-area { position: absolute; top: 80px; left: 0; right: 0; bottom: 0; }
+.chart-area { 
+  position: absolute; 
+  top: 140px; 
+  left: 0; 
+  right: 0; 
+  bottom: 0; 
+  overflow: visible;
+  height: calc(100vh - 140px);
+}
 svg#chartSvg { width: 100%; height: 100%; display: block; }
 
 /* Node styling moved to chart.css */
