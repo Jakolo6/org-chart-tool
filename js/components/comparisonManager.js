@@ -51,7 +51,6 @@ function toggleComparisonMode() {
     const toggleViewBtn = document.getElementById('toggleViewBtn');
     const modeIndicator = document.getElementById('modeIndicator');
     const legendContainer = document.getElementById('legendContainer');
-    const changeSummary = document.getElementById('changeSummary');
     const comparisonControls = document.querySelector('.comparison-controls');
     
     if (state.isComparisonMode) {
@@ -80,7 +79,6 @@ function toggleComparisonMode() {
                 headerLeft.appendChild(legendContainer);
             }
         }
-        if (changeSummary) changeSummary.style.display = 'flex';
         
         // Set current data to target data
         state.currentData = state.updateData;
@@ -132,7 +130,6 @@ function toggleComparisonMode() {
                 headerLeft.appendChild(legendContainer);
             }
         }
-        if (changeSummary) changeSummary.style.display = 'none';
         
         // Set current data to baseline data
         state.currentData = state.baselineData;
@@ -207,39 +204,6 @@ function analyzeChanges() {
     state.changeAnalysis = changeAnalysis;
     
     console.log('Change analysis:', changeAnalysis);
-    
-    // Update change summary in UI if element exists
-    updateChangeSummary(changeAnalysis);
-}
-
-/**
- * Update the change summary in the UI
- * @param {Object} analysis - The change analysis object
- */
-function updateChangeSummary(analysis) {
-    const summaryEl = document.getElementById('changeSummary');
-    if (!summaryEl) return;
-    
-    summaryEl.innerHTML = `
-        <div class="summary-item added">
-            <span class="count">${analysis.added.length}</span>
-            <span class="label">New</span>
-        </div>
-        <div class="summary-item moved">
-            <span class="count">${analysis.moved.length}</span>
-            <span class="label">Moved</span>
-        </div>
-        <div class="summary-item removed">
-            <span class="count">${analysis.removed.length}</span>
-            <span class="label">Removed</span>
-        </div>
-        <div class="summary-item total">
-            <span class="count">${analysis.totalDirectChanges}</span>
-            <span class="label">Total Changes</span>
-        </div>
-    `;
-    
-    summaryEl.style.display = 'flex';
 }
 
 /**
