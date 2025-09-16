@@ -1143,6 +1143,7 @@ window.fitChartToView = fitChartToView;
 window.selectNode = selectNode;
 window.renderChart = renderChart;
 window.initChartRenderer = initChartRenderer;
+window.showNodeStats = showNodeStats;
 
 // Log that chart renderer is loaded
 console.log('[ChartRenderer] Chart renderer loaded with all exports');
