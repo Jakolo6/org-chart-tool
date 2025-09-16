@@ -69,10 +69,27 @@ function toggleComparisonMode() {
             modeIndicator.className = 'mode-indicator target';
         }
         
-        // Show comparison controls and legend
+        // Show comparison controls
         if (comparisonControls) comparisonControls.style.display = 'block';
+        
+        // Create and show legend only in comparison mode
         if (legendContainer) {
             legendContainer.style.display = 'flex';
+            legendContainer.innerHTML = `
+                <div class="legend-item">
+                    <div class="legend-color new"></div>
+                    <span class="legend-label">New</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color moved"></div>
+                    <span class="legend-label">Moved</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color exit"></div>
+                    <span class="legend-label">Exit</span>
+                </div>
+            `;
+            
             // Ensure legend is in the correct position
             const headerLeft = document.querySelector('.page-header-left');
             if (headerLeft && !headerLeft.contains(legendContainer)) {
