@@ -319,7 +319,7 @@
   <script src="./js/app.js" type="module"></script>
   <script>
     // Initialize authentication and comparison manager
-    document.addEventListener('DOMContentLoaded', async () => {
+    window.addEventListener('load', async () => {
       // Initialize comparison manager if available
       if (window.initComparisonManager) {
         window.initComparisonManager();
