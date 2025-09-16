@@ -1,0 +1,91 @@
+/**
+ * Styles for header controls
+ */
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-top: 8px;
+}
+
+.mode-indicator {
+  font-size: 14px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background-color: #f0f9ff;
+  color: #0369a1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.mode-indicator.baseline {
+  background-color: #f0f9ff;
+  color: #0369a1;
+}
+
+.mode-indicator.target {
+  background-color: #f0fdf4;
+  color: #166534;
+}
+
+/* Legend container in header */
+.header-controls .legend-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background-color: #fff;
+  border: 1px solid #eee;
+}
+
+.header-controls .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.header-controls .legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.header-controls .legend-color.new {
+  background-color: #10b981;
+}
+
+.header-controls .legend-color.moved {
+  background-color: #f59e0b;
+}
+
+.header-controls .legend-color.exit {
+  background-color: #ef4444;
+}
+
+.header-controls .legend-label {
+  font-size: 12px;
+  color: #666;
+}
+
+/* Toggle view button */
+.header-controls #toggleViewBtn {
+  padding: 4px 10px;
+  font-size: 14px;
+  height: auto;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .header-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .header-controls .legend-container {
+    flex-wrap: wrap;
+  }
+}
