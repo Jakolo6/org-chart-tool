@@ -3,9 +3,9 @@
 .selected-node-stats {
   position: fixed;
   top: 80px;
-  right: 20px;
+  right: 80px; /* Moved left to avoid zoom controls */
   width: 320px;
-  max-height: calc(100vh - 100px);
+  max-height: calc(100vh - 120px);
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
@@ -15,6 +15,15 @@
   flex-direction: column;
   border: 1px solid #e2e8f0;
   transition: all 0.3s ease;
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    right: 20px;
+    left: 20px;
+    width: auto;
+    max-width: calc(100% - 40px);
+    top: 100px;
+  }
 }
 
 .stats-panel-header {
