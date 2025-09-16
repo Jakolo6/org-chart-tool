@@ -484,14 +484,22 @@ function buildComparisonMaps() {
  * @param {Object} node - The current node
  */
 function buildTotalReportsMap(node) {
-    if (!node) return;
+    if (!node || !node.data) return;
     
+    // Safely get the node ID, defaulting to a unique string if not available
+    const nodeId = node.data.id || `node-${Math.random().toString(36).substr(2, 9)}`;
     const totalReports = countTotalDescendants(node);
-    totalReportsMap.set(node.data.id, totalReports);
     
-    if (node.children) {
+    if (nodeId) {
+        totalReportsMap.set(nodeId, totalReports);
+    }
+    
+    // Process children if they exist
+    if (node.children && Array.isArray(node.children)) {
         node.children.forEach(child => {
-            buildTotalReportsMap(child);
+            if (child) {
+                buildTotalReportsMap(child);
+            }
         });
     }
 }
