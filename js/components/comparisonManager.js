@@ -10,8 +10,16 @@ console.log('[OrgChart] comparisonManager loaded');
 function initComparisonManager() {
     // Add toggle view button event listener
     const toggleViewBtn = document.getElementById('toggleViewBtn');
+    const legendContainer = document.getElementById('legendContainer');
+    
     if (toggleViewBtn) {
         toggleViewBtn.addEventListener('click', toggleComparisonMode);
+        toggleViewBtn.style.display = 'none'; // Hide by default
+    }
+    
+    // Ensure legend is hidden by default
+    if (legendContainer) {
+        legendContainer.style.display = 'none';
     }
     
     console.log('[OrgChart] Comparison manager initialized');
@@ -48,16 +56,21 @@ function toggleComparisonMode() {
     
     if (state.isComparisonMode) {
         // Switch to target view
+        console.log('Switching to target view');
+        
+        // Update button text and icon
         if (toggleViewBtn) {
             toggleViewBtn.innerHTML = '<i class="fas fa-exchange-alt"></i> Switch to Baseline';
-            toggleViewBtn.classList.add('active');
+            toggleViewBtn.style.display = 'inline-flex';
         }
+        
+        // Update mode indicator
         if (modeIndicator) {
-            modeIndicator.textContent = '⚖️ Target View';
+            modeIndicator.textContent = 'Target View';
             modeIndicator.className = 'mode-indicator target';
         }
         
-        // Show comparison controls
+        // Show comparison controls and legend
         if (comparisonControls) comparisonControls.style.display = 'block';
         if (legendContainer) legendContainer.style.display = 'flex';
         if (changeSummary) changeSummary.style.display = 'flex';
@@ -88,16 +101,21 @@ function toggleComparisonMode() {
         console.log('Change analysis:', state.changeAnalysis);
     } else {
         // Switch to baseline view
+        console.log('Switching to baseline view');
+        
+        // Update button text and icon
         if (toggleViewBtn) {
             toggleViewBtn.innerHTML = '<i class="fas fa-exchange-alt"></i> Switch to Target';
-            toggleViewBtn.classList.remove('active');
+            toggleViewBtn.style.display = 'none';
         }
+        
+        // Update mode indicator
         if (modeIndicator) {
-            modeIndicator.textContent = '📊 Baseline View';
+            modeIndicator.textContent = 'Baseline View';
             modeIndicator.className = 'mode-indicator baseline';
         }
         
-        // Hide comparison controls but keep the container visible
+        // Hide comparison controls and legend
         if (comparisonControls) comparisonControls.style.display = 'block';
         if (legendContainer) legendContainer.style.display = 'none';
         if (changeSummary) changeSummary.style.display = 'none';
