@@ -630,12 +630,12 @@ function renderChart(rootNode, selector) {
     console.log('Rendering nodes...');
     renderNodes(nodes);
     
-    // Auto-fit the chart
+    // Auto-fit the chart with requestAnimationFrame for better performance
     console.log('Scheduling fitChartToView...');
-    setTimeout(() => {
+    requestAnimationFrame(() => {
         console.log('Fitting chart to view...');
         fitChartToView();
-    }, 300); // Increased timeout to ensure DOM is ready
+    });
     
     // Setup tooltip
     setupTooltip();
@@ -707,106 +707,144 @@ function generateLShapedPath(link) {
  * @param {Array<Object>} nodes The array of visible node objects to render.
  */
 function renderNodes(nodes) {
+    if (!nodes || !nodes.length) return;
+    
+    // Batch DOM reads
+    const nodeWidth = window.CONFIG.nodeWidth;
+    const nodeHeight = window.CONFIG.nodeHeight;
+    const animationDuration = window.CONFIG.animationDuration;
+    
+    // Use D3's data join with key function for better performance
     const nodeGroups = window.state.g.selectAll('.node-group')
         .data(nodes, d => d.id);
     
-    // Handle exit selection
+    // Handle exit selection - batch removals
     nodeGroups.exit()
         .transition()
-        .duration(window.CONFIG.animationDuration)
+        .duration(animationDuration)
         .style('opacity', 0)
         .remove();
     
-    // Handle enter selection
+    // Handle enter selection - batch additions
     const enterGroups = nodeGroups.enter()
         .append('g')
         .attr('class', 'node-group')
-        .attr('transform', d => `translate(${d.x}, ${d.y})`)
+        .attr('transform', d => `translate(${d.x},${d.y})`)
         .style('opacity', 0);
     
-    // Add moved halo for moved nodes
-    enterGroups.filter(d => d.changeType === 'moved')
-        .append('rect')
-        .attr('class', 'moved-halo')
-        .attr('x', -window.CONFIG.nodeWidth / 2 - 4)
-        .attr('y', -window.CONFIG.nodeHeight / 2 - 4)
-        .attr('width', window.CONFIG.nodeWidth + 8)
-        .attr('height', window.CONFIG.nodeHeight + 8)
-        .attr('rx', 6)
-        .attr('ry', 6);
+    // Batch DOM operations for better performance
     
-    // Add main node card
-    enterGroups.append('rect')
-        .attr('class', d => `node-card ${d.changeType || ''}`)
-        .attr('x', -window.CONFIG.nodeWidth / 2)
-        .attr('y', -window.CONFIG.nodeHeight / 2)
-        .attr('width', window.CONFIG.nodeWidth)
-        .attr('height', window.CONFIG.nodeHeight)
-        .attr('rx', 4)
-        .attr('ry', 4);
-
+    // Cache calculations
+    const halfNodeWidth = nodeWidth / 2;
+    const halfNodeHeight = nodeHeight / 2;
+    const textWidth = nodeWidth - 20;
     
-    // Add name text with wrapping
-    enterGroups.append('text')
-        .attr('class', d => `node-text ${d.changeType || ''}`)
-        .attr('y', -15)
-        .attr('text-anchor', 'middle')
-        .each(function(d) {
-            wrapSVGText(d3.select(this), d.name, window.CONFIG.nodeWidth - 20, 2, -15);
-        });
+    // Process moved nodes in a batch
+    const movedNodes = enterGroups.filter(d => d.changeType === 'moved');
+    if (!movedNodes.empty()) {
+        movedNodes.append('rect')
+            .attr('class', 'moved-halo')
+            .attr('x', -halfNodeWidth - 4)
+            .attr('y', -halfNodeHeight - 4)
+            .attr('width', nodeWidth + 8)
+            .attr('height', nodeHeight + 8)
+            .attr('rx', 6)
+            .attr('ry', 6);
+    }
     
-    // Add title text with wrapping
-    enterGroups.append('text')
-        .attr('class', d => `node-title ${d.changeType || ''}`)
-        .attr('y', 15)
-        .attr('text-anchor', 'middle')
-        .each(function(d) {
-            wrapSVGText(d3.select(this), d.title || '', window.CONFIG.nodeWidth - 20, 2, 15);
-        });
+    // Batch node card creation
+    enterGroups.each(function(d) {
+        const group = d3.select(this);
+        
+        // Add main node card
+        group.append('rect')
+            .attr('class', `node-card ${d.changeType || ''}`)
+            .attr('x', -halfNodeWidth)
+            .attr('y', -halfNodeHeight)
+            .attr('width', nodeWidth)
+            .attr('height', nodeHeight)
+            .attr('rx', 4)
+            .attr('ry', 4);
+        
+        // Add name text with wrapping
+        group.append('text')
+            .attr('class', `node-text ${d.changeType || ''}`)
+            .attr('y', -15)
+            .attr('text-anchor', 'middle')
+            .each(function() {
+                wrapSVGText(d3.select(this), d.name, textWidth, 2, -15);
+            });
+        
+        // Add title text with wrapping
+        if (d.title) {
+            group.append('text')
+                .attr('class', `node-title ${d.changeType || ''}`)
+                .attr('y', 15)
+                .attr('text-anchor', 'middle')
+                .each(function() {
+                    wrapSVGText(d3.select(this), d.title, textWidth, 2, 15);
+                });
+        }
+        
+        // Add change indicator for moved nodes
+        if (d.changeType === 'moved' && d.previousManagerName) {
+            group.append('text')
+                .attr('class', 'change-indicator')
+                .attr('y', halfNodeHeight - 5)
+                .attr('text-anchor', 'middle')
+                .text(`Moved from: ${d.previousManagerName}`);
+        }
+    });
     
-    // Add change indicator for moved nodes
-    enterGroups.filter(d => d.changeType === 'moved' && d.previousManagerName)
-        .append('text')
-        .attr('class', 'change-indicator')
-        .attr('y', window.CONFIG.nodeHeight / 2 - 5)
-        .attr('text-anchor', 'middle')
-        .text(d => `Moved from: ${d.previousManagerName}`);
-    
-    // Add hover and click handlers
+    // Add event handlers in a single pass
     enterGroups
         .on('mouseenter', (event, d) => handleNodeHover(event, d))
-        .on('mouseleave', () => handleNodeUnhover())
+        .on('mouseleave', handleNodeUnhover)
         .on('click', (event, d) => handleNodeClick(event, d));
     
     // Merge enter and update selections
     const allGroups = nodeGroups.merge(enterGroups);
     
-    // Remove existing expand buttons
-    allGroups.selectAll('.expand-button, .expand-icon').remove();
+    // Process nodes with children in a batch
+    const nodesWithChildren = allGroups.filter(d => d.children && d.children.length > 0);
     
-    // Add expand/collapse buttons for nodes with children
-    allGroups.filter(d => d.children && d.children.length > 0)
-        .each(function(d) {
+    if (!nodesWithChildren.empty()) {
+        // Remove existing expand buttons in a batch
+        nodesWithChildren.selectAll('.expand-button, .expand-icon').remove();
+        
+        // Add expand/collapse buttons in a batch
+        nodesWithChildren.each(function(d) {
             const group = d3.select(this);
+            const isExpanded = d._expanded !== false; // Default to expanded
+            const buttonSize = 10;
+            const buttonX = nodeWidth / 2 - 5;
+            const buttonY = -nodeHeight / 2 + 5;
             
-            // Position the button in the top-right corner
+            // Add expand/collapse button
             group.append('circle')
                 .attr('class', 'expand-button')
-                .attr('cx', window.CONFIG.nodeWidth / 2 - 5)
-                .attr('cy', -window.CONFIG.nodeHeight / 2 + 5)
-                .attr('r', 10)
-                .on('click', (event, d) => {
+                .attr('cx', buttonX)
+                .attr('cy', buttonY)
+                .attr('r', buttonSize)
+                .attr('fill', '#fff')
+                .attr('stroke', '#666')
+                .attr('stroke-width', 1)
+                .on('click', function(event) {
                     event.stopPropagation();
                     d.expanded = !d.expanded;
                     renderChart(window.state.rootNode);
                 });
-            
+                
+            // Add plus/minus icon
             group.append('text')
                 .attr('class', 'expand-icon')
-                .attr('x', window.CONFIG.nodeWidth / 2 - 5)
-                .attr('y', -window.CONFIG.nodeHeight / 2 + 5)
+                .attr('x', buttonX)
+                .attr('y', buttonY + 4)
+                .attr('text-anchor', 'middle')
+                .attr('font-size', '12px')
+                .attr('fill', '#666')
                 .attr('dy', '0.35em')
-                .text(d => d.expanded ? '−' : '+');
+                .text(isExpanded ? '−' : '+');
         });
     
     // Animate nodes into position
@@ -1059,12 +1097,40 @@ function handleResize() {
     }
 }
 
-// Set up resize handler
+// Set up optimized resize handler with debouncing
 let resizeTimeout;
+let lastWidth = window.innerWidth;
+let lastHeight = window.innerHeight;
+const RESIZE_DEBOUNCE_DELAY = 100; // Reduced from 250ms to 100ms for better responsiveness
+
+function handleResizeDebounced() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    
+    // Only trigger if size actually changed
+    if (Math.abs(width - lastWidth) > 10 || Math.abs(height - lastHeight) > 10) {
+        lastWidth = width;
+        lastHeight = height;
+        handleResize();
+    }
+}
+
 window.addEventListener('resize', function() {
     if (resizeTimeout) clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(handleResize, 200);
+    resizeTimeout = setTimeout(handleResizeDebounced, RESIZE_DEBOUNCE_DELAY);
 });
+
+// Initialize chart renderer
+function initChartRenderer() {
+    console.log('[ChartRenderer] Initializing chart renderer');
+    
+    // Initialize the chart with default container
+    initChart('#chart-area');
+    
+    // Set up any additional event listeners or initialization logic here
+    console.log('[ChartRenderer] Chart renderer initialized');
+    return true;
+}
 
 // Export functions to global window object
 window.initChart = initChart;
@@ -1076,3 +1142,4 @@ window.centerChart = centerChart;
 window.fitChartToView = fitChartToView;
 window.selectNode = selectNode;
 window.renderChart = renderChart;
+window.initChartRenderer = initChartRenderer;

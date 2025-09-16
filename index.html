@@ -120,12 +120,17 @@
             });
             
             // Allow clicking on the minimized control to expand it
-            comparisonControls.addEventListener('click', (e) => {
-              if (comparisonControls.classList.contains('minimized') && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
-                comparisonControls.classList.remove('minimized');
-                toggleBtn.querySelector('i').className = 'fas fa-minus';
-              }
-            });
+            if (comparisonControls) {
+              comparisonControls.addEventListener('click', (e) => {
+                if (comparisonControls.classList.contains('minimized') && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
+                  comparisonControls.classList.remove('minimized');
+                  const toggleIcon = toggleBtn.querySelector('i');
+                  if (toggleIcon) {
+                    toggleIcon.className = 'fas fa-minus';
+                  }
+                }
+              });
+            }
           }
         });
       </script>
@@ -342,42 +347,55 @@
       }
       
       // Set user initials
-      if (profile?.display_name) {
-        document.getElementById('userInitials').textContent = getInitials(profile.display_name);
-      } else if (user?.email) {
-        document.getElementById('userInitials').textContent = getInitials(user.email);
+      const userInitials = document.getElementById('userInitials');
+      if (userInitials) {
+        if (profile?.display_name) {
+          userInitials.textContent = getInitials(profile.display_name);
+        } else if (user?.email) {
+          userInitials.textContent = getInitials(user.email);
+        }
       }
       
       // Add sign out event listener
-      document.getElementById('signOutLink').addEventListener('click', async (e) => {
-        e.preventDefault();
-        try {
-          await window.signOut();
-          window.location.href = './landing.html';
-        } catch (error) {
-          console.error('Sign out error:', error);
-        }
-      });
+      const signOutLink = document.getElementById('signOutLink');
+      if (signOutLink) {
+        signOutLink.addEventListener('click', async (e) => {
+          e.preventDefault();
+          try {
+            await window.signOut();
+            window.location.href = './landing.html';
+          } catch (error) {
+            console.error('Sign out error:', error);
+          }
+        });
+      }
       
       // Toggle user dropdown
-      document.getElementById('userAvatar').addEventListener('click', () => {
-        document.getElementById('userDropdown').classList.toggle('show');
-      });
+      const userAvatar = document.getElementById('userAvatar');
+      const userDropdown = document.getElementById('userDropdown');
+      if (userAvatar && userDropdown) {
+        userAvatar.addEventListener('click', () => {
+          userDropdown.classList.toggle('show');
+        });
+      }
       
       // Close dropdown when clicking outside
       window.addEventListener('click', (e) => {
         if (!e.target.matches('#userAvatar') && !e.target.matches('#userInitials')) {
           const dropdown = document.getElementById('userDropdown');
-          if (dropdown.classList.contains('show')) {
+          if (dropdown && dropdown.classList.contains('show')) {
             dropdown.classList.remove('show');
           }
         }
       });
       
       // Back to dashboard button
-      document.getElementById('backToDashboard').addEventListener('click', () => {
-        window.location.href = './dashboard.html';
-      });
+      const backToDashboardBtn = document.getElementById('backToDashboard');
+      if (backToDashboardBtn) {
+        backToDashboardBtn.addEventListener('click', () => {
+          window.location.href = './dashboard.html';
+        });
+      }
       
       // Get chart ID from URL
       const urlParams = new URLSearchParams(window.location.search);
@@ -794,20 +812,23 @@
       }
       
       // Export button
-      document.getElementById('exportBtn').addEventListener('click', async () => {
-        const chartId = urlParams.get('chart');
-        if (!chartId) return;
-        
-        try {
-          showLoading();
-          await window.exportToExcel(chartId);
-          hideLoading();
-        } catch (error) {
-          console.error('Error exporting chart:', error);
-          hideLoading();
-          alert('Error exporting chart: ' + error.message);
-        }
-      });
+      const exportBtn = document.getElementById('exportBtn');
+      if (exportBtn) {
+        exportBtn.addEventListener('click', async () => {
+          const chartId = urlParams.get('chart');
+          if (!chartId) return;
+          
+          try {
+            showLoading();
+            await window.exportToExcel(chartId);
+            hideLoading();
+          } catch (error) {
+            console.error('Error exporting chart:', error);
+            hideLoading();
+            alert('Error exporting chart: ' + error.message);
+          }
+        });
+      }
       
       // Zoom controls are now handled by zoomControls.js
       // Legacy zoom code removed to prevent errors
