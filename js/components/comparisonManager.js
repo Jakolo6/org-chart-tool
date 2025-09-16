@@ -138,7 +138,7 @@ function toggleComparisonMode() {
         }
         
         // Hide comparison controls and legend
-        if (comparisonControls) comparisonControls.style.display = 'block';
+        if (comparisonControls) comparisonControls.style.display = 'none';
         if (legendContainer) {
             legendContainer.style.display = 'none';
             // Ensure legend is in the correct position even when hidden
