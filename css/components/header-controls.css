@@ -9,6 +9,20 @@
   margin-top: 8px;
 }
 
+.page-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.view-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 .mode-indicator {
   font-size: 14px;
   font-weight: 500;
@@ -33,12 +47,15 @@
 /* Legend container in header */
 .header-controls .legend-container {
   display: flex;
+  gap: 15px;
+  padding: 8px 15px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-top: 10px;
   align-items: center;
-  gap: 12px;
-  padding: 4px 10px;
-  border-radius: 4px;
-  background-color: #fff;
-  border: 1px solid #eee;
+  border: 1px solid #e2e8f0;
+  max-width: fit-content;
 }
 
 .header-controls .legend-item {

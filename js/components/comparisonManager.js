@@ -72,7 +72,14 @@ function toggleComparisonMode() {
         
         // Show comparison controls and legend
         if (comparisonControls) comparisonControls.style.display = 'block';
-        if (legendContainer) legendContainer.style.display = 'flex';
+        if (legendContainer) {
+            legendContainer.style.display = 'flex';
+            // Ensure legend is in the correct position
+            const headerLeft = document.querySelector('.page-header-left');
+            if (headerLeft && !headerLeft.contains(legendContainer)) {
+                headerLeft.appendChild(legendContainer);
+            }
+        }
         if (changeSummary) changeSummary.style.display = 'flex';
         
         // Set current data to target data
@@ -117,7 +124,14 @@ function toggleComparisonMode() {
         
         // Hide comparison controls and legend
         if (comparisonControls) comparisonControls.style.display = 'block';
-        if (legendContainer) legendContainer.style.display = 'none';
+        if (legendContainer) {
+            legendContainer.style.display = 'none';
+            // Ensure legend is in the correct position even when hidden
+            const headerLeft = document.querySelector('.page-header-left');
+            if (headerLeft && !headerLeft.contains(legendContainer)) {
+                headerLeft.appendChild(legendContainer);
+            }
+        }
         if (changeSummary) changeSummary.style.display = 'none';
         
         // Set current data to baseline data

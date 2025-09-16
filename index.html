@@ -58,24 +58,18 @@
     <div class="page-header">
       <div class="page-header-left">
         <h1 id="chartTitle">Organization Chart</h1>
-        <div class="header-controls">
-          <div id="modeIndicator" class="mode-indicator baseline">📊 Baseline View</div>
-          <button id="toggleViewBtn" class="btn btn-secondary" style="display: none;">
-            <i class="fas fa-exchange-alt"></i> Switch to Target
-          </button>
-          <div id="legendContainer" class="legend-container" style="display: none;">
-            <div class="legend-item">
-              <div class="legend-color new"></div>
-              <span class="legend-label">New</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color moved"></div>
-              <span class="legend-label">Moved</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-color exit"></div>
-              <span class="legend-label">Exit</span>
-            </div>
+        <div id="legendContainer" class="legend-container" style="display: none;">
+          <div class="legend-item">
+            <div class="legend-color new"></div>
+            <span class="legend-label">New</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color moved"></div>
+            <span class="legend-label">Moved</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color exit"></div>
+            <span class="legend-label">Exit</span>
           </div>
         </div>
       </div>
@@ -83,9 +77,14 @@
         <button id="backToDashboard" class="btn btn-secondary">
           <i class="fas fa-arrow-left"></i> Back to Dashboard
         </button>
-        <button id="exportBtn" class="btn btn-primary">
-          <i class="fas fa-file-export"></i> Export
-        </button>
+        <div class="view-controls">
+          <button id="toggleViewBtn" class="btn btn-secondary" style="display: none; margin-right: 10px;">
+            <i class="fas fa-exchange-alt"></i> Switch to Target
+          </button>
+          <button id="exportBtn" class="btn btn-primary">
+            <i class="fas fa-file-export"></i> Export
+          </button>
+        </div>
       </div>
     </div>
 
