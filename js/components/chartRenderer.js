@@ -1178,17 +1178,57 @@ function centerChart() {
 }
 
 function fitChartToView() {
-    if (!window.state.g || !window.state.svg) return;
+    console.group('fitChartToView');
+    console.log('Starting fitChartToView');
+    
+    if (!window.state) {
+        console.error('window.state is not defined');
+        console.groupEnd();
+        return;
+    }
+    
+    console.log('Current window.state:', JSON.stringify(window.state, null, 2));
+    
+    if (!window.state.g) {
+        console.error('window.state.g is not defined');
+        console.groupEnd();
+        return;
+    }
+    
+    if (!window.state.svg) {
+        console.error('window.state.svg is not defined');
+        console.groupEnd();
+        return;
+    }
     
     try {
+        console.log('Getting g node...');
         const gNode = window.state.g.node();
-        if (!gNode) return;
+        if (!gNode) {
+            console.error('gNode is null');
+            console.log('window.state.g:', window.state.g);
+            console.groupEnd();
+            return;
+        }
+        console.log('gNode obtained:', gNode);
         
+        console.log('Getting bounding box...');
         const bounds = gNode.getBBox();
-        if (bounds.width === 0 || bounds.height === 0) return;
+        console.log('Bounding box:', bounds);
         
+        if (bounds.width === 0 || bounds.height === 0) {
+            console.error('Bounding box has zero dimensions');
+            console.log('gNode children:', gNode.children);
+            console.log('gNode content:', gNode.innerHTML);
+            console.groupEnd();
+            return;
+        }
+        
+        console.log('Getting dimensions...');
         const fullWidth = window.state.width;
         const fullHeight = window.state.height;
+        console.log('Container dimensions:', { width: fullWidth, height: fullHeight });
+        
         const widthScale = fullWidth / bounds.width;
         const heightScale = fullHeight / bounds.height;
         const scale = Math.min(widthScale, heightScale) * 0.9; // 90% to add some padding
@@ -1196,12 +1236,26 @@ function fitChartToView() {
         const translateX = fullWidth / 2 - (bounds.x + bounds.width / 2) * scale;
         const translateY = fullHeight / 2 - (bounds.y + bounds.height / 2) * scale;
         
-        window.state.svg.transition().duration(500).call(
-            window.state.zoom.transform,
-            d3.zoomIdentity.translate(translateX, translateY).scale(scale)
-        );
+        console.log('Applying transform - scale:', scale, 'translateX:', translateX, 'translateY:', translateY);
+        
+        // Add a small delay to ensure DOM is ready
+        setTimeout(() => {
+            try {
+                console.log('Executing transition...');
+                window.state.svg.transition().duration(500).call(
+                    window.state.zoom.transform,
+                    d3.zoomIdentity.translate(translateX, translateY).scale(scale)
+                );
+                console.log('Transition complete');
+            } catch (error) {
+                console.error('Error in transition:', error);
+            }
+        }, 100);
+        
+        console.groupEnd();
     } catch (error) {
         console.error('Error fitting chart to view:', error);
+        console.groupEnd();
     }
 }
 
