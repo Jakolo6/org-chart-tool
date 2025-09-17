@@ -64,6 +64,33 @@ function wrapSVGText(textElement, text, width, maxLines = 2, startY = 0) {
 console.log('[OrgChart] chartRenderer loaded');
 
 /**
+ * Displays an error message to the user
+ * @param {string} message - The error message to display
+ */
+function showError(message) {
+    // Remove any existing error messages
+    const existingError = document.querySelector('.error-message');
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    // Create and show new error message
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'error-message';
+    errorContainer.style.color = '#ff4444';
+    errorContainer.style.padding = '15px';
+    errorContainer.style.margin = '15px';
+    errorContainer.style.border = '1px solid #ffcccc';
+    errorContainer.style.borderRadius = '4px';
+    errorContainer.style.backgroundColor = '#ffeeee';
+    errorContainer.textContent = message;
+    
+    // Try to add to main content, fall back to body
+    const main = document.querySelector('main') || document.body;
+    main.prepend(errorContainer);
+}
+
+/**
  * Renders a chart with the provided data.
  * @param {Object} chartData - The chart data to render, should contain chart and employees.
  */
@@ -189,9 +216,21 @@ function initChart(container = '#chart-area') {
 function buildHierarchy(data) {
     console.log('Building hierarchy with data:', data);
     
-    if (!data || data.length === 0) {
-        console.log('No data available for hierarchy building');
+    if (!data || !Array.isArray(data)) {
+        console.error('Invalid data format for hierarchy building. Expected array, got:', typeof data);
         return null;
+    }
+    
+    if (data.length === 0) {
+        console.log('No data available for hierarchy building');
+        // Create a default company node when no employees exist
+        return {
+            id: 'company',
+            name: 'The Nunatak Group GmbH',
+            title: 'Digital Growth Advisors',
+            children: [],
+            expanded: true
+        };
     }
 
     // Create lookup map
@@ -638,7 +677,15 @@ function renderChart(rootNode, selector) {
     console.log('renderChart called with rootNode:', rootNode, 'selector:', selector);
     
     if (!rootNode) {
-        console.error('No data to render');
+        console.error('No root node provided to renderChart');
+        showError('No data available to render the organization chart.');
+        return;
+    }
+    
+    // Ensure rootNode has required properties
+    if (!rootNode.id || !rootNode.name) {
+        console.error('Invalid root node structure:', rootNode);
+        showError('Invalid chart data structure. Please check the data format.');
         return;
     }
     
