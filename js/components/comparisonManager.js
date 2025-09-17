@@ -10,17 +10,27 @@ console.log('[OrgChart] comparisonManager loaded');
 function initComparisonManager() {
     // Add toggle view button event listener
     const toggleViewBtn = document.getElementById('toggleViewBtn');
-    const legendContainer = document.getElementById('legendContainer');
     
     if (toggleViewBtn) {
         toggleViewBtn.addEventListener('click', toggleComparisonMode);
         toggleViewBtn.style.display = 'none'; // Hide by default
     }
     
-    // Ensure legend is hidden by default
-    if (legendContainer) {
-        legendContainer.style.display = 'none';
-    }
+    // Hide all legend containers on load
+    const allLegendContainers = document.querySelectorAll('.legend-container');
+    console.log(`[Init] Found ${allLegendContainers.length} legend containers to hide`);
+    
+    allLegendContainers.forEach(container => {
+        console.log('[Init] Hiding legend container:', container);
+        container.style.display = 'none';
+        
+        // Move to header if not already there (for consistency)
+        const headerLeft = document.querySelector('.page-header-left');
+        if (headerLeft && !headerLeft.contains(container)) {
+            console.log('[Init] Moving legend container to header');
+            headerLeft.appendChild(container);
+        }
+    });
     
     console.log('[OrgChart] Comparison manager initialized');
 }
@@ -52,6 +62,9 @@ function toggleComparisonMode() {
     const modeIndicator = document.getElementById('modeIndicator');
     const legendContainer = document.getElementById('legendContainer');
     const comparisonControls = document.querySelector('.comparison-controls');
+    
+    // Get all legend containers in case there are multiple
+    const allLegendContainers = document.querySelectorAll('.legend-container');
     
     if (state.isComparisonMode) {
         // Switch to target view
@@ -92,8 +105,18 @@ function toggleComparisonMode() {
             
             // Ensure legend is in the correct position
             const headerLeft = document.querySelector('.page-header-left');
-            if (headerLeft && !headerLeft.contains(legendContainer)) {
-                headerLeft.appendChild(legendContainer);
+            if (headerLeft) {
+                // Remove any existing legend containers first
+                const existingLegends = headerLeft.querySelectorAll('.legend-container');
+                existingLegends.forEach(legend => {
+                    if (legend !== legendContainer) {
+                        legend.remove();
+                    }
+                });
+                
+                if (!headerLeft.contains(legendContainer)) {
+                    headerLeft.appendChild(legendContainer);
+                }
             }
         }
         
@@ -137,7 +160,7 @@ function toggleComparisonMode() {
             modeIndicator.className = 'mode-indicator baseline';
         }
         
-        // Hide comparison controls and legend
+        // Hide comparison controls
         console.log('Hiding comparison controls and legend');
         if (comparisonControls) {
             console.log('Hiding comparison controls');
@@ -146,21 +169,30 @@ function toggleComparisonMode() {
             console.warn('comparisonControls element not found');
         }
         
-        if (legendContainer) {
-            console.log('Hiding legend container');
-            legendContainer.style.display = 'none';
-            // Ensure legend is in the correct position even when hidden
+        // Hide all legend containers
+        const allLegendContainers = document.querySelectorAll('.legend-container');
+        console.log(`Found ${allLegendContainers.length} legend containers to hide`);
+        
+        allLegendContainers.forEach(container => {
+            console.log('Hiding legend container:', container);
+            container.style.display = 'none';
+            
+            // Move to header if not already there (for consistency)
             const headerLeft = document.querySelector('.page-header-left');
-            if (headerLeft) {
-                if (!headerLeft.contains(legendContainer)) {
-                    console.log('Moving legend container to header');
-                    headerLeft.appendChild(legendContainer);
-                }
-            } else {
-                console.warn('headerLeft element not found');
+            if (headerLeft && !headerLeft.contains(container)) {
+                console.log('Moving legend container to header');
+                headerLeft.appendChild(container);
             }
-        } else {
-            console.warn('legendContainer element not found');
+        });
+        
+        // Also hide any standalone legends that might be in the header
+        const headerLeft = document.querySelector('.page-header-left');
+        if (headerLeft) {
+            const headerLegends = headerLeft.querySelectorAll('.legend-container');
+            headerLegends.forEach(legend => {
+                console.log('Hiding header legend');
+                legend.style.display = 'none';
+            });
         }
         
         // Set current data to baseline data
