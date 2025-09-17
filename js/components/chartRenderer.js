@@ -63,6 +63,38 @@ function wrapSVGText(textElement, text, width, maxLines = 2, startY = 0) {
 
 console.log('[OrgChart] chartRenderer loaded');
 
+/**
+ * Renders a chart with the provided data.
+ * @param {Object} chartData - The chart data to render.
+ */
+window.renderChartWithData = function(chartData) {
+    console.log('Rendering chart with data:', chartData);
+    
+    // Initialize chart if not already done
+    if (!window.state || !window.state.svg) {
+        initChart('#org-chart');
+    }
+    
+    // Build hierarchy from chart data
+    const rootNode = buildHierarchy(chartData.employees || []);
+    
+    if (!rootNode) {
+        console.error('Failed to build hierarchy from chart data');
+        return;
+    }
+    
+    // Store root node in state
+    window.state.rootNode = rootNode;
+    
+    // Render the chart
+    renderChart(rootNode, '#org-chart');
+    
+    // Fit chart to view
+    if (window.fitChartToView) {
+        window.fitChartToView();
+    }
+};
+
 /* ===========================================
    CHART INITIALIZATION
 =========================================== */
