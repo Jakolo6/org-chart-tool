@@ -138,14 +138,29 @@ function toggleComparisonMode() {
         }
         
         // Hide comparison controls and legend
-        if (comparisonControls) comparisonControls.style.display = 'none';
+        console.log('Hiding comparison controls and legend');
+        if (comparisonControls) {
+            console.log('Hiding comparison controls');
+            comparisonControls.style.display = 'none';
+        } else {
+            console.warn('comparisonControls element not found');
+        }
+        
         if (legendContainer) {
+            console.log('Hiding legend container');
             legendContainer.style.display = 'none';
             // Ensure legend is in the correct position even when hidden
             const headerLeft = document.querySelector('.page-header-left');
-            if (headerLeft && !headerLeft.contains(legendContainer)) {
-                headerLeft.appendChild(legendContainer);
+            if (headerLeft) {
+                if (!headerLeft.contains(legendContainer)) {
+                    console.log('Moving legend container to header');
+                    headerLeft.appendChild(legendContainer);
+                }
+            } else {
+                console.warn('headerLeft element not found');
             }
+        } else {
+            console.warn('legendContainer element not found');
         }
         
         // Set current data to baseline data
