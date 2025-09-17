@@ -1,3 +1,47 @@
 /* Legend styles */
+.legend-container {
+    display: flex;
+    gap: 15px;
+    padding: 8px 16px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin-left: 20px;
+    align-items: center;
+    transition: all 0.3s ease;
+}
 
-/* TODO: Move legend CSS here */
+.legend-container.hidden,
+.legend-container[hidden] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    clip: rect(0, 0, 0, 0) !important;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #333;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.legend-color.new { background-color: #4caf50; }
+.legend-color.moved { background-color: #2196f3; }
+.legend-color.exit { background-color: #f44336; }
+
+.legend-label {
+    white-space: nowrap;
+}

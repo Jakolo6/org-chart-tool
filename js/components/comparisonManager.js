@@ -2,6 +2,7 @@
  * @file Comparison Manager component for handling baseline and target view toggling
  */
 
+// LegendManager is loaded separately and exposed to window
 console.log('[OrgChart] comparisonManager loaded');
 
 /**
@@ -16,59 +17,12 @@ function initComparisonManager() {
         toggleViewBtn.style.display = 'none'; // Hide by default
     }
     
-    // Function to ensure legend is hidden and in the correct position
-    const hideAllLegends = () => {
-        // Get all legend containers
-        const allLegendContainers = document.querySelectorAll('.legend-container');
-        console.log(`[Init] Found ${allLegendContainers.length} legend containers to process`);
-        
-        allLegendContainers.forEach(container => {
-            console.log('[Init] Processing legend container:', container);
-            
-            // Force hide the container
-            container.style.display = 'none';
-            container.removeAttribute('style');
-            
-            // Clear any existing content to prevent duplicates
-            while (container.firstChild) {
-                container.removeChild(container.firstChild);
-            }
-            
-            // Ensure it's in the correct position in the DOM
-            const headerLeft = document.querySelector('.page-header-left');
-            if (headerLeft) {
-                // Remove any existing legends first to avoid duplicates
-                const existingLegends = headerLeft.querySelectorAll('.legend-container');
-                existingLegends.forEach(legend => {
-                    if (legend !== container) {
-                        legend.remove();
-                    }
-                });
-                
-                // Move to header if not already there
-                if (!headerLeft.contains(container)) {
-                    console.log('[Init] Moving legend container to header');
-                    headerLeft.appendChild(container);
-                }
-            }
-        });
-        
-        // Also ensure the header doesn't have any lingering legends
-        const headerLeft = document.querySelector('.page-header-left');
-        if (headerLeft) {
-            const headerLegends = headerLeft.querySelectorAll('.legend-container');
-            headerLegends.forEach(legend => {
-                legend.style.display = 'none';
-                legend.removeAttribute('style');
-            });
-        }
-    };
-    
-    // Run initially
-    hideAllLegends();
-    
-    // Run again after a short delay to catch any dynamically added elements
-    setTimeout(hideAllLegends, 100);
+    // Initialize the legend manager
+    if (window.legendManager) {
+        window.legendManager.hide();
+    } else {
+        console.warn('LegendManager not found. Legend functionality may not work correctly.');
+    }
     
     console.log('[OrgChart] Comparison manager initialized');
 }
@@ -81,32 +35,28 @@ function toggleComparisonMode() {
     
     console.log('Toggle comparison mode called. Current state:', { 
         isComparisonMode: state.isComparisonMode,
-        hasBaselineData: state.baselineData && state.baselineData.length > 0,
-        hasUpdateData: state.updateData && state.updateData.length > 0
+        hasTargetData: !!state.targetData,
+        hasBaselineData: !!state.baselineData
     });
     
-    // Check if we have both baseline and target data
-    if (!state.baselineData || !state.baselineData.length || !state.updateData || !state.updateData.length) {
-        alert('Both baseline and target data must be loaded to use comparison mode.');
-        return;
-    }
-    
-    // Toggle comparison mode state
+    // Toggle the comparison mode state
     state.isComparisonMode = !state.isComparisonMode;
-    window.setComparisonMode(state.isComparisonMode);
+    window.state = state;
     
-    // Update UI elements
+    // Get UI elements
     const toggleViewBtn = document.getElementById('toggleViewBtn');
-    const modeIndicator = document.getElementById('modeIndicator');
-    const legendContainer = document.getElementById('legendContainer');
-    const comparisonControls = document.querySelector('.comparison-controls');
-    
-    // Get all legend containers in case there are multiple
-    const allLegendContainers = document.querySelectorAll('.legend-container');
+    const chartContainer = document.getElementById('org-chart');
     
     if (state.isComparisonMode) {
-        // Switch to target view
-        console.log('Switching to target view');
+        console.log('Entering comparison mode');
+        
+        // Show the legend using LegendManager
+        if (window.legendManager) {
+            console.log('Showing legend via LegendManager');
+            window.legendManager.show();
+        } else {
+            console.warn('LegendManager not available');
+        }
         
         // Update button text and icon
         if (toggleViewBtn) {
@@ -115,68 +65,15 @@ function toggleComparisonMode() {
         }
         
         // Update mode indicator
+        const modeIndicator = document.getElementById('modeIndicator');
         if (modeIndicator) {
             modeIndicator.textContent = 'Target View';
             modeIndicator.className = 'mode-indicator target';
         }
         
-        // Show comparison controls
+        // Show comparison controls and legend
+        const comparisonControls = document.querySelector('.comparison-controls');
         if (comparisonControls) comparisonControls.style.display = 'block';
-        
-        // Create and show legend only in comparison mode
-        if (legendContainer) {
-            // First, remove all existing legend items to prevent duplicates
-            while (legendContainer.firstChild) {
-                legendContainer.removeChild(legendContainer.firstChild);
-            }
-            
-            // Create new legend items
-            const legendItems = [
-                { className: 'new', label: 'New' },
-                { className: 'moved', label: 'Moved' },
-                { className: 'exit', label: 'Exit' }
-            ];
-            
-            legendItems.forEach(item => {
-                const legendItem = document.createElement('div');
-                legendItem.className = 'legend-item';
-                
-                const colorBox = document.createElement('div');
-                colorBox.className = `legend-color ${item.className}`;
-                
-                const label = document.createElement('span');
-                label.className = 'legend-label';
-                label.textContent = item.label;
-                
-                legendItem.appendChild(colorBox);
-                legendItem.appendChild(label);
-                legendContainer.appendChild(legendItem);
-            });
-            
-            // Show the legend container
-            legendContainer.style.display = 'flex';
-            
-            // Ensure legend is in the correct position
-            const headerLeft = document.querySelector('.page-header-left');
-            if (headerLeft) {
-                // Remove any other legend containers
-                const existingLegends = headerLeft.querySelectorAll('.legend-container');
-                existingLegends.forEach(legend => {
-                    if (legend !== legendContainer) {
-                        legend.remove();
-                    }
-                });
-                
-                // Move to header if not already there
-                if (!headerLeft.contains(legendContainer)) {
-                    headerLeft.appendChild(legendContainer);
-                }
-            }
-        }
-        
-        // Set current data to target data
-        state.currentData = state.updateData;
-        window.setCurrentData(state.updateData);
         
         // Analyze changes between baseline and target
         analyzeChanges();
@@ -215,59 +112,26 @@ function toggleComparisonMode() {
         }
         
         // Hide comparison controls
-        console.log('Hiding comparison controls and legend');
+        console.log('Hiding comparison controls');
         if (comparisonControls) {
-            console.log('Hiding comparison controls');
             comparisonControls.style.display = 'none';
         } else {
             console.warn('comparisonControls element not found');
         }
         
-        // Hide all legend containers using a more aggressive approach
-        const hideLegendContainers = () => {
-            // First, handle the main legend container
-            if (legendContainer) {
-                console.log('Hiding main legend container');
-                legendContainer.style.display = 'none';
-                
-                // Also clear any inline styles that might be forcing visibility
-                legendContainer.removeAttribute('style');
-                
-                // Ensure it's in the correct position in the DOM
-                const headerLeft = document.querySelector('.page-header-left');
-                if (headerLeft && !headerLeft.contains(legendContainer)) {
-                    headerLeft.appendChild(legendContainer);
-                }
-            }
-            
-            // Handle any other legend containers that might exist
-            const allLegendContainers = document.querySelectorAll('.legend-container');
-            console.log(`Found ${allLegendContainers.length} legend containers to process`);
-            
-            allLegendContainers.forEach(container => {
-                if (container !== legendContainer) {  // Skip if it's the main container we already processed
-                    console.log('Hiding additional legend container:', container);
-                    container.style.display = 'none';
-                    container.removeAttribute('style');
-                    
-                    // Ensure it's in the correct position in the DOM
-                    const headerLeft = document.querySelector('.page-header-left');
-                    if (headerLeft && !headerLeft.contains(container)) {
-                        headerLeft.appendChild(container);
-                    }
-                }
-            });
-        };
-        
-        // Execute the hiding function
-        hideLegendContainers();
-        
-        // Add a small delay and check again to catch any dynamically added elements
-        setTimeout(hideLegendContainers, 100);
+        // Hide the legend using LegendManager
+        if (window.legendManager) {
+            console.log('Hiding legend via LegendManager');
+            window.legendManager.hide();
+        } else {
+            console.warn('LegendManager not available');
+        }
         
         // Set current data to baseline data
         state.currentData = state.baselineData;
-        window.setCurrentData(state.baselineData);
+        if (window.setCurrentData) {
+            window.setCurrentData(state.baselineData);
+        }
         
         // Reset change analysis
         state.changeAnalysis = null;
@@ -428,8 +292,21 @@ function normalizeId(id) {
 }
 
 // Export functions to global window object
+const comparisonManager = {
+    init: initComparisonManager,
+    toggleComparisonMode,
+    analyzeChanges,
+    sortChildrenByChangeStatus,
+    applyChangeTypesToNodes,
+    normalizeId
+};
+
+// For backward compatibility
 window.initComparisonManager = initComparisonManager;
 window.toggleComparisonMode = toggleComparisonMode;
 window.analyzeChanges = analyzeChanges;
-window.applyChangeTypesToNodes = applyChangeTypesToNodes;
 window.sortChildrenByChangeStatus = sortChildrenByChangeStatus;
+window.applyChangeTypesToNodes = applyChangeTypesToNodes;
+window.normalizeId = normalizeId;
+
+export default comparisonManager;

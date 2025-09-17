@@ -17,9 +17,6 @@
   <link rel="stylesheet" href="./css/components/floating-comparison-controls.css">
   <link rel="stylesheet" href="./css/auth.css">
   <link rel="stylesheet" href="./css/chart.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <header class="app-header">
@@ -53,242 +50,19 @@
     </div>
   </header>
 
-  <main class="container">
-    <div class="page-header">
-      <div class="page-header-left">
-        <h1 id="chartTitle">Organization Chart</h1>
-        <div id="legendContainer" class="legend-container" style="display: none;"></div>
-      </div>
-      <div class="page-actions">
-        <div class="view-controls">
-          <button id="toggleViewBtn" class="btn btn-secondary" style="display: none; margin-right: 10px;">
-            <i class="fas fa-exchange-alt"></i> Switch to Target
-          </button>
-          <button id="exportBtn" class="btn btn-primary">
-            <i class="fas fa-file-export"></i> Export
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Main container -->
-    <div class="main-container">
-      <!-- Floating Comparison Controls -->
-      <div class="comparison-controls floating-control">
-        <div class="comparison-icon">
-          <i class="fas fa-exchange-alt"></i>
-        </div>
-        <button class="comparison-toggle-btn" id="comparisonToggleBtn" title="Minimize/Maximize">
-          <i class="fas fa-minus"></i>
-        </button>
-        <div class="comparison-header">
-          <!-- Toggle view button moved to header -->
-        </div>
-        <!-- Legend container moved to header -->
-      </div>
-      
-      <script>
-        // Initialize comparison controls toggle functionality
-        document.addEventListener('DOMContentLoaded', () => {
-          const comparisonControls = document.querySelector('.comparison-controls');
-          const toggleBtn = document.getElementById('comparisonToggleBtn');
-          
-          if (comparisonControls && toggleBtn) {
-            toggleBtn.addEventListener('click', () => {
-              comparisonControls.classList.toggle('minimized');
-              const icon = toggleBtn.querySelector('i');
-              if (comparisonControls.classList.contains('minimized')) {
-                icon.className = 'fas fa-plus';
-              } else {
-                icon.className = 'fas fa-minus';
-              }
-            });
-            
-            // Allow clicking on the minimized control to expand it
-            if (comparisonControls) {
-              comparisonControls.addEventListener('click', (e) => {
-                if (comparisonControls.classList.contains('minimized') && e.target !== toggleBtn && !toggleBtn.contains(e.target)) {
-                  comparisonControls.classList.remove('minimized');
-                  const toggleIcon = toggleBtn.querySelector('i');
-                  if (toggleIcon) {
-                    toggleIcon.className = 'fas fa-minus';
-                  }
-                }
-              });
-            }
-          }
-        });
-      </script>
-
-      <!-- Hidden element to store chart name -->
-      <div id="chartName" style="display: none;">Loading chart...</div>
-      
-      <!-- Chart name moved to header -->
-      <script>
-        // Move chart name to the header
-        document.addEventListener('DOMContentLoaded', () => {
-          // Create a new element for the chart name in the header
-          const headerChartName = document.createElement('div');
-          headerChartName.id = 'headerChartName';
-          headerChartName.className = 'header-chart-name';
-          headerChartName.textContent = 'Loading chart...';
-          
-          // Get the header content element
-          const headerContent = document.querySelector('.header-content');
-          if (headerContent) {
-            // Insert after the logo
-            const logo = headerContent.querySelector('.logo');
-            if (logo && logo.nextSibling) {
-              headerContent.insertBefore(headerChartName, logo.nextSibling);
-            } else {
-              headerContent.appendChild(headerChartName);
-            }
-            
-            // Set up a function to update the chart name
-            window.updateChartName = function(name) {
-              if (headerChartName) {
-                headerChartName.textContent = name || 'Untitled Chart';
-                
-                // Add and remove the updated class for animation
-                headerChartName.classList.add('updated');
-                setTimeout(() => {
-                  headerChartName.classList.remove('updated');
-                }, 1500);
-              }
-              
-              // Also update the hidden element for compatibility
-              const chartNameElement = document.getElementById('chartName');
-              if (chartNameElement) {
-                chartNameElement.textContent = name || 'Untitled Chart';
-              }
-            };
-          }
-        });
-      </script>
-      
-      <!-- Chart area (full width) -->
-      <div class="chart-area" id="chart-area">
-        <svg id="chartSvg" class="chart-svg"></svg>
-      </div>
+  <main class="main-content">
+    <div class="container">
+      <!-- Chart will be rendered here -->
+      <div id="org-chart"></div>
     </div>
   </main>
 
-  <div id="loadingOverlay" class="loading-overlay">
-    <div class="loading-spinner"></div>
-  </div>
-
-  <!-- Tooltip container -->
-  <div id="tooltip" class="tooltip" style="display: none;"></div>
-
-  <!-- Selected Node Statistics Panel -->
-  <div id="selectedNodeStats" class="selected-node-stats" style="display: none;">
-    <div class="stats-panel-header">
-      <h3><i class="fas fa-user"></i> Selected Node</h3>
-      <button id="closeNodeStats" class="close-btn"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="stats-panel-content">
-      <!-- Employee Info -->
-      <div class="stats-card employee-info">
-        <div class="stats-card-header">
-          <h4>Selected Employee</h4>
-          <div id="employeeChangeType" class="change-badge" style="display: none;"></div>
-        </div>
-        <div class="stats-card-body">
-          <div id="employeeName" class="employee-name">-</div>
-          <div id="employeeTitle" class="employee-title">-</div>
-        </div>
-      </div>
-
-      <!-- Previous Manager (only in comparison mode) -->
-      <div id="previousManagerCard" class="stats-card previous-manager" style="display: none;">
-        <div class="stats-card-header">
-          <h4>Previous Manager</h4>
-        </div>
-        <div class="stats-card-body">
-          <div id="previousManagerName">-</div>
-        </div>
-      </div>
-
-      <!-- FTE Stats -->
-      <div class="stats-card fte-stats">
-        <div class="stats-card-header">
-          <h4>FTE</h4>
-        </div>
-        <div class="stats-card-body">
-          <div class="stats-row">
-            <div class="stats-label">Current FTE</div>
-            <div id="currentFte" class="stats-value">-</div>
-          </div>
-          <div class="stats-row">
-            <div class="stats-label">Total FTE in Team</div>
-            <div id="totalFte" class="stats-value">-</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Team Stats -->
-      <div class="stats-card team-stats">
-        <div class="stats-card-header">
-          <h4>Team Size</h4>
-        </div>
-        <div class="stats-card-body">
-          <div class="stats-row">
-            <div class="stats-label">Direct Reports</div>
-            <div id="directReports" class="stats-value">-</div>
-          </div>
-          <div id="directReportsChange" class="stats-change" style="display: none;">
-            <div class="stats-row">
-              <div class="stats-label">Added</div>
-              <div id="directReportsAdded" class="stats-value added" data-tooltip="">+0</div>
-            </div>
-            <div class="stats-row">
-              <div class="stats-label">Removed</div>
-              <div id="directReportsRemoved" class="stats-value removed" data-tooltip="">-0</div>
-            </div>
-            <div class="stats-row">
-              <div class="stats-label">Net Change</div>
-              <div id="directReportsNet" class="stats-value">0</div>
-            </div>
-          </div>
-          <div class="stats-row">
-            <div class="stats-label">Total Reports</div>
-            <div id="totalReports" class="stats-value">-</div>
-          </div>
-          <div id="totalReportsChange" class="stats-change" style="display: none;">
-            <div class="stats-row">
-              <div class="stats-label">Net Change</div>
-              <div id="totalReportsNet" class="stats-value">0</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Optional Fields -->
-      <div id="optionalFields" class="stats-card optional-fields">
-        <div class="stats-card-header">
-          <h4>Additional Information</h4>
-        </div>
-        <div class="stats-card-body">
-          <div id="locationField" class="stats-row" style="display: none;">
-            <div class="stats-label">Location</div>
-            <div id="locationValue" class="stats-value">-</div>
-          </div>
-          <div id="jobFamilyField" class="stats-row" style="display: none;">
-            <div class="stats-label">Job Family</div>
-            <div id="jobFamilyValue" class="stats-value">-</div>
-          </div>
-          <div id="managementLevelField" class="stats-row" style="display: none;">
-            <div class="stats-label">Management Level</div>
-            <div id="managementLevelValue" class="stats-value">-</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Load scripts in correct order -->
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
+  
+  <!-- Application scripts -->
   <script src="./js/supabase.js"></script>
   <script src="./js/auth.js"></script>
   <script src="./js/orgChartService.js"></script>
@@ -298,547 +72,137 @@
   <script src="./js/components/exportManager.js"></script>
   <script src="./js/components/tooltips.js"></script>
   <script src="./js/components/nodeStatistics.js"></script>
-  <script src="./js/components/comparisonManager.js?v=1.0.1"></script>
   <script src="./js/components/zoomControls.js"></script>
   <script src="./js/components/uxEnhancements.js"></script>
+  
+  <!-- Load modules -->
+  <script type="module" src="./js/components/LegendManager.js"></script>
+  <script type="module" src="./js/components/comparisonManager.js"></script>
+  
+  <!-- Initialize application -->
+  <script src="./js/init.js"></script>
+  
+  <!-- Main app script -->
   <script src="./js/app.js" type="module"></script>
+  
   <script>
-    // Initialize authentication and comparison manager
-    window.addEventListener('load', async () => {
-      // Initialize comparison manager if available
-      if (window.initComparisonManager) {
-        window.initComparisonManager();
+    // Main application initialization
+    (async () => {
+      // Helper functions
+      function getInitials(name) {
+        if (!name) return '';
+        return name
+          .split(' ')
+          .map(part => part[0])
+          .join('')
+          .toUpperCase()
+          .substring(0, 2);
       }
-      
-      // Initialize node statistics component
-      if (window.initNodeStatistics) {
-        window.initNodeStatistics();
+
+      function showLoading() {
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) loadingElement.style.display = 'flex';
       }
-      
-      // Initialize zoom controls
-      if (window.initZoomControls) {
-        window.initZoomControls();
+
+      function hideLoading() {
+        const loadingElement = document.getElementById('loading');
+        if (loadingElement) loadingElement.style.display = 'none';
       }
-      
-      // Initialize UX enhancements
-      if (window.initUxEnhancements) {
-        window.initUxEnhancements();
-      }
-      // Check authentication
-      const { user, profile, error } = await window.getCurrentUser();
-      if (error || !user) {
-        window.location.href = './auth/login.html?redirect=index.html' + window.location.search;
-        return;
-      }
-      
-      // Set user initials
-      const userInitials = document.getElementById('userInitials');
-      if (userInitials) {
-        if (profile?.display_name) {
-          userInitials.textContent = getInitials(profile.display_name);
-        } else if (user?.email) {
-          userInitials.textContent = getInitials(user.email);
-        }
-      }
-      
-      // Add sign out event listener
-      const signOutLink = document.getElementById('signOutLink');
-      if (signOutLink) {
-        signOutLink.addEventListener('click', async (e) => {
-          e.preventDefault();
-          try {
-            await window.signOut();
-            window.location.href = './landing.html';
-          } catch (error) {
-            console.error('Sign out error:', error);
-          }
-        });
-      }
-      
-      // Toggle user dropdown
-      const userAvatar = document.getElementById('userAvatar');
-      const userDropdown = document.getElementById('userDropdown');
-      if (userAvatar && userDropdown) {
-        userAvatar.addEventListener('click', () => {
-          userDropdown.classList.toggle('show');
-        });
-      }
-      
-      // Close dropdown when clicking outside
-      window.addEventListener('click', (e) => {
-        if (!e.target.matches('#userAvatar') && !e.target.matches('#userInitials')) {
-          const dropdown = document.getElementById('userDropdown');
-          if (dropdown && dropdown.classList.contains('show')) {
-            dropdown.classList.remove('show');
-          }
-        }
-      });
-      
-      // Back to dashboard button
-      const backToDashboardBtn = document.getElementById('backToDashboard');
-      if (backToDashboardBtn) {
-        backToDashboardBtn.addEventListener('click', () => {
-          window.location.href = './dashboard.html';
-        });
-      }
-      
-      // Get chart ID from URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const chartId = urlParams.get('chart');
-      
-      if (!chartId) {
-        window.location.href = './dashboard.html';
-        return;
-      }
-      
-      // Load chart data
+
       try {
+        console.log('Application initialization started');
         showLoading();
+        
+        // Get chart ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const chartId = urlParams.get('chart');
+        
+        if (!chartId) {
+          window.location.href = './dashboard.html';
+          return;
+        }
+        
+        // Check authentication first
+        const { user, profile, error: authError } = await window.getCurrentUser();
+        if (authError || !user) {
+          window.location.href = `./auth/login.html?redirect=index.html${window.location.search}`;
+          return;
+        }
+        
+        // Set user initials
+        const userInitials = document.getElementById('userInitials');
+        if (userInitials) {
+          userInitials.textContent = profile?.display_name 
+            ? getInitials(profile.display_name) 
+            : user?.email ? getInitials(user.email) : '';
+        }
+        
+        // Add sign out event listener
+        const signOutLink = document.getElementById('signOutLink');
+        if (signOutLink) {
+          signOutLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+              await window.signOut();
+              window.location.href = './landing.html';
+            } catch (error) {
+              console.error('Sign out error:', error);
+            }
+          });
+        }
+        
+        // Toggle user dropdown
+        const userAvatar = document.getElementById('userAvatar');
+        const userDropdown = document.getElementById('userDropdown');
+        if (userAvatar && userDropdown) {
+          userAvatar.addEventListener('click', () => {
+            userDropdown.classList.toggle('show');
+          });
+          
+          // Close dropdown when clicking outside
+          document.addEventListener('click', (e) => {
+            if (!userAvatar.contains(e.target) && !userDropdown.contains(e.target)) {
+              userDropdown.classList.remove('show');
+            }
+          });
+        }
+        
+        // Load chart data
         console.log('Loading chart data for ID:', chartId);
         
-        // Check if getOrgChartById exists
         if (typeof window.getOrgChartById !== 'function') {
-          console.error('Error: window.getOrgChartById is not a function');
           throw new Error('Chart loading function not available');
         }
         
         const result = await window.getOrgChartById(chartId);
         console.log('Raw result from getOrgChartById:', result);
         
-        const { chart, employees, version, error } = result;
-        
-        if (error) {
-          console.error('Error from getOrgChartById:', error);
-          throw error;
+        const { chart, employees, version, error: chartError } = result;
+        if (chartError) {
+          throw new Error(chartError.message || 'Failed to load chart data');
         }
         
-        console.log('Chart data:', chart);
-        console.log('Employees data:', employees);
-        console.log('Version data:', version);
-        
-        // Update chart title
-        if (window.updateChartName) {
-          window.updateChartName(chart.name);
-        }
-        document.getElementById('chartTitle').textContent = chart.name;
-        
-        let chartData = [];
-        
-        // First try to get data from employees table
-        if (employees && employees.length > 0) {
-          console.log('Using employees data for chart rendering');
-          chartData = employees.map(emp => ({
-            id: emp.employee_id,
-            name: emp.name,
-            manager: emp.manager_id,
-            title: emp.title,
-            fte: emp.fte,
-            location: emp.location,
-            jobFamily: emp.job_family,
-            managementLevel: emp.management_level
-          }));
-        }
-        // If no employees, try to get data from version
-        else if (version && version.data) {
-          console.log('No employees found, trying version data');
-          
-          // Check if data is in raw_data field or directly in data
-          if (version.data.raw_data && Array.isArray(version.data.raw_data)) {
-            console.log('Using raw_data from version');
-            chartData = version.data.raw_data;
-          } 
-          // Try direct data field
-          else if (Array.isArray(version.data)) {
-            console.log('Using direct data from version');
-            chartData = version.data;
-          }
-          // Try parsing if it's a string
-          else if (typeof version.data === 'string') {
-            try {
-              console.log('Trying to parse version data from string');
-              const parsedData = JSON.parse(version.data);
-              if (Array.isArray(parsedData)) {
-                console.log('Successfully parsed version data');
-                chartData = parsedData;
-              } else if (parsedData.raw_data && Array.isArray(parsedData.raw_data)) {
-                console.log('Successfully parsed version data with raw_data field');
-                chartData = parsedData.raw_data;
-              }
-            } catch (e) {
-              console.error('Error parsing version data:', e);
-            }
-          }
+        // Initialize UI components
+        if (window.initUxEnhancements) {
+          window.initUxEnhancements();
         }
         
-        // Log the final chart data
-        console.log('Final chart data:', chartData);
-        
-        renderChartWithData(chartData);
+        // Render the chart
+        if (window.renderChartWithData) {
+          window.renderChartWithData(chart);
+        }
         
       } catch (error) {
-        console.error('Error loading chart:', error);
-        console.error('Error details:', error.stack || 'No stack trace available');
-        hideLoading();
-        alert('Error loading chart: ' + (error.message || 'Unknown error'));
-        // Don't redirect immediately so user can see the error
-        // window.location.href = './dashboard.html';
-      }
-      
-      // Helper function to convert array data to object format
-      function convertArrayDataToObjects(arrayData) {
-        console.log('Converting array data to objects...');
-        
-        if (!Array.isArray(arrayData) || arrayData.length === 0) {
-          return [];
-        }
-        
-        // Check if this is an array of arrays (Excel format)
-        if (Array.isArray(arrayData[0])) {
-          console.log('Detected array of arrays format (Excel data)');
-          console.log('First row:', arrayData[0]);
-          console.log('Second row:', arrayData[1]);
-          
-          // For Excel data, we need to determine the column structure
-          // Let's log the first few rows to understand the structure
-          for (let i = 0; i < Math.min(3, arrayData.length); i++) {
-            console.log(`Row ${i}:`, arrayData[i]);
-          }
-          
-          // Special handling for the specific Excel format we're seeing in the logs
-          // The format appears to be arrays with 3 or 7 elements
-          // For the 3-element header: [ID, Name, Title]
-          // For the 7-element data rows: [ID, Name, Title, Manager ID, FTE, Location, Job Family]
-          
-          // Check if this is the specific format we're dealing with
-          const isSpecialFormat = arrayData[0].length === 3 && 
-                                (arrayData[1].length === 7 || arrayData[1].length === 3);
-          
-          if (isSpecialFormat) {
-            console.log('Detected special Excel format with 3-element header and 7-element data rows');
-            
-            // For this specific format, we know the exact structure
-            const idIndex = 0;
-            const nameIndex = 1;
-            const titleIndex = 2;
-            const managerIndex = 3; // Only in 7-element rows
-            const fteIndex = 4;     // Only in 7-element rows
-            const locationIndex = 5; // Only in 7-element rows
-            const jobFamilyIndex = 6; // Only in 7-element rows
-          } else {
-            // For other formats, use default column mapping
-            console.log('Using default column mapping for unknown format');
-            const idIndex = 0;
-            const nameIndex = 1;
-            const titleIndex = 2;
-            const managerIndex = 3;
-            const fteIndex = 4;
-            const locationIndex = 5;
-            const jobFamilyIndex = 6;
-          }
-          
-          // Convert data rows to objects
-          const result = [];
-          for (let i = 1; i < arrayData.length; i++) {
-            const row = arrayData[i];
-            if (row && row.length > 0) {
-              // Skip header row or empty rows
-              if (row[0] === 'ID' || !row[0]) continue;
-              
-              // Handle the special case where row length is 3 (only ID, Name, Title)
-              // In this case, we need to set manager to empty string
-              let obj;
-              
-              // Based on the logs, we need to fix the column mapping
-              // The actual format is:
-              // [0] = ID (employee name)
-              // [1] = Manager name (not ID)
-              // [2] = Title
-              // [3] = FTE
-              // [4] = Location
-              // [5] = Job Family
-              // [6] = Management Level
-              
-              // First row is special - it's the company name with no manager
-              if (i === 1 && row[0] === 'The Nunatak Group GmbH') {
-                obj = {
-                  id: 'company',
-                  name: row[0] || 'Unknown',
-                  manager: '', // Root node has no manager
-                  title: row[2] || '',
-                  fte: 1,
-                  location: '',
-                  jobFamily: '',
-                  managementLevel: ''
-                };
-              } else if (row.length === 3) {
-                obj = {
-                  id: String(row[0] || `emp_${i}`),
-                  name: row[0] || 'Unknown',
-                  manager: '', // No manager in 3-element rows
-                  title: row[2] || '',
-                  fte: 1,
-                  location: '',
-                  jobFamily: '',
-                  managementLevel: ''
-                };
-              } else {
-                // Find the employee ID for the manager name
-                const managerName = row[1];
-                
-                obj = {
-                  id: String(row[0] || `emp_${i}`),
-                  name: row[0] || 'Unknown',
-                  manager: managerName || '', // Store manager name for now
-                  title: row[2] || '',
-                  fte: row[3] || 1,
-                  location: row[4] || '',
-                  jobFamily: row[5] || '',
-                  managementLevel: row[6] || ''
-                };
-              }
-              
-              console.log(`Converting row ${i}:`, row, 'to:', obj);
-              result.push(obj);
-            }
-          }
-          
-          // Now we need to convert manager names to IDs
-          // Create a map of names to IDs
-          const nameToIdMap = new Map();
-          result.forEach(emp => {
-            nameToIdMap.set(emp.name, emp.id);
-          });
-          
-          // Replace manager names with manager IDs
-          result.forEach(emp => {
-            if (emp.manager && nameToIdMap.has(emp.manager)) {
-              emp.manager = nameToIdMap.get(emp.manager);
-            } else if (emp.manager === 'The Nunatak Group GmbH') {
-              emp.manager = 'company';
-            }
-          });
-          
-          console.log('Converted data with proper manager IDs:', result);
-          return result;
-        }
-        
-        // Already in object format
-        return arrayData;
-      }
-      
-      // Helper function to render chart with data
-      function renderChartWithData(chartData) {
-        console.log('renderChartWithData called with data:', chartData);
-        
-        // Render chart
-        if (chartData && chartData.length > 0) {
-          console.log('Final chart data for rendering:', chartData);
-          try {
-            // Convert data if needed
-            console.log('Converting data to objects...');
-            const formattedData = convertArrayDataToObjects(chartData);
-            console.log('Formatted data:', formattedData);
-            
-            // Store the data in state for baseline/target toggling
-            console.log('Setting baseline and current data...');
-            window.setBaselineData(formattedData);
-            window.setCurrentData(formattedData);
-            
-            console.log('Building hierarchy...');
-            const hierarchyData = window.buildHierarchy(formattedData);
-            console.log('Hierarchy data built:', hierarchyData);
-            
-            if (!hierarchyData) {
-              console.error('Failed to build hierarchy from data');
-              document.getElementById('chart-area').innerHTML = '<div class="empty-state"><p>Could not build organization chart from the data</p></div>';
-              return;
-            }
-            
-            // Store the root node in state
-            console.log('Setting root node in state...');
-            window.setRootNode(hierarchyData);
-            
-            // Check if window.renderChart exists
-            console.log('window.renderChart exists:', typeof window.renderChart === 'function');
-            
-            console.log('Rendering chart with container #chart-area...');
-            window.renderChart(hierarchyData, '#chart-area');
-            console.log('Chart rendering complete');
-            
-            // Check if we have a target chart ID in the URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const chartId = urlParams.get('chart');
-            const targetId = urlParams.get('target');
-            
-            console.log('URL parameters:', { chartId, targetId });
-            
-            if (targetId && targetId !== chartId) {
-              console.log('Target chart ID found, loading target data:', targetId);
-              // Load target data
-              loadTargetData(targetId);
-            } else {
-              console.log('No target chart ID found or same as baseline, hiding toggle button');
-              // Hide toggle button if no target chart
-              const toggleViewBtn = document.getElementById('toggleViewBtn');
-              if (toggleViewBtn) toggleViewBtn.style.display = 'none';
-            }
-          } catch (e) {
-            console.error('Error during chart rendering:', e);
-            document.getElementById('chart-area').innerHTML = `<div class="empty-state"><p>Error rendering chart: ${e.message}</p></div>`;
-          }
-        } else {
-          console.warn('No chart data available for rendering');
-          document.getElementById('chart-area').innerHTML = '<div class="empty-state"><p>No data available for this chart</p></div>';
-        }
-        
+        console.error('Error during initialization:', error);
+        // Show error message to user
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-message';
+        errorContainer.textContent = `Error: ${error.message}`;
+        document.querySelector('main').prepend(errorContainer);
+      } finally {
         hideLoading();
       }
-      
-      // Function to load target data
-      async function loadTargetData(targetId) {
-        try {
-          console.log('Loading target chart data for ID:', targetId);
-          const result = await window.getOrgChartById(targetId);
-          console.log('Target chart data loaded:', result);
-          
-          const { chart, employees, version, error } = result;
-          
-          if (error) {
-            console.error('Error loading target chart:', error);
-            return;
-          }
-          
-          console.log('Target chart info:', { chart });
-          console.log('Target employees:', employees);
-          console.log('Target version:', version);
-          
-          let targetData = [];
-          
-          // First try to get data from employees table
-          if (employees && employees.length > 0) {
-            console.log('Using employees data for target chart');
-            targetData = employees.map(emp => ({
-              id: emp.employee_id,
-              name: emp.name,
-              manager: emp.manager_id,
-              title: emp.title,
-              fte: emp.fte,
-              location: emp.location,
-              jobFamily: emp.job_family,
-              managementLevel: emp.management_level
-            }));
-          }
-          // If no employees, try to get data from version
-          else if (version && version.data) {
-            console.log('Using version data for target chart');
-            // Handle different data formats as in renderChartWithData
-            if (version.data.raw_data && Array.isArray(version.data.raw_data)) {
-              console.log('Using raw_data from version');
-              targetData = version.data.raw_data;
-            } 
-            else if (Array.isArray(version.data)) {
-              console.log('Using direct data from version');
-              targetData = version.data;
-            }
-            else if (typeof version.data === 'string') {
-              console.log('Attempting to parse string data from version');
-              try {
-                const parsedData = JSON.parse(version.data);
-                console.log('Parsed version data:', parsedData);
-                if (Array.isArray(parsedData)) {
-                  console.log('Using parsed array data');
-                  targetData = parsedData;
-                } else if (parsedData.raw_data && Array.isArray(parsedData.raw_data)) {
-                  console.log('Using parsed raw_data');
-                  targetData = parsedData.raw_data;
-                }
-              } catch (e) {
-                console.error('Error parsing target version data:', e);
-              }
-            }
-          }
-          
-          console.log('Target data before processing:', targetData);
-          
-          if (targetData && targetData.length > 0) {
-            // Convert data if needed
-            console.log('Converting target data to objects...');
-            const formattedTargetData = convertArrayDataToObjects(targetData);
-            console.log('Formatted target data:', formattedTargetData);
-            
-            // Store the target data in state
-            console.log('Storing target data in state...');
-            window.setUpdateData(formattedTargetData);
-            
-            // Show toggle button
-            const toggleViewBtn = document.getElementById('toggleViewBtn');
-            if (toggleViewBtn) {
-              toggleViewBtn.style.display = 'inline-flex';
-              toggleViewBtn.disabled = false;
-              
-              // Remove any existing event listeners
-              const newToggleBtn = toggleViewBtn.cloneNode(true);
-              toggleViewBtn.parentNode.replaceChild(newToggleBtn, toggleViewBtn);
-              
-              // Add event listener for toggle button
-              newToggleBtn.addEventListener('click', () => {
-                console.log('Toggle comparison mode clicked');
-                if (window.toggleComparisonMode) {
-                  window.toggleComparisonMode();
-                } else {
-                  console.error('toggleComparisonMode function not found');
-                }
-              });
-            }
-          }
-        } catch (error) {
-          console.error('Error loading target data:', error);
-        }
-      }
-      
-      // Export button
-      const exportBtn = document.getElementById('exportBtn');
-      if (exportBtn) {
-        exportBtn.addEventListener('click', async () => {
-          const chartId = urlParams.get('chart');
-          if (!chartId) return;
-          
-          try {
-            showLoading();
-            await window.exportToExcel(chartId);
-            hideLoading();
-          } catch (error) {
-            console.error('Error exporting chart:', error);
-            hideLoading();
-            alert('Error exporting chart: ' + error.message);
-          }
-        });
-      }
-      
-      // Zoom controls are now handled by zoomControls.js
-      // Legacy zoom code removed to prevent errors
-    });
-    
-    // Helper functions
-    function getInitials(name) {
-      if (!name) return '';
-      
-      return name
-        .split(' ')
-        .filter(part => part.length > 0)
-        .map(part => part[0])
-        .join('')
-        .toUpperCase()
-        .substring(0, 2);
-    }
-    
-    function showLoading() {
-      document.getElementById('loadingOverlay').style.display = 'flex';
-    }
-    
-    function hideLoading() {
-      document.getElementById('loadingOverlay').style.display = 'none';
-    }
+    })();
   </script>
 </body>
 </html>
