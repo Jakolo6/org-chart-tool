@@ -95,10 +95,19 @@ function showError(message) {
  * @param {Object} chartData - The chart data to render, should contain chart and employees.
  */
 window.renderChartWithData = function(chartData) {
-    console.log('Rendering chart with data:', chartData);
+    console.group('renderChartWithData');
+    console.log('Input chartData:', chartData);
+    
+    if (!chartData) {
+        console.error('No chartData provided');
+        showError('Error: No chart data received');
+        console.groupEnd();
+        return;
+    }
     
     // Initialize chart if not already done
     if (!window.state || !window.state.svg) {
+        console.log('Initializing chart...');
         initChart('#org-chart');
     }
     
@@ -106,16 +115,25 @@ window.renderChartWithData = function(chartData) {
     const employees = chartData.employees || [];
     console.log('Employees data for hierarchy:', employees);
     
+    if (!Array.isArray(employees)) {
+        console.error('Employees data is not an array:', employees);
+        showError('Error: Invalid employee data format');
+        console.groupEnd();
+        return;
+    }
+    
+    // Log first few employees for inspection
+    console.log('First 3 employees:', employees.slice(0, 3));
+    
     // Build hierarchy from employees data
+    console.log('Building hierarchy...');
     const rootNode = buildHierarchy(employees);
+    console.log('Built rootNode:', rootNode);
     
     if (!rootNode) {
         console.error('Failed to build hierarchy from chart data');
-        // Show error to user
-        const errorContainer = document.createElement('div');
-        errorContainer.className = 'error-message';
-        errorContainer.textContent = 'Error: Failed to build organization chart. No valid data found.';
-        document.querySelector('main').prepend(errorContainer);
+        showError('Error: Failed to build organization chart. No valid data found.');
+        console.groupEnd();
         return;
     }
     
@@ -214,23 +232,33 @@ function initChart(container = '#chart-area') {
  * @returns {Object|null} The root node of the hierarchy.
  */
 function buildHierarchy(data) {
-    console.log('Building hierarchy with data:', data);
+    console.group('buildHierarchy');
+    console.log('Input data:', data);
     
-    if (!data || !Array.isArray(data)) {
+    if (!data) {
+        console.error('No data provided to buildHierarchy');
+        console.groupEnd();
+        return null;
+    }
+    
+    if (!Array.isArray(data)) {
         console.error('Invalid data format for hierarchy building. Expected array, got:', typeof data);
+        console.groupEnd();
         return null;
     }
     
     if (data.length === 0) {
-        console.log('No data available for hierarchy building');
-        // Create a default company node when no employees exist
-        return {
+        console.log('No data available for hierarchy building - creating default company node');
+        const defaultNode = {
             id: 'company',
             name: 'The Nunatak Group GmbH',
             title: 'Digital Growth Advisors',
             children: [],
             expanded: true
         };
+        console.log('Created default node:', defaultNode);
+        console.groupEnd();
+        return defaultNode;
     }
 
     // Create lookup map
@@ -674,25 +702,32 @@ function resetView() {
  * rendering functions for them.
  */
 function renderChart(rootNode, selector) {
-    console.log('renderChart called with rootNode:', rootNode, 'selector:', selector);
+    console.group('renderChart');
+    console.log('Root node:', rootNode);
+    console.log('Selector:', selector);
     
     if (!rootNode) {
-        console.error('No root node provided to renderChart');
+        const errorMsg = 'No root node provided to renderChart';
+        console.error(errorMsg);
         showError('No data available to render the organization chart.');
+        console.groupEnd();
         return;
     }
     
     // Ensure rootNode has required properties
     if (!rootNode.id || !rootNode.name) {
-        console.error('Invalid root node structure:', rootNode);
+        const errorMsg = `Invalid root node structure - missing required properties. Node: ${JSON.stringify(rootNode, null, 2)}`;
+        console.error(errorMsg);
         showError('Invalid chart data structure. Please check the data format.');
+        console.groupEnd();
         return;
     }
     
     // Initialize chart if selector is provided
     if (selector) {
         console.log('Initializing chart with selector:', selector);
-        initChart(selector);
+        const initResult = initChart(selector);
+        console.log('Chart initialization result:', initResult);
     }
     
     if (!window.state || !window.state.g) {
