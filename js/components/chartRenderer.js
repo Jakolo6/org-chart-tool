@@ -65,7 +65,7 @@ console.log('[OrgChart] chartRenderer loaded');
 
 /**
  * Renders a chart with the provided data.
- * @param {Object} chartData - The chart data to render.
+ * @param {Object} chartData - The chart data to render, should contain chart and employees.
  */
 window.renderChartWithData = function(chartData) {
     console.log('Rendering chart with data:', chartData);
@@ -75,16 +75,28 @@ window.renderChartWithData = function(chartData) {
         initChart('#org-chart');
     }
     
-    // Build hierarchy from chart data
-    const rootNode = buildHierarchy(chartData.employees || []);
+    // Get employees from chartData or empty array if not available
+    const employees = chartData.employees || [];
+    console.log('Employees data for hierarchy:', employees);
+    
+    // Build hierarchy from employees data
+    const rootNode = buildHierarchy(employees);
     
     if (!rootNode) {
         console.error('Failed to build hierarchy from chart data');
+        // Show error to user
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-message';
+        errorContainer.textContent = 'Error: Failed to build organization chart. No valid data found.';
+        document.querySelector('main').prepend(errorContainer);
         return;
     }
     
     // Store root node in state
     window.state.rootNode = rootNode;
+    
+    // Store the original data for later use
+    window.state.chartData = chartData;
     
     // Render the chart
     renderChart(rootNode, '#org-chart');

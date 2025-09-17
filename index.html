@@ -187,9 +187,9 @@
           window.initUxEnhancements();
         }
         
-        // Render the chart
+        // Render the chart with both chart and employees data
         if (window.renderChartWithData) {
-          window.renderChartWithData(chart);
+          window.renderChartWithData({ chart, employees });
         }
         
       } catch (error) {
