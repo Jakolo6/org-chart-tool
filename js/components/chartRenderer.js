@@ -253,8 +253,10 @@ function buildHierarchy(data) {
             id: 'company',
             name: 'The Nunatak Group GmbH',
             title: 'Digital Growth Advisors',
+            description: 'No employee data found. Please upload or import employee data.',
             children: [],
-            expanded: true
+            expanded: true,
+            _isDefaultNode: true
         };
         console.log('Created default node:', defaultNode);
         console.groupEnd();
@@ -852,13 +854,13 @@ function renderNodes(nodes) {
         .remove();
     
     // Handle enter selection - batch additions
-    const enterGroups = nodeGroups.enter()
-        .append('g')
-        .attr('class', 'node-group')
+    const nodeEnter = nodeGroups.enter();
+    const nodeGroup = nodeEnter.append('g')
+        .attr('class', d => `node ${d._isDefaultNode ? 'default-node' : ''}`)
         .attr('transform', d => `translate(${d.x},${d.y})`)
-        .style('opacity', 0);
-    
-    // Batch DOM operations for better performance
+        .on('click', handleNodeClick)
+        .on('mouseover', handleNodeHover)
+        .on('mouseout', handleNodeUnhover);
     
     // Cache calculations
     const halfNodeWidth = nodeWidth / 2;
@@ -892,17 +894,31 @@ function renderNodes(nodes) {
             .attr('rx', 4)
             .attr('ry', 4);
         
-        // Add name text with wrapping
-        group.append('text')
-            .attr('class', `node-text ${d.changeType || ''}`)
-            .attr('y', -15)
+        // Add name with different styling for default node
+        const nameText = group.append('text')
+            .attr('class', d => `node-name ${d._isDefaultNode ? 'default-node-name' : ''}`)
+            .attr('y', d => d._isDefaultNode ? -25 : -15)
             .attr('text-anchor', 'middle')
-            .each(function() {
-                wrapSVGText(d3.select(this), d.name, textWidth, 2, -15);
-            });
+            .text(d => d.name || 'Unnamed');
+
+        // Add title with different styling for default node
+        const titleText = group.append('text')
+            .attr('class', d => `node-title ${d._isDefaultNode ? 'default-node-title' : ''}`)
+            .attr('y', d => d._isDefaultNode ? 0 : 0)
+            .attr('text-anchor', 'middle')
+            .text(d => d.title || '');
         
-        // Add title text with wrapping
-        if (d.title) {
+        // Add description for default node
+        if (d._isDefaultNode && d.description) {
+            group.append('text')
+                .attr('class', 'node-description')
+                .attr('y', 20)
+                .attr('text-anchor', 'middle')
+                .text(d.description);
+        }
+        
+        // Add wrapped title for regular nodes
+        if (!d._isDefaultNode) {
             group.append('text')
                 .attr('class', `node-title ${d.changeType || ''}`)
                 .attr('y', 15)

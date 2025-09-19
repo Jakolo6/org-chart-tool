@@ -1,3 +1,41 @@
-/* Chart area styles */
+/* Default node styles */
+.node.default-node .node-card {
+    fill: #f8f9fa;
+    stroke: #6c757d;
+    stroke-width: 2px;
+    stroke-dasharray: 4;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15));
+    transition: all 0.3s ease;
+}
 
-/* TODO: Move chart area CSS here */
+.node.default-node:hover .node-card {
+    stroke: #0d6efd;
+    filter: drop-shadow(0 2px 12px rgba(13, 110, 253, 0.25));
+}
+
+.node.default-node .default-node-name {
+    font-weight: 700;
+    fill: #212529;
+    font-size: 16px;
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+.node.default-node .default-node-title {
+    fill: #495057;
+    font-size: 13px;
+    font-weight: 500;
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+.node.default-node .node-description {
+    fill: #dc3545;
+    font-size: 12px;
+    font-weight: 500;
+    text-anchor: middle;
+    dominant-baseline: hanging;
+    font-style: italic;
+}
+
+/* Chart area styles */
